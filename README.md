@@ -13,3 +13,8 @@ How to commit:
 1) Clean the project: Right click on the project icon in the projects window and click 'Clean'
 2) Left click on the project icon in the projects window to highlight it. Go to Team/Commit. Write a commit message
 3) Push to the Github: Go to Team/Remote/Push and select the branch you were working on. Commit the branch
+
+Other things:
+1) How to check what branches there are: git branch -v
+2) How to check what remotes are available: git remote -v
+
