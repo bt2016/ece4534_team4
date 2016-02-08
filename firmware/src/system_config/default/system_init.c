@@ -112,6 +112,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 
+//<editor-fold defaultstate="collapsed" desc="DRV_USART Initialization Data">
+
+// </editor-fold>
 
 // *****************************************************************************
 // *****************************************************************************
@@ -178,6 +181,7 @@ void SYS_Initialize ( void* data )
     SYS_PORTS_Initialize();
 
     /* Initialize Drivers */
+    DRV_USART0_Initialize();
 
     /* Initialize System Services */
     SYS_INT_Initialize();  

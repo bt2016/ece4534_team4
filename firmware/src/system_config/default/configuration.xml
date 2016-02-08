@@ -152,7 +152,7 @@
       <Template>
         <Name>system_init.c</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>855A660EFC459CDC047E066EECDF70CE</Checksum>
+        <Checksum>69108E2F7E8B80BC6F778A4C906709A1</Checksum>
       </Template>
       <Template>
         <Name>main.c</Name>
@@ -161,12 +161,12 @@
       <Template>
         <Name>system_interrupt_a.S</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>F8E29721D7D91213A568F3DC060408EC</Checksum>
+        <Checksum>5C0D911C19B5E425D7F0FB89E579F457</Checksum>
       </Template>
       <Template>
         <Name>system_definitions.h</Name>
         <Path>Header Files/app/system_config/default</Path>
-        <Checksum>635D9887864305E4A18DCBB3D9BEC414</Checksum>
+        <Checksum>903A3A136796FE56886B36AECFA35002</Checksum>
       </Template>
       <Template>
         <Name>system_exceptions.c</Name>
@@ -176,6 +176,16 @@
       <Template>
         <Name>app.c</Name>
         <Path>Source Files/app</Path>
+      </Template>
+      <Template>
+        <Name>drv_usart_static.c</Name>
+        <Path>Source Files/app/system_config/default/framework/driver/usart</Path>
+        <Checksum>E99F83B1AF2B9157413E2D6BC8969741</Checksum>
+      </Template>
+      <Template>
+        <Name>drv_usart_static.h</Name>
+        <Path>Header Files/app/system_config/default/framework/driver/usart</Path>
+        <Checksum>66C127084540B78CD4F78E2FBCC6D29F</Checksum>
       </Template>
       <Template>
         <Name>FreeRTOSConfig.h</Name>
@@ -204,7 +214,7 @@
       <Template>
         <Name>system_interrupt.c</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>9AC33B2960C8DF72C5EB0E3662303FF4</Checksum>
+        <Checksum>A04BD60BBAF7CCA6265F0618F14DF797</Checksum>
       </Template>
       <Template>
         <Name>rtos_hooks.c</Name>

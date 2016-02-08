@@ -59,7 +59,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 
-
 #include "timerCallback.h" //Created by me
 
 // DOM-IGNORE-BEGIN
@@ -91,6 +90,10 @@ typedef enum
 {
 	APP_STATE_INIT=0, //Application's state machine's initial state.
 
+        /* TODO: Define states used by the application state machine. */
+        APP_STATE_TX,       // USART transmit state
+        APP_STATE_RX        // USART receive state
+            
 } APP_STATES;
 
 
@@ -112,7 +115,12 @@ typedef struct
     APP_STATES state; //The application's current state
     int letterPosition;
 
+    /* TODO: Define any additional data used by the application. */
+    char rx_byte;       // byte received
+    char tx_byte;       // byte to send
+    
 } APP_DATA;
+
 
 
 // *****************************************************************************

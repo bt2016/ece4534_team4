@@ -1,20 +1,30 @@
 /*******************************************************************************
- System Interrupt Source File
+  USART Driver Interface Declarations for Static Single Instance Driver
+
+  Company:
+    Microchip Technology Inc.
 
   File Name:
-    sys_interrupt_a.S
+    drv_usart_static.h
 
   Summary:
-    Raw ISR definitions.
+    USART driver interface declarations for the static single instance driver.
 
   Description:
-    This file contains a definitions of the raw ISRs required to support the 
-    interrupt sub-system.
+    The USART device driver provides a simple interface to manage the USART
+    modules on Microchip microcontrollers. This file defines the interface
+    Declarations for the USART driver.
+    
+  Remarks:
+    Static interfaces incorporate the driver instance number within the names
+    of the routines, eliminating the need for an object ID or object handle.
+    
+    Static single-open interfaces also eliminate the need for the open handle.
 *******************************************************************************/
 
-// DOM-IGNORE-BEGIN
+//DOM-IGNORE-BEGIN
 /*******************************************************************************
-Copyright (c) 2011-2014 released Microchip Technology Inc.  All rights reserved.
+Copyright (c) 2013 released Microchip Technology Inc.  All rights reserved.
 
 Microchip licenses to you the right to use, modify, copy and distribute
 Software only when embedded on a Microchip microcontroller or digital signal
@@ -34,53 +44,25 @@ INCLUDING BUT NOT LIMITED TO ANY INCIDENTAL, SPECIAL, INDIRECT, PUNITIVE OR
 CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF PROCUREMENT OF
 SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 (INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), OR OTHER SIMILAR COSTS.
- *******************************************************************************/
-// DOM-IGNORE-END
-/*
-*********************************************************************************************************
-*                                           INCLUDES
-*********************************************************************************************************
-*/
-#include <xc.h>
+*******************************************************************************/
+//DOM-IGNORE-END
 
-#include "ISR_Support.h"
+#ifndef _DRV_USART_STATIC_H
+#define _DRV_USART_STATIC_H
 
+// *****************************************************************************
+// *****************************************************************************
+// Section: Interface Headers for Instance 0 for the static driver
+// *****************************************************************************
+// *****************************************************************************
 
-/* USART Instance 0 Interrupt */
+void DRV_USART0_Initialize(void);
+uint8_t DRV_USART0_ReadByte(void);
+bool DRV_USART0_ReceiverBufferIsEmpty(void);
+void DRV_USART0_WriteByte(const uint8_t byte);
 
-   .extern  IntHandlerDrvUsartInstance0
-
-   .section	.vector_24,code, keep
-   .equ     __vector_dispatch_24, IntVectorDrvUsartInstance0
-   .global  __vector_dispatch_24
-   .set     nomicromips
-   .set     noreorder
-   .set     nomips16
-   .set     noat
-   .ent  IntVectorDrvUsartInstance0
-
-IntVectorDrvUsartInstance0:
-    la    $26,  _IntHandlerDrvUsartInstance0         
-    jr    $26
-    nop
-	.end	IntVectorDrvUsartInstance0
-
-   .section	.DrvUsartInstance0_vector_text, code, keep
-   .set     nomicromips
-   .set     noreorder
-   .set     nomips16
-   .set     noat
-   .ent  _IntHandlerDrvUsartInstance0
-
-_IntHandlerDrvUsartInstance0:
-    portSAVE_CONTEXT
-    la    s6,  IntHandlerDrvUsartInstance0
-    jalr  s6
-    nop
-    portRESTORE_CONTEXT
-    .end	_IntHandlerDrvUsartInstance0
+#endif // #ifndef _DRV_USART_STATIC_H
 
 /*******************************************************************************
  End of File
- */
-
+*/

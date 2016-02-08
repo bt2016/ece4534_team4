@@ -70,7 +70,30 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: System Interrupt Vector Functions
 // *****************************************************************************
 // *****************************************************************************
+
+void IntHandlerDrvUsartInstance0(void)
+{
+
+    /* TODO: Add code to process interrupt here */
+
+    /* Clear pending interrupt */
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
+
+}
  
+ 
+ 
+
+ 
+ 
+
+ 
+
+ 
+ 
+  
 /*******************************************************************************
  End of File
 */

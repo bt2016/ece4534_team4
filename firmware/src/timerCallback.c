@@ -143,7 +143,7 @@ unsigned int millisecondsElapsed = 0;
 
 void vTimerCallback(TimerHandle_t pxTimer){
 
-    millisecondsElapsed += 100; //Timer is called every 100ms
+    millisecondsElapsed += 1; //Timer is called every 100ms
     
     app1SendTimerValToMsgQ(millisecondsElapsed);
 

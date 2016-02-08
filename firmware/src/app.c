@@ -128,7 +128,7 @@ void app1SendTimerValToMsgQ(unsigned int millisecondsElapsed){
                              ( TickType_t ) 0 ) != pdPASS ) //change to portMAX_DELAY
         {
             // Failed to post the message.
-            stopAll();            
+            //stopAll();            
         }  
     
 }
@@ -221,14 +221,24 @@ void APP_Initialize ( void )
     See prototype in app.h.
  */
 
+char sent = 'a';
+char msg_start = 'T';
+char msg_type = 'E';
+char msg_data1 = 'A';
+char msg_data2 = 'M';
+char msg_stop = '4';
+
 void APP_Tasks ( void )
 {
     
+    //sent += 1;
+    //if (sent > 100) { sent = 0; };
     //You can put code here, it should get executed like forever.
     //stopAll(); //Uncomment to demo the HALT method thats in debug. This will flash your LED 
     
     unsigned int *qData;
 
+    //DRV_USART0_WriteByte('.');
     if( xTimerIntQ != 0 )
     {
         // Receive a message on the created queue.  Block for ever if a
@@ -238,18 +248,23 @@ void APP_Tasks ( void )
             
             if(appData.letterPosition == 0){
                 dbgOutputVal('T');
+                sent = 'T';
             }
             else if(appData.letterPosition == 1){
                 dbgOutputVal('E');
+                sent = 'E';
             }
             else if(appData.letterPosition == 2){
                 dbgOutputVal('A');
+                sent = 'A';
             }
             else if(appData.letterPosition == 3){
                 dbgOutputVal('M');
+                sent = 'M';
             }
             else if(appData.letterPosition == 4){
                 dbgOutputVal('4');
+                sent = '4';
             }
             
             appData.letterPosition += 1;
@@ -262,27 +277,54 @@ void APP_Tasks ( void )
         }
     }
     
-    
+    DRV_USART0_WriteByte(' ');
     
     /* Check the application's current state. */
     switch ( appData.state )
     {
         /* Application's initial state. */
-        case APP_STATE_INIT:
+        case APP_STATE_INIT:                        // application state after system and application are initialized
         {
+            DRV_USART0_WriteByte('i');
+            appData.state = APP_STATE_TX;           // change state to receive after initializing application
             break;
         }
 
         /* TODO: implement your application state machine.*/
-        
-        
-        
 
-        /* The default state should never be executed. */
-        default:
+        case APP_STATE_RX:                              // USART receive state
         {
-            /* TODO: Handle error in application's state machine. */
+            if (!DRV_USART0_ReceiverBufferIsEmpty())    // if byte received in USART instance 0 (USART1 in this case)
+           {
+               int l;
+                
+               appData.tx_byte = appData.rx_byte + 1;   // modifying received byte confirms it was received
+               appData.state = APP_STATE_TX;            // change state to TX
+            }
+            appData.state = APP_STATE_TX;
             break;
+        }
+
+        case APP_STATE_TX:                              // USART transmit state
+        {
+
+           DRV_USART0_WriteByte(msg_start);
+           DRV_USART0_WriteByte(msg_type);
+           DRV_USART0_WriteByte(msg_data1);
+           DRV_USART0_WriteByte(msg_data2);
+           DRV_USART0_WriteByte(msg_stop);
+           
+           //DRV_USART0_WriteByte(appData.tx_byte);       // send modified byte received in APP_STATE_RX
+           
+           appData.state = APP_STATE_RX;                // change state to RX and wait for next received byte
+       
+           break;
+        }
+
+        default:    /* The default state should never be executed. */
+        {
+            DRV_USART0_WriteByte('d');
+            break;  /* TODO: Handle error in application's state machine. */
         }
     }
 }
