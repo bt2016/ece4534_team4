@@ -221,18 +221,21 @@ void APP_Initialize ( void )
     See prototype in app.h.
  */
 
-char sent = 'a';
-char msg_start = 'T';
-char msg_type = 'E';
-char msg_data1 = 'A';
-char msg_data2 = 'M';
-char msg_stop = '4';
+char msg_start = '~';
+char msg_type = 's';
+char msg_data1 = 0x30;
+char msg_data2 = 0x39;
+char msg_stop = '.';
+
+void writeFullTCP(char* boop) {
+    char *k;
+    for (k = boop; *k; ++k) {
+        DRV_USART0_WriteByte(*k);
+    }
+}
 
 void APP_Tasks ( void )
 {
-    
-    //sent += 1;
-    //if (sent > 100) { sent = 0; };
     //You can put code here, it should get executed like forever.
     //stopAll(); //Uncomment to demo the HALT method thats in debug. This will flash your LED 
     
@@ -248,36 +251,26 @@ void APP_Tasks ( void )
             
             if(appData.letterPosition == 0){
                 dbgOutputVal('T');
-                sent = 'T';
             }
             else if(appData.letterPosition == 1){
                 dbgOutputVal('E');
-                sent = 'E';
             }
             else if(appData.letterPosition == 2){
                 dbgOutputVal('A');
-                sent = 'A';
             }
             else if(appData.letterPosition == 3){
                 dbgOutputVal('M');
-                sent = 'M';
             }
             else if(appData.letterPosition == 4){
                 dbgOutputVal('4');
-                sent = '4';
             }
             
             appData.letterPosition += 1;
             if(appData.letterPosition == 5){
                 appData.letterPosition = 0;
             }
-            
-            
-            
         }
     }
-    
-    DRV_USART0_WriteByte(' ');
     
     /* Check the application's current state. */
     switch ( appData.state )
@@ -294,7 +287,7 @@ void APP_Tasks ( void )
 
         case APP_STATE_RX:                              // USART receive state
         {
-            if (!DRV_USART0_ReceiverBufferIsEmpty())    // if byte received in USART instance 0 (USART1 in this case)
+           if (!DRV_USART0_ReceiverBufferIsEmpty())    // if byte received in USART instance 0 (USART1 in this case)
            {
                int l;
                 
@@ -307,7 +300,12 @@ void APP_Tasks ( void )
 
         case APP_STATE_TX:                              // USART transmit state
         {
-
+            msg_data1++;
+            msg_data2 += 2;
+            if (msg_data1 > 57) msg_data1 = 48;
+            if (msg_data2 > 57) msg_data2 = 48;
+           //writeFullTCP("Sweet, I can send!");
+            
            DRV_USART0_WriteByte(msg_start);
            DRV_USART0_WriteByte(msg_type);
            DRV_USART0_WriteByte(msg_data1);
@@ -316,7 +314,7 @@ void APP_Tasks ( void )
            
            //DRV_USART0_WriteByte(appData.tx_byte);       // send modified byte received in APP_STATE_RX
            
-           appData.state = APP_STATE_RX;                // change state to RX and wait for next received byte
+           //appData.state = APP_STATE_RX;                // change state to RX and wait for next received byte
        
            break;
         }
@@ -328,7 +326,7 @@ void APP_Tasks ( void )
         }
     }
 }
- 
+
 
 /*******************************************************************************
  End of File
