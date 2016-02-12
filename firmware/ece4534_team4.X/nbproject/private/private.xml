@@ -5,11 +5,14 @@
         <group>
             <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/firmware/src/app.h</file>
             <file>file:/C:/microchip/harmony/v1_06_02/third_party/rtos/FreeRTOS/Source/queue.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/firmware/src/system_config/default/framework/driver/usart/drv_usart_static.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/firmware/src/sender.h</file>
             <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/firmware/src/main.c</file>
             <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/firmware/src/app1_public.h</file>
             <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/firmware/src/app.c</file>
             <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/firmware/src/debug.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/firmware/src/timerCallback.h</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/firmware/src/sender.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/firmware/src/timerCallback.c</file>
         </group>
     </open-files>
 </project-private>

@@ -17,27 +17,20 @@
 
 /* ************************************************************************** */
 /* ************************************************************************** */
-/* Section: Included Files */                           
-
-#include "timerCallback.h"
-#include "sender.h"
-
+/* Section: Included Files                                                    */
 /* ************************************************************************** */
 /* ************************************************************************** */
 
 /* This section lists the other files that are included in this file.
  */
 
-/* TODO:  Include other files here if needed. */
-
+#include "sender.h"
 
 /* ************************************************************************** */
 /* ************************************************************************** */
 /* Section: File Scope or Global Data                                         */
 /* ************************************************************************** */
 /* ************************************************************************** */
-
-unsigned int millisecondsElapsed = 0;
 
 /*  A brief description of a section can be given directly below the section
     banner.
@@ -60,6 +53,8 @@ unsigned int millisecondsElapsed = 0;
   @Remarks
     Any additional remarks
  */
+int global_data;
+
 
 /* ************************************************************************** */
 /* ************************************************************************** */
@@ -116,8 +111,41 @@ unsigned int millisecondsElapsed = 0;
         return 3;
     }
  */
+void writeString(char* sendvalue) {
+    char *k;
+    for (k = sendvalue; *k; ++k) {
+        DRV_USART0_WriteByte(*k);
+    }
+}
 
+void writeMsgStr(char* sendvalue) {
+    char *k;
+    
+    DRV_USART0_WriteByte(MSG_START);
+    
+    for (k = sendvalue; *k; ++k) {
+        DRV_USART0_WriteByte(*k);
+    }
+    
+    DRV_USART0_WriteByte(MSG_STOP);
+    
+}
 
+void writeMsgChar(char type, char dataa, char datab) {
+    DRV_USART0_WriteByte(MSG_START);
+    DRV_USART0_WriteByte(type);
+    DRV_USART0_WriteByte(dataa);
+    DRV_USART0_WriteByte(datab);
+    DRV_USART0_WriteByte(MSG_STOP);
+}
+
+void writeMsgShortInt(char type, unsigned short int data) {
+    DRV_USART0_WriteByte(MSG_START);
+    DRV_USART0_WriteByte(type);
+    DRV_USART0_WriteByte( data >> 8);
+    DRV_USART0_WriteByte( data );
+    DRV_USART0_WriteByte(MSG_STOP);
+}
 
 /* ************************************************************************** */
 /* ************************************************************************** */
@@ -141,15 +169,9 @@ unsigned int millisecondsElapsed = 0;
   @Remarks
     Refer to the example_file.h interface header for function usage details.
  */
-
-void vTimerCallback(TimerHandle_t pxTimer){
-
-    millisecondsElapsed += 1; //Timer is called every 100ms
-    
-    app1SendTimerValToMsgQ(millisecondsElapsed);
-    app1WriteMessage();
- }
-
+int ExampleInterfaceFunction(int param1, int param2) {
+    return 0;
+}
 
 
 /* *****************************************************************************
