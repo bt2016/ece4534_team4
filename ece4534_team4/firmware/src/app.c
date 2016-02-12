@@ -278,7 +278,7 @@ void APP_Tasks ( void )
         /* Application's initial state. */
         case APP_STATE_INIT:                        // application state after system and application are initialized
         {
-            DRV_USART0_WriteByte('START');
+            writeString("START");
             appData.state = APP_STATE_TX;           // change state to receive after initializing application
             break;
         }
@@ -297,7 +297,7 @@ void APP_Tasks ( void )
 
         default:    /* The default state should never be executed. */
         {
-            DRV_USART0_WriteByte('DEFAULT ERROR');
+            writeString("DEFAULT_ERROR");
 			appData.state = APP_STATE_TX;
             break;  /* TODO: Handle error in application's state machine. */
         }
