@@ -1,3 +1,4 @@
+
 /*******************************************************************************
   MPLAB Harmony Application Source File
   
@@ -61,6 +62,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app1_public.h" //Created by me file
 //#include "timerCallback.h" //Created by me ** included in app.h
 #include "debug.h" //Created by me
+#include "sender.h" //Created my me
 
 // *****************************************************************************
 // *****************************************************************************
@@ -133,14 +135,23 @@ void app1SendTimerValToMsgQ(unsigned int millisecondsElapsed){
     
 }
 
+char msg_type = 'q';
+char msg_data1 = 0x30;
+char msg_data2 = 0x39;
+unsigned short int msg_datashort = 0x3639;
+unsigned short int count = 0;
 
-/*
-void localTimerCallback(TimerHandle_t pxTimer){
+void app1WriteMessage() {
+    // Use transmit interrupt for UART 
+    // Same interrupt as receiver - account for both (clear both), handle the one that was raised
     
-    //vTimerCallback();
-    
+    //writeMsgChar(msg_type, msg_data1, msg_data2);
+    writeMsgStr("roo");
+    count++;
+    dbgOutputVal(count >> 8);
+    //writeMsgShortInt(msg_type, msg_datashort);
 }
-*/
+
 
 // *****************************************************************************
 // *****************************************************************************
@@ -221,19 +232,6 @@ void APP_Initialize ( void )
     See prototype in app.h.
  */
 
-char msg_start = '~';
-char msg_type = 's';
-char msg_data1 = 0x30;
-char msg_data2 = 0x39;
-char msg_stop = '.';
-
-void writeFullTCP(char* boop) {
-    char *k;
-    for (k = boop; *k; ++k) {
-        DRV_USART0_WriteByte(*k);
-    }
-}
-
 void APP_Tasks ( void )
 {
     //You can put code here, it should get executed like forever.
@@ -241,6 +239,7 @@ void APP_Tasks ( void )
     
     unsigned int *qData;
 
+	/*
     //DRV_USART0_WriteByte('.');
     if( xTimerIntQ != 0 )
     {
@@ -271,6 +270,7 @@ void APP_Tasks ( void )
             }
         }
     }
+	*/
     
     /* Check the application's current state. */
     switch ( appData.state )
@@ -278,23 +278,8 @@ void APP_Tasks ( void )
         /* Application's initial state. */
         case APP_STATE_INIT:                        // application state after system and application are initialized
         {
-            DRV_USART0_WriteByte('i');
+            DRV_USART0_WriteByte('START');
             appData.state = APP_STATE_TX;           // change state to receive after initializing application
-            break;
-        }
-
-        /* TODO: implement your application state machine.*/
-
-        case APP_STATE_RX:                              // USART receive state
-        {
-           if (!DRV_USART0_ReceiverBufferIsEmpty())    // if byte received in USART instance 0 (USART1 in this case)
-           {
-               int l;
-                
-               appData.tx_byte = appData.rx_byte + 1;   // modifying received byte confirms it was received
-               appData.state = APP_STATE_TX;            // change state to TX
-            }
-            appData.state = APP_STATE_TX;
             break;
         }
 
@@ -304,24 +289,16 @@ void APP_Tasks ( void )
             msg_data2 += 2;
             if (msg_data1 > 57) msg_data1 = 48;
             if (msg_data2 > 57) msg_data2 = 48;
-           //writeFullTCP("Sweet, I can send!");
             
-           DRV_USART0_WriteByte(msg_start);
-           DRV_USART0_WriteByte(msg_type);
-           DRV_USART0_WriteByte(msg_data1);
-           DRV_USART0_WriteByte(msg_data2);
-           DRV_USART0_WriteByte(msg_stop);
+            msg_datashort += 3;
            
-           //DRV_USART0_WriteByte(appData.tx_byte);       // send modified byte received in APP_STATE_RX
-           
-           //appData.state = APP_STATE_RX;                // change state to RX and wait for next received byte
-       
            break;
         }
 
         default:    /* The default state should never be executed. */
         {
-            DRV_USART0_WriteByte('d');
+            DRV_USART0_WriteByte('DEFAULT ERROR');
+			appData.state = APP_STATE_TX;
             break;  /* TODO: Handle error in application's state machine. */
         }
     }

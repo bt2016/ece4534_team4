@@ -1,3 +1,4 @@
+
 /* ************************************************************************** */
 /** Descriptive File Name
 
@@ -20,6 +21,7 @@
 /* Section: Included Files */                           
 
 #include "timerCallback.h"
+#include "sender.h"
 
 /* ************************************************************************** */
 /* ************************************************************************** */
@@ -146,6 +148,7 @@ void vTimerCallback(TimerHandle_t pxTimer){
     millisecondsElapsed += 1; //Timer is called every 100ms
     
     app1SendTimerValToMsgQ(millisecondsElapsed);
+	app1WriteMessage();
 
  }
 
