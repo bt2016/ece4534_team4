@@ -1,23 +1,23 @@
-# ece4534_team4
+# ece4534_team4 Source Code Repo
 Source code for ECE4534 Spring2016 Team4
 
 NOTE: You can also configure and manage the git repo via command line. The .git folder is in the C:\microchip\harmony\v1_06_02\apps\ece4534_team4 folder.
 
 ### Managing include directories
 1. ProjectProperties/General/SourceFolders
-..* ../../../../../framework
-..* ../../../../../third_party
-..* ../src
+ * ../../../../../framework
+ * ../../../../../third_party
+ * ../src
 2. ProjectProperties/Conf:[default]/xc32(GlobalOptions)/xc32-as
-..* ../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX
-..* ../../../../../third_party/rtos/FreeRTOS/Source/include
-..* ../src/system_config/default
+ * ../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX
+ * ../../../../../third_party/rtos/FreeRTOS/Source/include
+ * ../src/system_config/default
 3. Start MPLAB Harmony Configurator and follow the prompt to choose a new harmony framework
-..* Use path C:/microchip/harmony/v1_06_02
-..* Click the Generate Code button so that the relative addressed can be re-mapped
+ * Use path C:/microchip/harmony/v1_06_02
+ * Click the Generate Code button so that the relative addressed can be re-mapped
 4. Check for multiple instances of app.h app.c and main.c
-..* if multiple copies exist, then delete them
- 5. Build the project!
+ * if multiple copies exist, then delete them
+5. Build the project!
 
 ### How to import this project into your MPLAB:
 1. Clone the repository: git clone https://github.com/bt2016/ece4534_team4.git C:\microchip\harmony\v1_06_02\apps\ece4534_team4
