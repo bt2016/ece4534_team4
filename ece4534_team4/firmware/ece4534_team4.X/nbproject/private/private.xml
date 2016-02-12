@@ -9,6 +9,11 @@
             <file>file:/C:/microchip/harmony/v1_06_02/framework/sender.h</file>
             <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/system_config/default/framework/driver/usart/drv_usart_static.h</file>
             <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/ece4534_team4.X/nbproject/Makefile-default.mk</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/app.h</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/receive_code_template/firmware/src/app.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/receive_code_template/firmware/src/system_config/default/system_interrupt.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/receive_code_template/firmware/src/system_config/default/system_init.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/receive_code_template/firmware/src/system_config/default/system_tasks.c</file>
         </group>
     </open-files>
 </project-private>
