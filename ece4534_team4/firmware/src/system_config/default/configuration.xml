@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <configuration version="1.0.7.9">
   <General>
-    <HarmonyPath path="../.."/>
+    <HarmonyPath path="../../.."/>
     <ForceOptimization flag="true"/>
   </General>
   <Manifest>
@@ -229,19 +229,19 @@
     </Templates>
     <CompilerItems>
       <C32-AS>
-        <Include value="../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
-        <Include value="../../../../third_party/rtos/FreeRTOS/Source/include"/>
+        <Include value="../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
+        <Include value="../../../../../third_party/rtos/FreeRTOS/Source/include"/>
         <Include value="../src/system_config/default"/>
       </C32-AS>
       <C32>
-        <Include value="../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
-        <Include value="../../../../third_party/rtos/FreeRTOS/Source/include"/>
+        <Include value="../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
+        <Include value="../../../../../third_party/rtos/FreeRTOS/Source/include"/>
         <Include value="../src/system_config/default"/>
         <Define value="__XC"/>
       </C32>
     </CompilerItems>
     <Libraries>
-      <Library value="../../../../bin/framework/peripheral/PIC32MX795F512L_peripherals.a"/>
+      <Library value="../../../../../bin/framework/peripheral/PIC32MX795F512L_peripherals.a"/>
     </Libraries>
   </Manifest>
 </configuration>
