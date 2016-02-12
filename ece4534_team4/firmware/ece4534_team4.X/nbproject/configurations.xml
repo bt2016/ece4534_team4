@@ -28,6 +28,10 @@
         <itemPath>../src/app1_public.h</itemPath>
         <itemPath>../src/timerCallback.h</itemPath>
         <itemPath>../../../../../framework/sender.h</itemPath>
+        <itemPath>../src/receive.h</itemPath>
+        <itemPath>../src/send.h</itemPath>
+        <itemPath>../src/motor.h</itemPath>
+        <itemPath>../src/sensor.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f1" displayName="system" projectFiles="true">
@@ -112,6 +116,10 @@
         <itemPath>../src/main.c</itemPath>
         <itemPath>../src/timerCallback.c</itemPath>
         <itemPath>../../../../../framework/sender.c</itemPath>
+        <itemPath>../src/receive.c</itemPath>
+        <itemPath>../src/send.c</itemPath>
+        <itemPath>../src/motor.c</itemPath>
+        <itemPath>../src/sensor.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f1" displayName="osal" projectFiles="true">
@@ -216,7 +224,7 @@
         <property key="enable-unroll-loops" value="false"/>
         <property key="exclude-floating-point" value="false"/>
         <property key="extra-include-directories"
-                  value="../src;../../../../framework;../src/system_config/default/framework;../src/system_config/default;../../../../../framework;../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX;../../../../../third_party/rtos/FreeRTOS/Source/include"/>
+                  value="../src;../../../../framework;../src/system_config/default/framework;../../../../../framework;../src/system_config/default;../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX;../../../../../third_party/rtos/FreeRTOS/Source/include"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="true"/>
@@ -240,7 +248,7 @@
         <property key="enable-symbols" value="true"/>
         <property key="exclude-floating-point-library" value="false"/>
         <property key="expand-macros" value="false"/>
-        <property key="extra-include-directories-for-assembler" value=""/>
+        <property key="extra-include-directories-for-assembler" value=";"/>
         <property key="extra-include-directories-for-preprocessor"
                   value="../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX;../../../../../third_party/rtos/FreeRTOS/Source/include;../src/system_config/default"/>
         <property key="false-conditionals" value="false"/>
@@ -367,6 +375,7 @@
         <property key="UART5" value="true"/>
         <property key="UART6" value="true"/>
         <property key="USB" value="true"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

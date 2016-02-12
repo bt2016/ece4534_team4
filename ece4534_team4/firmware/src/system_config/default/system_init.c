@@ -189,7 +189,10 @@ void SYS_Initialize ( void* data )
     /* Initialize Middleware */
 
     /* Initialize the Application */
-    APP_Initialize();
+    RECEIVE_Initialize();
+    SEND_Initialize();
+    MOTOR_Initialize();
+    SENSOR_Initialize();
 }
 
 

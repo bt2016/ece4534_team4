@@ -54,7 +54,10 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "system_config.h"
 #include "system_definitions.h"
-#include "app.h"
+#include "receive.h"
+#include "send.h"
+#include "motor.h"
+#include "sensor.h"
 
 
 // *****************************************************************************
@@ -64,7 +67,10 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
  
 static void _SYS_Tasks ( void );
-static void _APP_Tasks(void);
+static void _RECEIVE_Tasks(void);
+static void _SEND_Tasks(void);
+static void _MOTOR_Tasks(void);
+static void _SENSOR_Tasks(void);
 
 
 // *****************************************************************************
@@ -88,9 +94,24 @@ void SYS_Tasks ( void )
                 "Sys Tasks",
                 1024, NULL, 0, NULL);
 
-    /* Create OS Thread for APP Tasks. */
-    xTaskCreate((TaskFunction_t) _APP_Tasks,
-                "APP Tasks",
+    /* Create OS Thread for RECEIVE Tasks. */
+    xTaskCreate((TaskFunction_t) _RECEIVE_Tasks,
+                "RECEIVE Tasks",
+                1024, NULL, 1, NULL);
+
+    /* Create OS Thread for SEND Tasks. */
+    xTaskCreate((TaskFunction_t) _SEND_Tasks,
+                "SEND Tasks",
+                1024, NULL, 1, NULL);
+
+    /* Create OS Thread for MOTOR Tasks. */
+    xTaskCreate((TaskFunction_t) _MOTOR_Tasks,
+                "MOTOR Tasks",
+                1024, NULL, 1, NULL);
+
+    /* Create OS Thread for SENSOR Tasks. */
+    xTaskCreate((TaskFunction_t) _SENSOR_Tasks,
+                "SENSOR Tasks",
                 1024, NULL, 1, NULL);
 
     /**************
@@ -126,17 +147,68 @@ static void _SYS_Tasks ( void )
 
 /*******************************************************************************
   Function:
-    void _APP_Tasks ( void )
+    void _RECEIVE_Tasks ( void )
 
   Summary:
-    Maintains state machine of APP.
+    Maintains state machine of RECEIVE.
 */
 
-static void _APP_Tasks(void)
+static void _RECEIVE_Tasks(void)
 {
     while(1)
     {
-        APP_Tasks();
+        RECEIVE_Tasks();
+    }
+}
+
+
+/*******************************************************************************
+  Function:
+    void _SEND_Tasks ( void )
+
+  Summary:
+    Maintains state machine of SEND.
+*/
+
+static void _SEND_Tasks(void)
+{
+    while(1)
+    {
+        SEND_Tasks();
+    }
+}
+
+
+/*******************************************************************************
+  Function:
+    void _MOTOR_Tasks ( void )
+
+  Summary:
+    Maintains state machine of MOTOR.
+*/
+
+static void _MOTOR_Tasks(void)
+{
+    while(1)
+    {
+        MOTOR_Tasks();
+    }
+}
+
+
+/*******************************************************************************
+  Function:
+    void _SENSOR_Tasks ( void )
+
+  Summary:
+    Maintains state machine of SENSOR.
+*/
+
+static void _SENSOR_Tasks(void)
+{
+    while(1)
+    {
+        SENSOR_Tasks();
     }
 }
 
