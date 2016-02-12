@@ -47,106 +47,26 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // DOM-IGNORE-END
 
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Included Files 
-// *****************************************************************************
-// *****************************************************************************
-
 #include "send.h"
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Global Data Definitions
-// *****************************************************************************
-// *****************************************************************************
-
-// *****************************************************************************
-/* Application Data
-
-  Summary:
-    Holds application data
-
-  Description:
-    This structure holds the application's data.
-
-  Remarks:
-    This structure should be initialized by the APP_Initialize function.
-    
-    Application strings and buffers are be defined outside this structure.
-*/
 
 SEND_DATA sendData;
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Callback Functions
-// *****************************************************************************
-// *****************************************************************************
-
-/* TODO:  Add any necessary callback funtions.
-*/
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Local Functions
-// *****************************************************************************
-// *****************************************************************************
-
-/* TODO:  Add any necessary local functions.
-*/
-
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Initialization and State Machine Functions
-// *****************************************************************************
-// *****************************************************************************
-
-/*******************************************************************************
-  Function:
-    void SEND_Initialize ( void )
-
-  Remarks:
-    See prototype in send.h.
- */
-
 void SEND_Initialize ( void )
 {
-    /* Place the App state machine in its initial state. */
     sendData.state = SEND_STATE_INIT;
-    
-    /* TODO: Initialize your application's state machine and other
-     * parameters.
-     */
 }
-
-
-/******************************************************************************
-  Function:
-    void SEND_Tasks ( void )
-
-  Remarks:
-    See prototype in send.h.
- */
 
 void SEND_Tasks ( void )
 {
-    /* Check the application's current state. */
     switch ( sendData.state )
     {
-        /* Application's initial state. */
         case SEND_STATE_INIT:
         {
             break;
         }
-
-        /* TODO: implement your application state machine.*/
-
         /* The default state should never be executed. */
         default:
         {
-            /* TODO: Handle error in application's state machine. */
             break;
         }
     }

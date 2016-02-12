@@ -48,92 +48,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // DOM-IGNORE-END
 
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Included Files 
-// *****************************************************************************
-// *****************************************************************************
-
 #include "app.h"
 
-//Include files required for milestone1
-#include "queue.h" //FreeRTOS file
-#include "timers.h" //FreeRTOS file
-#include "app1_public.h" //Created by me file
-//#include "timerCallback.h" //Created by me ** included in app.h
-#include "debug.h" //Created by me
-#include "sender.h" //Created my me
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Global Data Definitions
-// *****************************************************************************
-// *****************************************************************************
-
-
-
-
-
-//The handle for the messaging queue which receives messages from the timer interrupt
-QueueHandle_t xTimerIntQ;
-TimerHandle_t xTimer100ms;
-
-
-
-
-// *****************************************************************************
-/* Application Data
-
-  Summary:
-    Holds application data
-
-  Description:
-    This structure holds the application's data.
-
-  Remarks:
-    This structure should be initialized by the APP_Initialize function.
-    
-    Application strings and buffers are be defined outside this structure.
-*/
-
 APP_DATA appData;
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Callback Functions
-// *****************************************************************************
-// *****************************************************************************
-
-/* TODO:  Add any necessary callback funtions.
-*/
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Local Functions
-// *****************************************************************************
-// *****************************************************************************
-
-/* TODO:  Add any necessary local functions.
-*/
-
-/*******************************************************************************
-  Function:
-     int app1SendTimerValToMsgQ(unsigned int millisecondsElapsed)
-
-  Remarks:
-    millisecondsElapsed is sent to the back of the xTimerIntQ. 
- */
-void app1SendTimerValToMsgQ(unsigned int millisecondsElapsed){    
-        
-    if( xQueueSendToBack( xTimerIntQ,
-                             ( void * ) &millisecondsElapsed,
-                             ( TickType_t ) 0 ) != pdPASS ) //change to portMAX_DELAY
-        {
-            // Failed to post the message.
-            //stopAll();            
-        }  
-    
-}
 
 char msg_type = 'q';
 char msg_data1 = 0x30;
@@ -153,157 +70,91 @@ void app1WriteMessage() {
 }
 
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Initialization and State Machine Functions
-// *****************************************************************************
-// *****************************************************************************
-
-/*******************************************************************************
-  Function:
-    void APP_Initialize ( void )
-
-  Remarks:
-    See prototype in app.h.
- */
-
-
 void APP_Initialize ( void )
 {
-    /* Place the App state machine in its initial state. */
     appData.state = APP_STATE_INIT;
-    
-    
     appData.letterPosition = 0;
     
-    //Initialize FreeRTOS task Queue (& and later, timer)
-       
     //Create a queue capable of holding 25 unsigned long numbers
-    xTimerIntQ = xQueueCreate( 5, sizeof( unsigned int ) ); 
-    if( xTimerIntQ == 0 )
-    {
-        // TODO: Queue was not created and must not be used. Call debug stop function
-    }
+    appData.xTimerIntQ = xQueueCreate( 250, sizeof( unsigned int ) ); 
+    if( appData.xTimerIntQ == 0 ) stopAll();
     
     //Create a timer
-    
-    xTimer100ms = xTimerCreate(  
-                     // Just a text name, not used by the RTOS kernel. 
-                     "Timer100ms",
-                     // The timer period in ms (100), must be greater than 0. 
-                     ( 100 / portTICK_PERIOD_MS ),
-                     // The timers will auto-reload themselves when they
-                     //expire. 
-                     pdTRUE,
-                     // Assign a unique id  
-                     (void *) 23,
-                     // TimerCallback function 
-                     vTimerCallback );
+    appData.xTimer100ms = xTimerCreate(  
+                     "Timer100ms", //Just a text name
+                     ( 100 / portTICK_PERIOD_MS ), //period is 100ms
+                     pdTRUE, //auto-reload when expires
+                     (void *) 23, //a unique id
+                     vTimerCallback ); //pointer to callback function
     
     //Start the timer
-    if( xTimer100ms == NULL )
-         {
-             /* The timer was not created. Stop and throw error */
-            stopAll();
-         }
-         else
-         {
-             /* Start the timer.  No block time is specified, and even if one
-             was it would be ignored because the RTOS scheduler has not yet
-             been started. */
-             if( xTimerStart( xTimer100ms, 0 ) != pdPASS )
-             {
-                 /* The timer could not be set into the Active state. */
-             }
-         }
-
-    
-   
-    
+    if( appData.xTimer100ms == NULL ) stopAll();
+    else
+    {
+         if( xTimerStart( appData.xTimer100ms, 0 ) != pdPASS ) stopAll();
+    }
    
 }
 
-
-/******************************************************************************
-  Function:
-    void APP_Tasks ( void )
-
-  Remarks:
-    See prototype in app.h.
- */
 
 void APP_Tasks ( void )
 {
-    //You can put code here, it should get executed like forever.
-    //stopAll(); //Uncomment to demo the HALT method thats in debug. This will flash your LED 
-    
-    unsigned int *qData;
-
-	/*
-    //DRV_USART0_WriteByte('.');
-    if( xTimerIntQ != 0 )
+    while (1)
     {
-        // Receive a message on the created queue.  Block for ever if a
-        // message is not immediately available.
-        if( xQueueReceive( xTimerIntQ, &( qData ), portMAX_DELAY ) )
-        {               
-            
-            if(appData.letterPosition == 0){
-                dbgOutputVal('T');
+        unsigned int *qData;
+
+        switch ( appData.state )
+        {
+            case APP_STATE_INIT:
+            {
+                writeString("START");
+                appData.state = APP_STATE_TX;
+                break;
             }
-            else if(appData.letterPosition == 1){
-                dbgOutputVal('E');
+
+            case APP_STATE_TX:
+            {
+                msg_data1++;
+                msg_data2 += 2;
+                if (msg_data1 > 57) msg_data1 = 48;
+                if (msg_data2 > 57) msg_data2 = 48;
+                
+                msg_datashort += 3;
+               
+               break;
             }
-            else if(appData.letterPosition == 2){
-                dbgOutputVal('A');
+
+            default: /* The default state should never be executed. */
+            {
+                writeString("DEFAULT_ERROR");
+                appData.state = APP_STATE_TX;
+                break;
             }
-            else if(appData.letterPosition == 3){
-                dbgOutputVal('M');
-            }
-            else if(appData.letterPosition == 4){
-                dbgOutputVal('4');
-            }
-            
-            appData.letterPosition += 1;
-            if(appData.letterPosition == 5){
-                appData.letterPosition = 0;
-            }
-        }
-    }
-	*/
-    
-    /* Check the application's current state. */
-    switch ( appData.state )
+
+        }//end switch
+    }//end while
+}//end APP_Tasks
+
+void app1SendTimerValToMsgQ(unsigned int* millisecondsElapsed)
+{    
+    if( xQueueSend( appData.xTimerIntQ,
+                             (void*) millisecondsElapsed,
+                             portMAX_DELAY) != pdPASS )
     {
-        /* Application's initial state. */
-        case APP_STATE_INIT:                        // application state after system and application are initialized
-        {
-            writeString("START");
-            appData.state = APP_STATE_TX;           // change state to receive after initializing application
-            break;
-        }
-
-        case APP_STATE_TX:                              // USART transmit state
-        {
-            msg_data1++;
-            msg_data2 += 2;
-            if (msg_data1 > 57) msg_data1 = 48;
-            if (msg_data2 > 57) msg_data2 = 48;
-            
-            msg_datashort += 3;
-           
-           break;
-        }
-
-        default:    /* The default state should never be executed. */
-        {
-            writeString("DEFAULT_ERROR");
-			appData.state = APP_STATE_TX;
-            break;  /* TODO: Handle error in application's state machine. */
-        }
+        stopAll(); //failed to send to queue
     }
 }
 
+void app1SendValFromISR(unsigned int* message)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    if (xQueueSendFromISR( appData.xTimerIntQ,
+                            (void*) message,
+                            &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
+    {
+        stopAll(); //failed to send to queue
+    }
+}
 
 /*******************************************************************************
  End of File

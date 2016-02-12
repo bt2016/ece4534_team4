@@ -46,107 +46,26 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 // DOM-IGNORE-END
 
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Included Files 
-// *****************************************************************************
-// *****************************************************************************
-
 #include "sensor.h"
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Global Data Definitions
-// *****************************************************************************
-// *****************************************************************************
-
-// *****************************************************************************
-/* Application Data
-
-  Summary:
-    Holds application data
-
-  Description:
-    This structure holds the application's data.
-
-  Remarks:
-    This structure should be initialized by the APP_Initialize function.
-    
-    Application strings and buffers are be defined outside this structure.
-*/
 
 SENSOR_DATA sensorData;
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Callback Functions
-// *****************************************************************************
-// *****************************************************************************
-
-/* TODO:  Add any necessary callback funtions.
-*/
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Local Functions
-// *****************************************************************************
-// *****************************************************************************
-
-/* TODO:  Add any necessary local functions.
-*/
-
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Initialization and State Machine Functions
-// *****************************************************************************
-// *****************************************************************************
-
-/*******************************************************************************
-  Function:
-    void SENSOR_Initialize ( void )
-
-  Remarks:
-    See prototype in sensor.h.
- */
-
 void SENSOR_Initialize ( void )
 {
-    /* Place the App state machine in its initial state. */
     sensorData.state = SENSOR_STATE_INIT;
-    
-    /* TODO: Initialize your application's state machine and other
-     * parameters.
-     */
 }
-
-
-/******************************************************************************
-  Function:
-    void SENSOR_Tasks ( void )
-
-  Remarks:
-    See prototype in sensor.h.
- */
 
 void SENSOR_Tasks ( void )
 {
-    /* Check the application's current state. */
     switch ( sensorData.state )
     {
-        /* Application's initial state. */
         case SENSOR_STATE_INIT:
         {
             break;
         }
-
-        /* TODO: implement your application state machine.*/
-
         /* The default state should never be executed. */
         default:
         {
-            /* TODO: Handle error in application's state machine. */
             break;
         }
     }
