@@ -71,7 +71,8 @@ typedef enum
 {
 	SEND_STATE_INIT=0,
     SEND_STATE_RECEIVE,
-    SEND_STATE_TRANSMIT       // USART transmit state
+    SEND_STATE_TRANSMIT,       // USART transmit state
+    SEND_STATE_LOOP 
 } SEND_STATES;
 
 typedef struct
