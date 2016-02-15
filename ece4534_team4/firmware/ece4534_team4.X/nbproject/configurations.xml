@@ -37,7 +37,7 @@
         <itemPath>../src/app1_public.h</itemPath>
         <itemPath>../src/sensor_public.h</itemPath>
         <itemPath>../../../../../framework/send_public.h</itemPath>
-        <itemPath>../../../../../framework/proj_definitions.h</itemPath>
+        <itemPath>../src/proj_definitions.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f1" displayName="system" projectFiles="true">
