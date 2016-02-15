@@ -1,11 +1,15 @@
 /* ************************************************************************** */
 /** Descriptive File Name
+
   @Company
     Company Name
+
   @File Name
     filename.h
+
   @Summary
     Brief description of the file.
+
   @Description
     Describe the purpose of this file.
  */
@@ -46,6 +50,7 @@ extern "C" {
 
     /* ************************************************************************** */
     /** Descriptive Constant Name
+
       @Summary
         Brief one-line summary of the constant.
     
@@ -62,6 +67,7 @@ extern "C" {
      */
 #define MSG_START '~'
 #define MSG_STOP '.'
+#define MSG_LENGTH 10
 
 
     // *****************************************************************************
@@ -78,6 +84,7 @@ extern "C" {
     // *****************************************************************************
 
     /** Descriptive Data Type Name
+
       @Summary
         Brief one-line summary of the data type.
     
@@ -88,21 +95,13 @@ extern "C" {
         paragraph breaks, as necessary.
         <p>
         Type "JavaDoc" in the "How Do I?" IDE toolbar for more information on tags.
+
       @Remarks
         Any additional remarks
         <p>
         Describe enumeration elements and structure and union members above each 
         element or member.
      */
-    typedef struct _example_struct_t {
-        /* Describe structure member. */
-        int some_number;
-
-        /* Describe structure member. */
-        //bool some_flag;
-
-    } example_struct_t;
-
 
     // *****************************************************************************
     // *****************************************************************************
@@ -118,8 +117,10 @@ extern "C" {
     /**
       @Function
         int ExampleFunctionName ( int param1, int param2 ) 
+
       @Summary
         Brief one-line description of the function.
+
       @Description
         Full description, explaining the purpose and usage of the function.
         <p>
@@ -127,23 +128,28 @@ extern "C" {
         paragraph breaks, as necessary.
         <p>
         Type "JavaDoc" in the "How Do I?" IDE toolbar for more information on tags.
+
       @Precondition
         List and describe any required preconditions. If there are no preconditions,
         enter "None."
+
       @Parameters
         @param param1 Describe the first parameter to the function.
     
         @param param2 Describe the second parameter to the function.
+
       @Returns
         List (if feasible) and describe the return values of the function.
         <ul>
           <li>1   Indicates an error occurred
           <li>0   Indicates an error did not occur
         </ul>
+
       @Remarks
         Describe any special behavior not described above.
         <p>
         Any additional remarks.
+
       @Example
         @code
         if(ExampleFunctionName(1, 2) == 0)
@@ -151,11 +157,13 @@ extern "C" {
             return 3;
         }
      */
+    
+    #include "send.h"
     void writeString(char* sendval);
     void writeMsgStr(char count, char* sendval);
     void writeMsgChar(char type, char count, char dataa, char datab);
     void writeMsgShortInt(char type, char count, unsigned short int data);
-
+    void writeMESSAGE(MESSAGE message);
 
     /* Provide C++ Compatibility */
 #ifdef __cplusplus
