@@ -52,6 +52,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <stdlib.h>
 #include "system_config.h"
 #include "system_definitions.h"
+#include <queue.h>
+
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -68,12 +70,36 @@ typedef enum
 
 typedef struct
 {
+    
     RECEIVE_STATES state;
-
+    QueueHandle_t xReceiveIntQ;
+    
 } RECEIVE_DATA;
+
+
+typedef struct
+{
+    /* TODO: Define any additional data used by the application. */
+   
+    int nextByteAt; 
+    
+    char start; // "~"
+    char sendCount; //number of messages the sender has sent
+    char types[10]; //you can add more types in if you'd like
+    
+    char stop; //this is our stop value "."
+    
+    char buffer[11]; // the actual buffer that holds what we've got
+    
+    
+    
+    
+} M_BUFFER;
+
 
 void RECEIVE_Initialize ( void );
 void RECEIVE_Tasks( void );
+void clearBuffer();
 
 
 #endif /* _RECEIVE_H */

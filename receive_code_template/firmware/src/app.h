@@ -140,18 +140,19 @@ typedef struct
     
 } APP_DATA;
 
-typedef struct
+typedef struct messageBuffer
 {
     RX_STATES state; //The application's current state
 
     /* TODO: Define any additional data used by the application. */
-    char last_rx_byte; // byte received last
+   
 
     char start;
-    char types[4]; //you can add more types in if you'd like
+    char types[10]; //you can add more types in if you'd like
+    
     char stop; //this is our stop value
     
-    char buffer[5]; // the actual buffer that holds what we've got
+    char buffer[11]; // the actual buffer that holds what we've got
     
     
     

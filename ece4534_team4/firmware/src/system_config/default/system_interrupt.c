@@ -63,6 +63,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <xc.h>
 #include <sys/attribs.h>
 #include "receive.h"
+#include "receivePublic.h"
 #include "send.h"
 #include "motor.h"
 #include "sensor.h"
@@ -78,10 +79,20 @@ void IntHandlerDrvUsartInstance0(void)
 {
 
     /* TODO: Add code to process interrupt here */
+    
+    
+    if (!DRV_USART0_ReceiverBufferIsEmpty()){
+        char incomingByte = DRV_USART0_ReadByte();
+        
+        receiveSendValFromISR(&incomingByte);
+        
+        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);        
+    }
+    
+    
 
     /* Clear pending interrupt */
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
-    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
 
 }

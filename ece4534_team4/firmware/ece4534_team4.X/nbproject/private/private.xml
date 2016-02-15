@@ -3,15 +3,10 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/receive.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/app1_public.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/app.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/timerCallback.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/app.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/third_party/rtos/FreeRTOS/Source/include/timers.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/debug.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/debug.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/system_config/default/system_interrupt.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/receive_code_template/firmware/src/system_config/default/system_interrupt.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/receive_code_template/firmware/src/app.h</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/receive_code_template/firmware/src/app.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/receive_code_template/firmware/src/app1_public.h</file>
         </group>
     </open-files>
 </project-private>
