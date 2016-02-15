@@ -16,17 +16,18 @@
  */
 
 #include "timerCallback.h"
-#include "sender.h"
 
-unsigned int millisecondsElapsed = 0;
+unsigned int sendms = 0;
 
-void vTimerCallback(TimerHandle_t pxTimer){
-    millisecondsElapsed += 1; //Timer is called every 100ms
-    app1SendTimerValToMsgQ(millisecondsElapsed);
-	app1WriteMessage();
+void vTimerCallback(TimerHandle_t pxTimer) {
+    sendms += 1; //Timer is called every 100ms
+    sendTimerValToMsgQ(sendms);
+    sendWriteMessage();
+}
 
- }
-
+void motorTimerCallback(TimerHandle_t mTimer) {
+    motorSendTimerValToMsgQ(sendms);
+}
 
 
 /* *****************************************************************************

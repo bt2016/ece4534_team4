@@ -26,9 +26,8 @@
 extern "C" {
 #endif
 
-    
 void vTimerCallback(TimerHandle_t pxTimer);
-    
+void motorTimerCallback(TimerHandle_t mTimer);
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus

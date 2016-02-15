@@ -53,26 +53,35 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 
+#include "queue.h"        //FreeRTOS file
+#include "timers.h"       //FreeRTOS file
+#include "app1_public.h"  //Created by me
+#include "debug.h"        //Created by me
+#include "timerCallback.h"//Created by me
+
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
 extern "C" {
 #endif
 // DOM-IGNORE-END 
 
+    #define MSG_LENGTH 10
 
 typedef enum
 {
 	MOTOR_STATE_INIT=0,
-            
 } MOTOR_STATES;
-
 
 typedef struct
 {
+    /* The application's current state */
     MOTOR_STATES state;
 
+    /* TODO: Define any additional data used by the application. */
+    QueueHandle_t xTimerIntQ;
+    TimerHandle_t xTimer200ms;
+   
 } MOTOR_DATA;
-
 
 void MOTOR_Initialize ( void );
 void MOTOR_Tasks( void );

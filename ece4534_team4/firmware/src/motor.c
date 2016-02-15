@@ -5,7 +5,7 @@
     Microchip Technology Inc.
   
   File Name:
-    motor.c
+    send.c
 
   Summary:
     This file contains the source code for the MPLAB Harmony application.
@@ -48,30 +48,97 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 
 #include "motor.h"
+#include "sender.h"
+
 
 MOTOR_DATA motorData;
+char motorCount = 0x0;
+
 
 void MOTOR_Initialize ( void )
 {
     motorData.state = MOTOR_STATE_INIT;
+    
+    //Create a queue capable of holding 25 unsigned long numbers
+    motorData.xTimerIntQ = xQueueCreate( 25, sizeof( unsigned int ) ); 
+    if( motorData.xTimerIntQ == 0 ) stopAll();
+    
+    //Create a timer
+    motorData.xTimer200ms = xTimerCreate(  
+                     "MotorTimer200ms", //Just a text name
+                     ( 100 / portTICK_PERIOD_MS ), //period is 100ms
+                     pdTRUE, //auto-reload when expires
+                     (void *) 23, //a unique id
+                     motorTimerCallback ); //pointer to callback function
+    
+    //Start the timer
+    if( motorData.xTimer200ms == NULL ) stopAll();
+    else
+    {
+         if( xTimerStart( motorData.xTimer200ms, 0 ) != pdPASS ) stopAll();
+    }
+   
 }
 
 void MOTOR_Tasks ( void )
 {
-    switch ( motorData.state )
+   while (1)
     {
-        case MOTOR_STATE_INIT:
+        //unsigned int qData;
+       char qData[MSG_LENGTH];
+
+        switch ( motorData.state )
         {
-            break;
-        }
-        /* The default state should never be executed. */
-        default:
-        {
-            break;
+            case MOTOR_STATE_INIT:
+            {
+                //writeString("START");
+                motorData.state = MOTOR_STATE_INIT;
+                break;
+            }
+
+            default: /* The default state should never be executed. */
+            {
+                writeString("DEFAULT_ERROR");
+                motorData.state = MOTOR_STATE_INIT;
+                break;
+            }
+
+        }//end switch
+    }//end while
+}
+
+MESSAGE motorRelay = {'~', 'm', 0x0, "123456", '.'};
+
+char* motorTest = "ZZDHJGKFpo";
+
+void motorSendTimerValToMsgQ(unsigned int* sendms)
+{    
+    //stopAll();
+    //writeMESSAGE(motorRelay);
+
+    if (motorData.xTimerIntQ != 0) {
+        if (uxQueueSpacesAvailable(motorData.xTimerIntQ) != 0) {
+            if( xQueueSend( motorData.xTimerIntQ, (void*) motorTest, portMAX_DELAY) != pdPASS )
+            {
+                stopAll(); //failed to send to queue
+            }
         }
     }
+
 }
- 
+
+/*
+void motorSendValFromISR(unsigned int* message)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    if (xQueueSendFromISR( motorData.xTimerIntQ,
+                            (void*) message,
+                            &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
+    {
+        stopAll(); //failed to send to queue
+    }
+}
+ * */
 
 /*******************************************************************************
  End of File

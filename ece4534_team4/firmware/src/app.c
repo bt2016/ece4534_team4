@@ -52,24 +52,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 APP_DATA appData;
 
-char msg_type = 'q';
-char msg_data1 = 0x30;
-char msg_data2 = 0x39;
-unsigned short int msg_datashort = 0x3639;
-unsigned short int count = 0;
-
-void app1WriteMessage() {
-    // Use transmit interrupt for UART 
-    // Same interrupt as receiver - account for both (clear both), handle the one that was raised
-    
-    //writeMsgChar(msg_type, msg_data1, msg_data2);
-    writeMsgStr("roo");
-    count++;
-    dbgOutputVal(count >> 8);
-    //writeMsgShortInt(msg_type, msg_datashort);
-}
-
-
 void APP_Initialize ( void )
 {
     appData.state = APP_STATE_INIT;
@@ -107,20 +89,14 @@ void APP_Tasks ( void )
         {
             case APP_STATE_INIT:
             {
-                writeString("START");
+                //writeString("START");
                 appData.state = APP_STATE_TX;
                 break;
             }
 
             case APP_STATE_TX:
             {
-                msg_data1++;
-                msg_data2 += 2;
-                if (msg_data1 > 57) msg_data1 = 48;
-                if (msg_data2 > 57) msg_data2 = 48;
-                
-                msg_datashort += 3;
-               
+
                break;
             }
 

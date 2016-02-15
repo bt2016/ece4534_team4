@@ -53,17 +53,25 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 
+#include "queue.h"        //FreeRTOS file
+#include "timers.h"       //FreeRTOS file
+#include "app1_public.h"  //Created by me
+#include "debug.h"        //Created by me
+#include "timerCallback.h"//Created by me
+
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
 extern "C" {
 #endif
 // DOM-IGNORE-END 
 
+    #define MSG_LENGTH 10
 
 typedef enum
 {
 	SEND_STATE_INIT=0,
-
+    SEND_STATE_RECEIVE,
+    SEND_STATE_TRANSMIT       // USART transmit state
 } SEND_STATES;
 
 typedef struct
@@ -72,9 +80,22 @@ typedef struct
     SEND_STATES state;
 
     /* TODO: Define any additional data used by the application. */
-
-
+    QueueHandle_t xTimerIntQ;
+    TimerHandle_t xTimer100ms;
+    
+    int letterPosition;
+    char rx_byte;       // byte received
+    char tx_byte;       // byte to send
 } SEND_DATA;
+
+typedef struct
+{
+    char start;
+    char type;
+    char count;
+    char data[6];
+    char stop;
+} MESSAGE;
 
 void SEND_Initialize ( void );
 void SEND_Tasks( void );

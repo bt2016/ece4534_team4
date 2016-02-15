@@ -15,9 +15,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-   
-void app1SendTimerValToMsgQ(unsigned int* millisecondsElapsed);
-void app1SendValFromISR(unsigned int* message);
+    
+//void app1SendTimerValToMsgQ(unsigned int* sendms);
+//void app1SendValFromISR(unsigned int* message);
+void sendTimerValToMsgQ(unsigned int* sendms);
+void sendValFromISR(unsigned int* message);
+void motorSendTimerValToMsgQ(unsigned int* sendms);
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus

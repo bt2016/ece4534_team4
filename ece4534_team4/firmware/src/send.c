@@ -48,30 +48,153 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 
 #include "send.h"
+#include "sender.h"
+
 
 SEND_DATA sendData;
+char cnt = 0x0;
+
+void sendWriteMessage() {
+    // Use transmit interrupt for UART 
+    // Same interrupt as receiver - account for both (clear both), handle the one that was raised
+    
+    //writeMsgChar(msg_type, msg_data1, msg_data2);
+    //writeString("roo");
+    //writeMsgShortInt(msg_type, msg_datashort);
+}
 
 void SEND_Initialize ( void )
 {
     sendData.state = SEND_STATE_INIT;
+
+    sendData.letterPosition = 0;
+    
+    //Create a queue capable of holding 25 unsigned long numbers
+    sendData.xTimerIntQ = xQueueCreate( 25, sizeof( unsigned int ) ); 
+    if( sendData.xTimerIntQ == 0 ) stopAll();
+    
+    //Create a timer
+    sendData.xTimer100ms = xTimerCreate(  
+                     "SendTimer100ms", //Just a text name
+                     ( 100 / portTICK_PERIOD_MS ), //period is 100ms
+                     pdTRUE, //auto-reload when expires
+                     (void *) 23, //a unique id
+                     vTimerCallback ); //pointer to callback function
+    
+    //Start the timer
+    if( sendData.xTimer100ms == NULL ) stopAll();
+    else
+    {
+         if( xTimerStart( sendData.xTimer100ms, 0 ) != pdPASS ) stopAll();
+    }
+   
 }
 
 void SEND_Tasks ( void )
 {
-    switch ( sendData.state )
+   while (1)
     {
-        case SEND_STATE_INIT:
+        //unsigned int qData;
+       char qData[MSG_LENGTH];
+
+        switch ( sendData.state )
         {
-            break;
-        }
-        /* The default state should never be executed. */
-        default:
+            case SEND_STATE_INIT:
+            {
+                writeString("START");
+                sendData.state = SEND_STATE_RECEIVE;
+                break;
+            }
+            
+            case SEND_STATE_RECEIVE:
+            {
+                //checkSourceQ();
+                
+                //writeString("Asking Queue...");
+                if (xQueueReceive(sendData.xTimerIntQ, &qData, portMAX_DELAY))
+                {
+                    //writeString("Received\n");
+                    dbgOutputVal(cnt);
+                } 
+                
+                sendData.state = SEND_STATE_TRANSMIT;
+                break;
+            }
+
+            case SEND_STATE_TRANSMIT:
+            {
+                //writeString("Received: ");
+               writeMsgStr(cnt, qData);
+               sendData.state = SEND_STATE_RECEIVE;
+               break;
+            }
+
+            default: /* The default state should never be executed. */
+            {
+                writeString("DEFAULT_ERROR");
+                sendData.state = SEND_STATE_TRANSMIT;
+                break;
+            }
+
+        }//end switch
+    }//end while
+}
+
+MESSAGE relay = {'~', 'm', 0x0, "123456", '.'};
+
+void sendDataToMsgQ(char* message) {
+    
+    cnt++;
+    unsigned int test = 20;
+    
+    if (sendData.xTimerIntQ != 0) {
+        //writeString("Requesting send...");
+        if( xQueueSend( sendData.xTimerIntQ, (void*) message, portMAX_DELAY) != pdPASS )
         {
-            break;
+            stopAll(); //failed to send to queue
         }
+        //writeString("Posted\n");
     }
 }
  
+void checkSourceQ()
+{    
+    char readdata[MSG_LENGTH];
+    //writeString("Asking Queue...");
+    if (xQueueReceive(sendData.xTimerIntQ, &readdata, portMAX_DELAY))
+    {
+        //writeString("Received\n");
+    } 
+    
+    sendDataToMsgQ(readdata);
+}
+
+char* test = "HEYYOUZZAA";
+
+void sendTimerValToMsgQ(unsigned int* sendms)
+{    
+    cnt++;
+    
+    if (sendData.xTimerIntQ != 0) {
+        //writeString("SENT:");
+        if( xQueueSend( sendData.xTimerIntQ, (void*) test, portMAX_DELAY) != pdPASS )
+        {
+            stopAll(); //failed to send to queue
+        }
+    }
+
+}
+
+void sendValFromISR(unsigned int* message)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    if (xQueueSendFromISR( sendData.xTimerIntQ,
+                            (void*) message,
+                            &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
+    {
+        stopAll(); //failed to send to queue
+    }
+}
 
 /*******************************************************************************
  End of File

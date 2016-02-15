@@ -152,9 +152,9 @@ extern "C" {
         }
      */
     void writeString(char* sendval);
-    void writeMsgStr(char* sendval);
-    void writeMsgChar(char type, char dataa, char datab);
-    void writeMsgShortInt(char type, unsigned short int data);
+    void writeMsgStr(char count, char* sendval);
+    void writeMsgChar(char type, char count, char dataa, char datab);
+    void writeMsgShortInt(char type, char count, unsigned short int data);
 
 
     /* Provide C++ Compatibility */
