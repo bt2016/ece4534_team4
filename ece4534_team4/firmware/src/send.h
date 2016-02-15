@@ -65,8 +65,6 @@ extern "C" {
 #endif
 // DOM-IGNORE-END 
 
-    #define MSG_LENGTH 10
-
 typedef enum
 {
 	SEND_STATE_INIT=0,
@@ -84,19 +82,13 @@ typedef struct
     QueueHandle_t xTimerIntQ;
     TimerHandle_t xTimer100ms;
     
+    QueueHandle_t xSensorToSend;
+    
     int letterPosition;
     char rx_byte;       // byte received
     char tx_byte;       // byte to send
 } SEND_DATA;
 
-typedef struct
-{
-    char start;
-    char type;
-    char count;
-    char data[6];
-    char stop;
-} MESSAGE;
 
 void SEND_Initialize ( void );
 void SEND_Tasks( void );

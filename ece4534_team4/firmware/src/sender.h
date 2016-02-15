@@ -65,9 +65,6 @@ extern "C" {
       @Remarks
         Any additional remarks
      */
-#define MSG_START '~'
-#define MSG_STOP '.'
-#define MSG_LENGTH 10
 
 
     // *****************************************************************************
@@ -159,6 +156,8 @@ extern "C" {
      */
     
     #include "send.h"
+    #include "proj_definitions.h"
+
     void writeString(char* sendval);
     void writeMsgStr(char count, char* sendval);
     void writeMsgChar(char type, char count, char dataa, char datab);

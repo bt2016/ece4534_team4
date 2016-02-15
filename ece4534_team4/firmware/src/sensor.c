@@ -47,6 +47,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // DOM-IGNORE-END
 
 #include "sensor.h"
+#include "sender.h"
 
 SENSOR_DATA sensorData;
 
@@ -86,6 +87,7 @@ void SENSOR_Initialize ( void )
 void SENSOR_Tasks ( void )
 {
     unsigned int qData;
+    char data[MSG_LENGTH];
     
 	switch ( sensorData.state )
     {
@@ -100,8 +102,21 @@ void SENSOR_Tasks ( void )
             //dbgOutputVal(59);
 		    if (xQueueReceive(sensorData.q_adc_interrupt, &qData, portMAX_DELAY))
 			{
-				//TODO: process the value in qData
-                dbgOutputVal(qData);				
+                // Convert sensor data to message format character array
+                //qData = 0x55565758;
+                char data[10];
+                data[0] = MSG_START;
+                data[1] = 's';
+                data[2] = 0x20;
+                data[3] = 0x20;
+                data[4] = 0x20;
+                data[5] = 0x20;
+                data[6] = 0x20;
+                data[7] = 0x20;
+                data[8] = (qData & 0xFF);
+                data[9] = MSG_STOP;
+                
+                putSensorStrOnQueue(data);
 			}
 			break;
 		}
