@@ -77,15 +77,37 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 void IntHandlerDrvUsartInstance0(void)
 {
 
-    /* TODO: Add code to process interrupt here */
+    //TODO: Add code to process interrupt here
 
-    /* Clear pending interrupt */
+    //Clear pending interrupt
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
 
 }
  
+void IntHandlerDrvAdc(void)
+{
+    //TODO: make sure this corresponds to the Harmony config!!!
+    int numberSamplesPerInterrupt = 1;
+        
+    //clear the interrupt flag
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
+    
+    //get the ADC value
+    unsigned int potValue = 0;
+    int i = 0;
+    for(i=0; i<numberSamplesPerInterrupt; i++)
+        potValue += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
+    potValue = potValue/numberSamplesPerInterrupt; //the output is a 16-bit int
+    
+    //convert ADC steps to distance in cm
+    //unsigned int distance = (unsigned int) (63.404-((double)potValue*0.058)); //cm
+    unsigned int distance = (unsigned int) (24.952-((double)potValue*0.0227)); //in
+    
+    //send the value to the queue
+    sendValToSensorTaskFromISR(&distance);
+}
  
  
 

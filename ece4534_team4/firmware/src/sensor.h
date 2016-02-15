@@ -53,6 +53,13 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 
+#include "queue.h"        //FreeRTOS file
+#include "timers.h"       //FreeRTOS file
+#include "app1_public.h"  //Created by me
+#include "sensor_public.h"//Created by me
+#include "debug.h"        //Created by me
+#include "timerCallback.h"//Created by me
+
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
 extern "C" {
@@ -63,13 +70,15 @@ extern "C" {
 typedef enum
 {
 	SENSOR_STATE_INIT=0,
+	SENSOR_STATE_READ=1
 
 } SENSOR_STATES;
 
 typedef struct
 {
     SENSOR_STATES state;
-
+	QueueHandle_t q_adc_interrupt;
+	TimerHandle_t t_adc_interrupt;
 
 } SENSOR_DATA;
 

@@ -33,7 +33,7 @@ int global_data;
      * Pin 36 -> Bit position 1. Pic32 pin 94. Signal E1
      * Pin 37 -> Bit position 0. Pic32 pin 93. Signal E0     
 */
-int dbgOutputVal(unsigned char outVal){
+int dbgOutputVal(unsigned int outVal){
     LATECLR = 0xff;
     LATGCLR = 0xff;
     LATGCLR = (1<<15);

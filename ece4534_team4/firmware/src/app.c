@@ -54,8 +54,8 @@ APP_DATA appData;
 
 void APP_Initialize ( void )
 {
+    //Initialize task variables
     appData.state = APP_STATE_INIT;
-    appData.letterPosition = 0;
     
     //Create a queue capable of holding 25 unsigned long numbers
     appData.xTimerIntQ = xQueueCreate( 250, sizeof( unsigned int ) ); 
@@ -75,6 +75,11 @@ void APP_Initialize ( void )
     {
          if( xTimerStart( appData.xTimer100ms, 0 ) != pdPASS ) stopAll();
     }
+
+    //Initialize ADC A0 = Pic32 pin 25, RB0. Manual Sample Start and TAD based Conversion Start
+    PLIB_PORTS_PinDirectionInputSet(PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_0);
+    PLIB_ADC_SampleAutoStartDisable(ADC_ID_1);
+    PLIB_ADC_Enable(ADC_ID_1);
    
 }
 
@@ -96,7 +101,6 @@ void APP_Tasks ( void )
 
             case APP_STATE_TX:
             {
-
                break;
             }
 

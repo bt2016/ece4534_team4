@@ -181,6 +181,8 @@ void SYS_Initialize ( void* data )
     SYS_PORTS_Initialize();
 
     /* Initialize Drivers */
+    /* Initialize ADC */
+    DRV_ADC_Initialize();
     DRV_USART0_Initialize();
 
     /* Initialize System Services */

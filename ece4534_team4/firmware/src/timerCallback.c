@@ -26,6 +26,10 @@ void vTimerCallback(TimerHandle_t pxTimer) {
     //sendWriteMessage();
 }
 
+void sensorTimerCallback(TimerHandle_t sTimer){
+    PLIB_ADC_SamplingStart(0);
+}
+
 void motorTimerCallback(TimerHandle_t mTimer) {
     motorSendTimerValToMsgQ(sendms);
 }

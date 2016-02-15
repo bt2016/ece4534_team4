@@ -151,39 +151,22 @@
       <Template>
         <Name>sys_ports_static.c</Name>
         <Path>Source Files/app/system_config/default/framework/system/ports/src</Path>
-        <Checksum>2B6399DB4957CE69F8E74BE1AB99372C</Checksum>
-      </Template>
-      <Template>
-        <Name>system_init.c</Name>
-        <Path>Source Files/app/system_config/default</Path>
-        <Checksum>C2BB6AD5A2A881171AC0543131323B12</Checksum>
-      </Template>
-      <Template>
-        <Name>main.c</Name>
-        <Path>Source Files/app</Path>
+        <Checksum>EA425DBB02818CEF28D6D454B7F2C73B</Checksum>
       </Template>
       <Template>
         <Name>system_interrupt_a.S</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>5C0D911C19B5E425D7F0FB89E579F457</Checksum>
+        <Checksum>2AADE7885E66E00DBB7FE911439FFA49</Checksum>
       </Template>
       <Template>
-        <Name>sensor.c</Name>
-        <Path>Source Files/app</Path>
+        <Name>drv_adc_static.h</Name>
+        <Path>Header Files/app/system_config/default/framework/driver/adc</Path>
+        <Checksum>DA228C4429B405DC81984D73AB97988D</Checksum>
       </Template>
       <Template>
-        <Name>system_definitions.h</Name>
-        <Path>Header Files/app/system_config/default</Path>
-        <Checksum>F1D8F1DB25324F822C9049A42FA4D2BE</Checksum>
-      </Template>
-      <Template>
-        <Name>system_exceptions.c</Name>
-        <Path>Source Files/app/system_config/default</Path>
-        <Checksum>C111969CA43D6CEA1E9E33A6164E7AE0</Checksum>
-      </Template>
-      <Template>
-        <Name>motor.c</Name>
-        <Path>Source Files/app</Path>
+        <Name>drv_adc_static.c</Name>
+        <Path>Source Files/app/system_config/default/framework/driver/adc/src</Path>
+        <Checksum>809FE72B6243BE8368D33AC8EC51AF03</Checksum>
       </Template>
       <Template>
         <Name>receive.c</Name>
@@ -195,32 +178,9 @@
         <Checksum>E99F83B1AF2B9157413E2D6BC8969741</Checksum>
       </Template>
       <Template>
-        <Name>send.h</Name>
-        <Path>Header Files/app</Path>
-      </Template>
-      <Template>
-        <Name>drv_usart_static.h</Name>
-        <Path>Header Files/app/system_config/default/framework/driver/usart</Path>
-        <Checksum>66C127084540B78CD4F78E2FBCC6D29F</Checksum>
-      </Template>
-      <Template>
         <Name>FreeRTOSConfig.h</Name>
         <Path>Header Files/app/system_config/default</Path>
         <Checksum>30EEE56F57A63549F1E0305B6D0A3E0E</Checksum>
-      </Template>
-      <Template>
-        <Name>system_tasks.c</Name>
-        <Path>Source Files/app/system_config/default</Path>
-        <Checksum>3C88FE263B40734696688505391C54D4</Checksum>
-      </Template>
-      <Template>
-        <Name>sensor.h</Name>
-        <Path>Header Files/app</Path>
-      </Template>
-      <Template>
-        <Name>system_config.h</Name>
-        <Path>Header Files/app/system_config/default</Path>
-        <Checksum>C233625A150A9A9D22D82654DC3FA746</Checksum>
       </Template>
       <Template>
         <Name>motor.h</Name>
@@ -234,12 +194,7 @@
       <Template>
         <Name>system_interrupt.c</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>0ABD3645E3AEF13152E69A7507BB1387</Checksum>
-      </Template>
-      <Template>
-        <Name>rtos_hooks.c</Name>
-        <Path>Source Files/app/system_config/default</Path>
-        <Checksum>FA52743264536E5207D2ADBE57B48D05</Checksum>
+        <Checksum>FC4B1B16DE62444A8A6C705528B25517</Checksum>
       </Template>
       <Template>
         <Name>send.c</Name>
@@ -249,6 +204,61 @@
         <Name>sys_clk_static.c</Name>
         <Path>Source Files/app/system_config/default/framework/system/clk/src</Path>
         <Checksum>1B968DA82B5DD869A6119C3B7628D753</Checksum>
+      </Template>
+      <Template>
+        <Name>system_init.c</Name>
+        <Path>Source Files/app/system_config/default</Path>
+        <Checksum>B26039FBA45B5AA3501D2CA744CF2997</Checksum>
+      </Template>
+      <Template>
+        <Name>main.c</Name>
+        <Path>Source Files/app</Path>
+      </Template>
+      <Template>
+        <Name>sensor.c</Name>
+        <Path>Source Files/app</Path>
+      </Template>
+      <Template>
+        <Name>system_definitions.h</Name>
+        <Path>Header Files/app/system_config/default</Path>
+        <Checksum>19E109C842EFF3E16D59435C062D20AE</Checksum>
+      </Template>
+      <Template>
+        <Name>system_exceptions.c</Name>
+        <Path>Source Files/app/system_config/default</Path>
+        <Checksum>C111969CA43D6CEA1E9E33A6164E7AE0</Checksum>
+      </Template>
+      <Template>
+        <Name>motor.c</Name>
+        <Path>Source Files/app</Path>
+      </Template>
+      <Template>
+        <Name>send.h</Name>
+        <Path>Header Files/app</Path>
+      </Template>
+      <Template>
+        <Name>drv_usart_static.h</Name>
+        <Path>Header Files/app/system_config/default/framework/driver/usart</Path>
+        <Checksum>66C127084540B78CD4F78E2FBCC6D29F</Checksum>
+      </Template>
+      <Template>
+        <Name>system_tasks.c</Name>
+        <Path>Source Files/app/system_config/default</Path>
+        <Checksum>3C88FE263B40734696688505391C54D4</Checksum>
+      </Template>
+      <Template>
+        <Name>sensor.h</Name>
+        <Path>Header Files/app</Path>
+      </Template>
+      <Template>
+        <Name>system_config.h</Name>
+        <Path>Header Files/app/system_config/default</Path>
+        <Checksum>DC713CFA7EE4560F954E48DF04D0B7AE</Checksum>
+      </Template>
+      <Template>
+        <Name>rtos_hooks.c</Name>
+        <Path>Source Files/app/system_config/default</Path>
+        <Checksum>FA52743264536E5207D2ADBE57B48D05</Checksum>
       </Template>
     </Templates>
     <CompilerItems>

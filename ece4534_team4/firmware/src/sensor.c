@@ -50,24 +50,89 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 SENSOR_DATA sensorData;
 
+//runs once
 void SENSOR_Initialize ( void )
 {
+	//Initialize task variables
     sensorData.state = SENSOR_STATE_INIT;
+	
+	//Create a queue capable of holding 25 unsigned long numbers
+    sensorData.q_adc_interrupt = xQueueCreate( 2500, sizeof( unsigned int ) ); 
+    if( sensorData.q_adc_interrupt == 0 ) stopAll();
+	
+	//Create a timer with rollover rate 100ms
+	sensorData.t_adc_interrupt = xTimerCreate(  
+				 "Timer100ms", //Just a text name
+				 ( 100 / portTICK_PERIOD_MS ), //period is 100ms
+				 pdTRUE, //auto-reload when expires
+				 (void *) 23, //a unique id
+				 sensorTimerCallback ); //pointer to callback function
+				 
+    //Start the timer
+    if( sensorData.t_adc_interrupt == NULL ) stopAll();
+    else
+    {
+         if( xTimerStart( sensorData.t_adc_interrupt, 0 ) != pdPASS ) stopAll();
+    }
+
+    //Initialize ADC A0 = Pic32 pin 25, RB0. Manual Sample Start and TAD based Conversion Start
+    PLIB_PORTS_PinDirectionInputSet(PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_0);
+    PLIB_ADC_SampleAutoStartDisable(ADC_ID_1);
+    PLIB_ADC_Enable(ADC_ID_1);
+					 
 }
 
+//runs forever
 void SENSOR_Tasks ( void )
 {
-    switch ( sensorData.state )
+    unsigned int qData;
+    
+	switch ( sensorData.state )
     {
         case SENSOR_STATE_INIT:
         {
+			sensorData.state = SENSOR_STATE_READ;
             break;
         }
+		
+		case SENSOR_STATE_READ:
+		{
+            //dbgOutputVal(59);
+		    if (xQueueReceive(sensorData.q_adc_interrupt, &qData, portMAX_DELAY))
+			{
+				//TODO: process the value in qData
+                dbgOutputVal(qData);				
+			}
+			break;
+		}
+			
         /* The default state should never be executed. */
         default:
         {
             break;
         }
+    }//end switch
+}//end SENSOR_Tasks()
+
+
+void sendValToSensorTask(unsigned int* message)
+{
+    if( xQueueSend( sensorData.q_adc_interrupt,
+                             (void*) message,
+                             portMAX_DELAY) != pdPASS )
+    {
+        stopAll(); //failed to send to queue
+    }
+}
+
+void sendValToSensorTaskFromISR(unsigned int* message)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    if (xQueueSendFromISR( sensorData.q_adc_interrupt,
+                            (void*) message,
+                            &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
+    {
+        stopAll(); //failed to send to queue
     }
 }
  

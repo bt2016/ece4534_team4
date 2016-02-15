@@ -107,7 +107,7 @@ void checkSourceQ()
         if (xQueueReceive(sendData.xTimerIntQ, &readdata, portMAX_DELAY))
         {
             //writeString("Received\n");
-            dbgOutputVal(readdata[2]);
+            //dbgOutputVal(readdata[2]); //uncomment
         } 
 
         writeString(readdata);
@@ -167,7 +167,7 @@ void SEND_Tasks ( void )
                 if (xQueueReceive(sendData.xTimerIntQ, &qData, portMAX_DELAY))
                 {
                     //writeString("Received\n");
-                    dbgOutputVal(cnt);
+                    //dbgOutputVal(cnt); //uncomment
                 } 
                 //}
                 sendData.state = SEND_STATE_TRANSMIT;
