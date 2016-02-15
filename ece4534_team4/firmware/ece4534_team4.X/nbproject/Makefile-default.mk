@@ -224,6 +224,12 @@ ${OBJECTDIR}/_ext/1360937237/sender.o: ../src/sender.c  nbproject/Makefile-${CND
 	@${RM} ${OBJECTDIR}/_ext/1360937237/sender.o 
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1360937237/sender.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -ffunction-sections -O1 -D__XC -I"../src" -I"../../../../framework" -I"../src/system_config/default/framework" -I"../../../../../framework" -I"../src/system_config/default" -I"../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX" -I"../../../../../third_party/rtos/FreeRTOS/Source/include" -MMD -MF "${OBJECTDIR}/_ext/1360937237/sender.o.d" -o ${OBJECTDIR}/_ext/1360937237/sender.o ../src/sender.c     
 	
+${OBJECTDIR}/_ext/1360937237/sender.o: ../src/sender.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1360937237" 
+	@${RM} ${OBJECTDIR}/_ext/1360937237/sender.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1360937237/sender.o 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1360937237/sender.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -ffunction-sections -O1 -D__XC -I"../src" -I"../../../../framework" -I"../src/system_config/default/framework" -I"../src/system_config/default" -I"../../../../../framework" -I"../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX" -I"../../../../../third_party/rtos/FreeRTOS/Source/include" -MMD -MF "${OBJECTDIR}/_ext/1360937237/sender.o.d" -o ${OBJECTDIR}/_ext/1360937237/sender.o ../src/sender.c     
+	
 ${OBJECTDIR}/_ext/308321468/osal_freertos.o: ../../../../../framework/osal/src/osal_freertos.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/308321468" 
 	@${RM} ${OBJECTDIR}/_ext/308321468/osal_freertos.o.d 
@@ -410,6 +416,12 @@ ${OBJECTDIR}/_ext/1360937237/sender.o: ../src/sender.c  nbproject/Makefile-${CND
 	@${RM} ${OBJECTDIR}/_ext/1360937237/sender.o.d 
 	@${RM} ${OBJECTDIR}/_ext/1360937237/sender.o 
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1360937237/sender.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -ffunction-sections -O1 -D__XC -I"../src" -I"../../../../framework" -I"../src/system_config/default/framework" -I"../../../../../framework" -I"../src/system_config/default" -I"../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX" -I"../../../../../third_party/rtos/FreeRTOS/Source/include" -MMD -MF "${OBJECTDIR}/_ext/1360937237/sender.o.d" -o ${OBJECTDIR}/_ext/1360937237/sender.o ../src/sender.c     
+	
+${OBJECTDIR}/_ext/1360937237/sender.o: ../src/sender.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1360937237" 
+	@${RM} ${OBJECTDIR}/_ext/1360937237/sender.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1360937237/sender.o 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1360937237/sender.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -ffunction-sections -O1 -D__XC -I"../src" -I"../../../../framework" -I"../src/system_config/default/framework" -I"../src/system_config/default" -I"../../../../../framework" -I"../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX" -I"../../../../../third_party/rtos/FreeRTOS/Source/include" -MMD -MF "${OBJECTDIR}/_ext/1360937237/sender.o.d" -o ${OBJECTDIR}/_ext/1360937237/sender.o ../src/sender.c     
 	
 ${OBJECTDIR}/_ext/308321468/osal_freertos.o: ../../../../../framework/osal/src/osal_freertos.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/308321468" 
