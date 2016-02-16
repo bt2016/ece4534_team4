@@ -42,6 +42,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // DOM-IGNORE-END
 
 #include "receive.h"
+#include "proj_definitions.h"
 //#include "receivePublic.h"
 
 RECEIVE_DATA receiveData;
@@ -52,6 +53,24 @@ void clearBuffer(){
     //Do anything you need to do to clear the message buffer in here
     messageBuffer.nextByteAt = 0;
     
+}
+
+void receiveSendToMsgQ() {
+    // Convert sensor data to message format character array
+    char data[MSG_LENGTH];
+    data[0] = MSG_START;            // Start byte
+    data[1] = 'm';                  // Type byte
+    data[2] = 0x67;  // Count byte
+    // Dummy values
+    data[3] = 0x20;
+    data[4] = 0x40;
+    data[5] = 0x60;
+    data[6] = receiveData.sendCount << 1;
+    data[7] = receiveData.sendCount >> 3;
+    data[8] = receiveData.sendCount << 2;
+    data[9] = MSG_STOP;             // Stop byte
+                
+    putDataOnMotorQ(data);
 }
 
 
@@ -79,9 +98,24 @@ void RECEIVE_Initialize ( void )
     messageBuffer.nextByteAt = 0;
     messageBuffer.start = '~';
     messageBuffer.stop = '.';
+    receiveData.sendCount = 0x55;
     
     //Initialize any types you want to use right here? 
     
+    //Create a timer
+    receiveData.xTimer125ms = xTimerCreate(  
+                     "ReceiveTimer125ms", //Just a text name
+                     ( 125 / portTICK_PERIOD_MS ), //period is 200ms
+                     pdTRUE, //auto-reload when expires
+                     (void *) 27, //a unique id
+                     receiveTimerCallback ); //pointer to callback function
+    
+    //Start the timer
+    if( receiveData.xTimer125ms == NULL ) stopAll();
+    else
+    {
+         if( xTimerStart( receiveData.xTimer125ms, 0 ) != pdPASS ) stopAll();
+    }
 
 }
 

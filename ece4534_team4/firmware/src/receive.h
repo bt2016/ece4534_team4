@@ -46,6 +46,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 #include <queue.h>
+#include <timers.h>
+#include "timerCallback.h"
 
 
 // DOM-IGNORE-BEGIN
@@ -66,6 +68,9 @@ typedef struct
     
     RECEIVE_STATES state;
     QueueHandle_t xReceiveIntQ;
+    
+    TimerHandle_t xTimer125ms;
+    char sendCount;
     
 } RECEIVE_DATA;
 

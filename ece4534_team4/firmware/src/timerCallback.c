@@ -34,6 +34,10 @@ void motorTimerCallback(TimerHandle_t mTimer) {
     motorSendToMsgQ();
 }
 
+void receiveTimerCallback(TimerHandle_t rTimer) {
+    receiveSendToMsgQ();
+}
+
 
 /* *****************************************************************************
  End of File

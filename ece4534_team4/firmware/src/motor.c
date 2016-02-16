@@ -60,7 +60,7 @@ void MOTOR_Initialize ( void )
     motorData.state = MOTOR_STATE_INIT;
     
     //Create a queue capable of holding 25 unsigned long numbers
-    motorData.xMotorQ = xQueueCreate( 25, MSG_LENGTH+1 ); 
+    motorData.xMotorQ = xQueueCreate( 250, MSG_LENGTH+1 ); 
     if( motorData.xMotorQ == 0 ) stopAll();
     
     //Create a timer
@@ -88,7 +88,7 @@ void MOTOR_Tasks ( void )
         {
             case MOTOR_STATE_INIT:
             {
-                motorData.state = MOTOR_STATE_INIT;
+                motorReceiveFromMsgQ();
                 break;
             }
 
@@ -103,6 +103,9 @@ void MOTOR_Tasks ( void )
 }
 
 void motorSendToMsgQ() {
+
+        LATACLR = 1 << 3;
+        
         motorData.sendCount++;
                 
         // Convert sensor data to message format character array
@@ -122,8 +125,36 @@ void motorSendToMsgQ() {
         putDataOnQueue(data);
 }
 
+void putDataOnMotorQ(char* data) {
+    if (motorData.xMotorQ != 0) {
+        
+        if( xQueueSend( motorData.xMotorQ, (void*) data, portMAX_DELAY) != pdPASS )
+        {
+            //stopAll(); //failed to send to queue
+        }
+    }
+}
 
 
+void motorReceiveFromMsgQ() {
+    char readdata[MSG_LENGTH];
+    char newData = 0;
+    
+    while (uxQueueMessagesWaiting(motorData.xMotorQ) != 0){
+    
+        if (xQueueReceive(motorData.xMotorQ, &readdata, portMAX_DELAY))
+        {
+            newData = 1;
+            if (readdata[0] == '~' && readdata[9] == '.')
+                LATASET = 1 << 3;   
+        } 
+    }
+}
+
+
+
+
+/*
 MESSAGE motorRelay = {'~', 'm', 0x0, "123456", '.'};
 
 char* motorTest = "ZZDHJGKFpo";
@@ -138,10 +169,8 @@ void motorSendTimerValToMsgQ(unsigned int* sendms)
             }
         }
     }
-
 }
 
-/*
 void motorSendValFromISR(unsigned int* message)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;

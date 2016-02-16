@@ -18,7 +18,6 @@ extern "C" {
     
 void sendTimerValToMsgQ(unsigned int* sendms);
 void sendValFromISR(unsigned int* message);
-void motorSendTimerValToMsgQ(unsigned int* sendms);
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus

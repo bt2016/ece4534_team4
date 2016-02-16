@@ -99,14 +99,17 @@ void sendDataToMsgQ(char* message) {
     writeString(tempMsg);
 }
  
+
+
+
 void checkSourceQ()
 {    
     char readdata[MSG_LENGTH];
     char newData = 0;
     
-    while (uxQueueMessagesWaiting(sendData.xSensorToSend) != 0){
+    while (uxQueueMessagesWaiting(sendData.xDataToSendQ) != 0){
         //writeString("Asking Queue...");
-        if (xQueueReceive(sendData.xSensorToSend, &readdata, portMAX_DELAY))
+        if (xQueueReceive(sendData.xDataToSendQ, &readdata, portMAX_DELAY))
         {
             newData = 1;
         } 
@@ -119,17 +122,28 @@ void checkSourceQ()
     }
 }
 
+void putDataOnQueue(char* data) {
+    if (sendData.xDataToSendQ != 0) {
+        
+        if( xQueueSend( sendData.xDataToSendQ, (void*) data, portMAX_DELAY) != pdPASS )
+        {
+            //stopAll(); //failed to send to queue
+        }
+    }
+}
+
 
 void SEND_Initialize ( void )
 {
     sendData.state = SEND_STATE_INIT;
+    sendData.sendCount = 0x55;
     
     //Create a queue capable of holding 25 unsigned long numbers
     sendData.xTimerIntQ = xQueueCreate( 25, MSG_LENGTH+1 ); 
     if( sendData.xTimerIntQ == 0 ) stopAll();
     
-    sendData.xSensorToSend = xQueueCreate(250, MSG_LENGTH+1);
-    if (sendData.xSensorToSend == 0) stopAll();
+    sendData.xDataToSendQ = xQueueCreate(250, MSG_LENGTH+1);
+    if (sendData.xDataToSendQ == 0) stopAll();
     
     //Create a timer
     sendData.xTimer100ms = xTimerCreate(  
@@ -167,9 +181,7 @@ void SEND_Tasks ( void )
             case SEND_STATE_RECEIVE:
             {
                 //while (uxQueueMessagesWaiting(sendData.xTimerIntQ) != 0){
-                if (xQueueReceive(sendData.xTimerIntQ, &qData, portMAX_DELAY))
-                {
-                } 
+                    if (xQueueReceive(sendData.xTimerIntQ, &qData, portMAX_DELAY))  { } 
                 //}
                 sendData.state = SEND_STATE_TRANSMIT;
                 break;
@@ -196,38 +208,6 @@ void SEND_Tasks ( void )
 
         }//end switch
     }//end while
-}
-
-void putDataOnQueue(char* data) {
-      if (sendData.xSensorToSend != 0) {
-        
-        if( xQueueSend( sendData.xSensorToSend, (void*) data, portMAX_DELAY) != pdPASS )
-        {
-            //stopAll(); //failed to send to queue
-        }
-    }
-}
-
-void putSensorDataOnQueue(unsigned int sensor) {
-    
-    char data[10];
-    data[0] = MSG_START;
-    data[1] = 's';
-    data[2] = 0x50;
-    data[3] = 0x51;
-    data[4] = 0x52;
-    data[5] = ((sensor & 0xFF000000) >> 24);
-    data[6] = ((sensor & 0xFF0000) >> 16);
-    data[7] = ((sensor & 0xFF00) >> 8);
-    data[8] = (sensor & 0xFF);
-    data[9] = MSG_STOP;
-    
-    if (sendData.xSensorToSend != 0) {
-        if( xQueueSend( sendData.xSensorToSend, (void*) data, portMAX_DELAY) != pdPASS )
-        {
-            //stopAll(); //failed to send to queue
-        }
-    }
 }
 
 void sendTimerValToMsgQ(unsigned int* sendms)

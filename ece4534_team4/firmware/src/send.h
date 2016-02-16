@@ -77,12 +77,13 @@ typedef struct
 {
     /* The application's current state */
     SEND_STATES state;
+    char sendCount;
 
     /* TODO: Define any additional data used by the application. */
     QueueHandle_t xTimerIntQ;
     TimerHandle_t xTimer100ms;
     
-    QueueHandle_t xSensorToSend;
+    QueueHandle_t xDataToSendQ;
 
 } SEND_DATA;
 
