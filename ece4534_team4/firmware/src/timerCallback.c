@@ -21,9 +21,9 @@ unsigned int sendms = 0;
 
 void vTimerCallback(TimerHandle_t pxTimer) {
     sendms += 1; //Timer is called every 100ms
-    //sendTimerValToMsgQ(sendms);
-    checkSourceQ();
-    //sendWriteMessage();
+    if (sendms % 600 == 0) {
+        writeString("TIME");
+    }
 }
 
 void sensorTimerCallback(TimerHandle_t sTimer){
@@ -31,7 +31,7 @@ void sensorTimerCallback(TimerHandle_t sTimer){
 }
 
 void motorTimerCallback(TimerHandle_t mTimer) {
-    motorSendTimerValToMsgQ(sendms);
+    motorSendToMsgQ();
 }
 
 

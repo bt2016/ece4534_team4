@@ -79,6 +79,7 @@ typedef struct
     SENSOR_STATES state;
 	QueueHandle_t q_adc_interrupt;
 	TimerHandle_t t_adc_interrupt;
+    char sendCount;
 
 } SENSOR_DATA;
 

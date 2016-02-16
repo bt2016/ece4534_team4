@@ -83,10 +83,7 @@ typedef struct
     TimerHandle_t xTimer100ms;
     
     QueueHandle_t xSensorToSend;
-    
-    int letterPosition;
-    char rx_byte;       // byte received
-    char tx_byte;       // byte to send
+
 } SEND_DATA;
 
 

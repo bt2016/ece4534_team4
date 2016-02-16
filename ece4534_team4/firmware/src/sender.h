@@ -159,9 +159,9 @@ extern "C" {
     #include "proj_definitions.h"
 
     void writeString(char* sendval);
-    void writeMsgStr(char count, char* sendval);
-    void writeMsgChar(char type, char count, char dataa, char datab);
-    void writeMsgShortInt(char type, char count, unsigned short int data);
+    void writeMsgStr(char type, char count, char* sendval);
+    void writeMsgChar(char type, char count, char dataa, char datab, char datac, char datad, char datae, char dataf);
+    void writeMsgShortInt(char type, char count, unsigned int data);
     void writeMESSAGE(MESSAGE message);
 
     /* Provide C++ Compatibility */

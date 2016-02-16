@@ -54,6 +54,8 @@ SENSOR_DATA sensorData;
 //runs once
 void SENSOR_Initialize ( void )
 {
+    sensorData.sendCount = 0;
+    
 	//Initialize task variables
     sensorData.state = SENSOR_STATE_INIT;
 	
@@ -102,12 +104,14 @@ void SENSOR_Tasks ( void )
             //dbgOutputVal(59);
 		    if (xQueueReceive(sensorData.q_adc_interrupt, &qData, portMAX_DELAY))
 			{
+                sensorData.sendCount++;
+                
                 // Convert sensor data to message format character array
                 //qData = 0x55565758;
                 char data[10];
                 data[0] = MSG_START;
                 data[1] = 's';
-                data[2] = 0x20;
+                data[2] = sensorData.sendCount >> 1;
                 data[3] = 0x20;
                 data[4] = 0x20;
                 data[5] = 0x20;
@@ -116,7 +120,7 @@ void SENSOR_Tasks ( void )
                 data[8] = (qData & 0xFF);
                 data[9] = MSG_STOP;
                 
-                putSensorStrOnQueue(data);
+                putDataOnQueue(data);
 			}
 			break;
 		}
@@ -142,6 +146,7 @@ void sendValToSensorTask(unsigned int* message)
 
 void sendValToSensorTaskFromISR(unsigned int* message)
 {
+    
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     if (xQueueSendFromISR( sensorData.q_adc_interrupt,
                             (void*) message,

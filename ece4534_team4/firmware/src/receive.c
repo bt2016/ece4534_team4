@@ -42,7 +42,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // DOM-IGNORE-END
 
 #include "receive.h"
-#include "receivePublic.h"
+//#include "receivePublic.h"
 
 RECEIVE_DATA receiveData;
 M_BUFFER messageBuffer;

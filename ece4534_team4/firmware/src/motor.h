@@ -65,8 +65,6 @@ extern "C" {
 #endif
 // DOM-IGNORE-END 
 
-    #define MSG_LENGTH 10
-
 typedef enum
 {
 	MOTOR_STATE_INIT=0,
@@ -76,9 +74,10 @@ typedef struct
 {
     /* The application's current state */
     MOTOR_STATES state;
+    char sendCount;
 
     /* TODO: Define any additional data used by the application. */
-    QueueHandle_t xTimerIntQ;
+    QueueHandle_t xMotorQ;
     TimerHandle_t xTimer200ms;
    
 } MOTOR_DATA;

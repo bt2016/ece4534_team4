@@ -113,15 +113,16 @@ void checkSourceQ()
     }
     
     //if (newData == 1) writeString(readdata);
-    if (newData == 1) sendDataToMsgQ(readdata);
+    //if (newData == 1) sendDataToMsgQ(readdata);
+    if (newData == 1) {
+        writeString(readdata);
+    }
 }
 
 
 void SEND_Initialize ( void )
 {
     sendData.state = SEND_STATE_INIT;
-
-    sendData.letterPosition = 0;
     
     //Create a queue capable of holding 25 unsigned long numbers
     sendData.xTimerIntQ = xQueueCreate( 25, MSG_LENGTH+1 ); 
@@ -150,15 +151,14 @@ void SEND_Tasks ( void )
 {
    while (1)
     {
-       //unsigned int qData;
        char qData[MSG_LENGTH];
 
         switch ( sendData.state )
         {
             case SEND_STATE_INIT:
             {
-                char* initVal = "~maLETSGO.";
-                writeString("START");
+                //char* initVal = "~maLETSGO.";
+                //writeString("START");
                 //sendDataToMsgQ(initVal);
                 sendData.state = SEND_STATE_LOOP;
                 break;
@@ -166,7 +166,6 @@ void SEND_Tasks ( void )
             
             case SEND_STATE_RECEIVE:
             {
-                //writeString("Asking Queue...");
                 //while (uxQueueMessagesWaiting(sendData.xTimerIntQ) != 0){
                 if (xQueueReceive(sendData.xTimerIntQ, &qData, portMAX_DELAY))
                 {
@@ -178,8 +177,6 @@ void SEND_Tasks ( void )
 
             case SEND_STATE_TRANSMIT:
             {
-               //writeString("Received: ");
-               //writeMsgStr(cnt, qData);
                sendData.state = SEND_STATE_RECEIVE;
                break;
             }
@@ -201,7 +198,7 @@ void SEND_Tasks ( void )
     }//end while
 }
 
-void putSensorStrOnQueue(char* data) {
+void putDataOnQueue(char* data) {
       if (sendData.xSensorToSend != 0) {
         
         if( xQueueSend( sendData.xSensorToSend, (void*) data, portMAX_DELAY) != pdPASS )
