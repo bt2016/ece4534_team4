@@ -111,10 +111,13 @@ void RECEIVE_Initialize ( void )
                      receiveTimerCallback ); //pointer to callback function
     
     //Start the timer
-    if( receiveData.xTimer125ms == NULL ) stopAll();
-    else
-    {
-         if( xTimerStart( receiveData.xTimer125ms, 0 ) != pdPASS ) stopAll();
+    if( receiveData.xTimer125ms == NULL ) {
+        dbgOutputVal(RECEIVE_TIMERINIT_FAIL);
+        stopAll();
+    }
+    else if( xTimerStart( receiveData.xTimer125ms, 0 ) != pdPASS ) {
+        dbgOutputVal(RECEIVE_TIMERINIT_FAIL);
+        stopAll();
     }
 
 }
@@ -173,6 +176,7 @@ void RECEIVE_Tasks ( void )
         /* The default state should never be executed. */
         default:
         {
+            dbgOutputVal(RECEIVE_ENTERED_DEFAULT);
             break;
         }
     }

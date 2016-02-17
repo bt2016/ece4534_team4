@@ -3,23 +3,17 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/send.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/system_config/default/system_init.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/third_party/rtos/FreeRTOS/Source/queue.c</file>
             <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/sensor.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/app1_public.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/framework/send_public.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/system_config/default/system_interrupt.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/system_config/default/framework/driver/usart/drv_usart_static.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/motor.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/motor.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/timerCallback.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/timerCallback.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/sender.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/main.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/app.c</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/app.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/sensor_public.h</file>
-            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/sender.h</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/framework/peripheral/peripheral_common.h</file>
             <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/send.h</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/receive.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/framework/peripheral/usart/templates/usart_TransmitterInterruptMode_Default.h</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/system_config/default/framework/driver/usart/drv_usart_static.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/system_config/default/system_interrupt.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/apps/ece4534_team4/ece4534_team4/firmware/src/send.c</file>
+            <file>file:/C:/microchip/harmony/v1_06_02/framework/peripheral/usart/processor/usart_p32mx795f512l.h</file>
         </group>
     </open-files>
 </project-private>

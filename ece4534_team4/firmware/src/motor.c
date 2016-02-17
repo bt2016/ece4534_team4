@@ -72,10 +72,13 @@ void MOTOR_Initialize ( void )
                      motorTimerCallback ); //pointer to callback function
     
     //Start the timer
-    if( motorData.xTimer200ms == NULL ) stopAll();
-    else
-    {
-         if( xTimerStart( motorData.xTimer200ms, 0 ) != pdPASS ) stopAll();
+    if( motorData.xTimer200ms == NULL ) {
+        dbgOutputVal(MOTOR_TIMERINIT_FAIL);
+        stopAll();
+    }
+    else if( xTimerStart( motorData.xTimer200ms, 0 ) != pdPASS ) {
+        dbgOutputVal(MOTOR_TIMERINIT_FAIL);
+        stopAll();
     }
    
 }
@@ -95,6 +98,7 @@ void MOTOR_Tasks ( void )
             default: /* The default state should never be executed. */
             {
                 motorData.state = MOTOR_STATE_INIT;
+                dbgOutputVal(MOTOR_ENTERED_DEFAULT);
                 break;
             }
 
@@ -115,11 +119,11 @@ void motorSendToMsgQ() {
         data[2] = motorData.sendCount;  // Count byte
         // Dummy values
         data[3] = 0x20;
-        data[4] = 0x40;
-        data[5] = 0x60;
-        data[6] = motorData.sendCount << 1;
-        data[7] = motorData.sendCount >> 3;
-        data[8] = motorData.sendCount << 2;
+        data[4] = 0x20;
+        data[5] = 0x20;
+        data[6] = 0x20; //motorData.sendCount << 1;
+        data[7] = 0x20; //motorData.sendCount >> 3;
+        data[8] = 0x20; //motorData.sendCount << 2;
         data[9] = MSG_STOP;             // Stop byte
                 
         putDataOnQueue(data);
@@ -130,7 +134,7 @@ void putDataOnMotorQ(char* data) {
         
         if( xQueueSend( motorData.xMotorQ, (void*) data, portMAX_DELAY) != pdPASS )
         {
-            //stopAll(); //failed to send to queue
+            dbgOutputVal(RECEIVE_SENDTOMOTORQ_FAIL);
         }
     }
 }
@@ -144,6 +148,7 @@ void motorReceiveFromMsgQ() {
     
         if (xQueueReceive(motorData.xMotorQ, &readdata, portMAX_DELAY))
         {
+            dbgOutputVal(MOTOR_RECEIVEFROMQ);
             newData = 1;
             if (readdata[0] == '~' && readdata[9] == '.')
                 LATASET = 1 << 3;   

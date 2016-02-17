@@ -87,10 +87,10 @@ void IntHandlerDrvUsartInstance0(void)
     }
 
     /* Clear pending interrupt */
-    if (PLIB_USART_TransmitterBufferIsFull(USART_ID_1)) {
+    //if (!PLIB_USART_TransmitterIsEmpty(USART_ID_1)) {
         
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
-    }
+    //}
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
 
 }

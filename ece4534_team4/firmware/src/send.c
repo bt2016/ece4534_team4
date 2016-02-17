@@ -82,15 +82,18 @@ void sendDataToMsgQ(char* message) {
     
     if (*message == '~') {
         
-        if (cnt == 0x7E) cnt = 0x1;
+     /*   if (cnt == 0x7E) cnt = 0x1;
         else cnt++;
 
         addCountToMsg(cnt, message);
+      */
+        
 /*
+        // SEND TO UART QUEUE
         if (sendData.xTimerIntQ != 0) {
-            //writeString("Requesting send...");
-            if( xQueueSend( sendData.xTimerIntQ, (void*) tempMsg, portMAX_DELAY) != pdPASS )
+            if( xQueueSend( sendData.xTimerIntQ, (void*) message, portMAX_DELAY) != pdPASS )
             {
+                dbgOutputVal(SEND_SENDTOTRANSMITQ_FAIL);
                 stopAll(); //failed to send to queue
             }
         }
@@ -111,15 +114,14 @@ void checkSourceQ()
         //writeString("Asking Queue...");
         if (xQueueReceive(sendData.xDataToSendQ, &readdata, portMAX_DELAY))
         {
+            dbgOutputVal(SEND_RECEIVEFROMQ);
             newData = 1;
         } 
     }
     
     //if (newData == 1) writeString(readdata);
     //if (newData == 1) sendDataToMsgQ(readdata);
-    if (newData == 1) {
-        writeString(readdata);
-    }
+    if (newData == 1) { writeString(readdata); }
 }
 
 void putDataOnQueue(char* data) {
@@ -127,7 +129,7 @@ void putDataOnQueue(char* data) {
         
         if( xQueueSend( sendData.xDataToSendQ, (void*) data, portMAX_DELAY) != pdPASS )
         {
-            //stopAll(); //failed to send to queue
+            dbgOutputVal(MOTOR_SENDTOSENDQ_FAIL);
         }
     }
 }
@@ -139,7 +141,7 @@ void SEND_Initialize ( void )
     sendData.sendCount = 0x55;
     
     //Create a queue capable of holding 25 unsigned long numbers
-    sendData.xTimerIntQ = xQueueCreate( 25, MSG_LENGTH+1 ); 
+    sendData.xTimerIntQ = xQueueCreate( 250, MSG_LENGTH+1 ); 
     if( sendData.xTimerIntQ == 0 ) stopAll();
     
     sendData.xDataToSendQ = xQueueCreate(250, MSG_LENGTH+1);
@@ -154,10 +156,13 @@ void SEND_Initialize ( void )
                      vTimerCallback ); //pointer to callback function
     
     //Start the timer
-    if( sendData.xTimer100ms == NULL ) stopAll();
-    else
-    {
-         if( xTimerStart( sendData.xTimer100ms, 0 ) != pdPASS ) stopAll();
+    if( sendData.xTimer100ms == NULL ) {
+        dbgOutputVal(SEND_TIMERINIT_FAIL);
+        stopAll();
+    }
+    else if( xTimerStart( sendData.xTimer100ms, 0 ) != pdPASS ) {
+        dbgOutputVal(SEND_TIMERINIT_FAIL);
+        stopAll();
     }
 }
 
@@ -201,8 +206,8 @@ void SEND_Tasks ( void )
 
             default: /* The default state should never be executed. */
             {
-                writeString("DEFAULT_ERROR");
-                sendData.state = SEND_STATE_TRANSMIT;
+                dbgOutputVal(SEND_ENTERED_DEFAULT);
+                sendData.state = SEND_STATE_LOOP;
                 break;
             }
 

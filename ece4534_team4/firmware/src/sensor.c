@@ -72,10 +72,13 @@ void SENSOR_Initialize ( void )
 				 sensorTimerCallback ); //pointer to callback function
 				 
     //Start the timer
-    if( sensorData.t_adc_interrupt == NULL ) stopAll();
-    else
-    {
-         if( xTimerStart( sensorData.t_adc_interrupt, 0 ) != pdPASS ) stopAll();
+    if( sensorData.t_adc_interrupt == NULL ) {
+        dbgOutputVal(SENSOR_TIMERINIT_FAIL);
+        stopAll();
+    }
+    else if( xTimerStart( sensorData.t_adc_interrupt, 0 ) != pdPASS ) {
+        dbgOutputVal(SENSOR_TIMERINIT_FAIL);
+        stopAll();
     }
 
     //Initialize ADC A0 = Pic32 pin 25, RB0. Manual Sample Start and TAD based Conversion Start
@@ -128,6 +131,7 @@ void SENSOR_Tasks ( void )
         /* The default state should never be executed. */
         default:
         {
+            dbgOutputVal(SENSOR_ENTERED_DEFAULT);
             break;
         }
     }//end switch
@@ -140,6 +144,7 @@ void sendValToSensorTask(unsigned int* message)
                              (void*) message,
                              portMAX_DELAY) != pdPASS )
     {
+        dbgOutputVal(SENSOR_SENDTOSENSORQ_FAIL);
         stopAll(); //failed to send to queue
     }
 }
@@ -152,6 +157,7 @@ void sendValToSensorTaskFromISR(unsigned int* message)
                             (void*) message,
                             &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
     {
+        dbgOutputVal(SENSOR_SENDTOSENSORQ_FAIL);
         stopAll(); //failed to send to queue
     }
 }

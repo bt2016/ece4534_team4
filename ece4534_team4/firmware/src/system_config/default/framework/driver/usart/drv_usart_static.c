@@ -73,7 +73,7 @@ void DRV_USART0_Initialize(void)
     /* Initialize interrupts */
     /* Note: TX interrupt must be enabled when data is ready to be transmitted */
     /* The following code can be used to enable TX Interrupt */
-    /* PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT); */
+    //PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT); 
     PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);
     PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_ERROR);
     PLIB_INT_VectorPrioritySet(INT_ID_0, INT_VECTOR_UART1, INT_PRIORITY_LEVEL1);
