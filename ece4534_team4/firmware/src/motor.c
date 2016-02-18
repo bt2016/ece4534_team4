@@ -59,24 +59,24 @@ void MOTOR_Initialize ( void )
     
     motorData.state = MOTOR_STATE_INIT;
     
-    //Create a queue capable of holding 25 unsigned long numbers
+    //Create a queue capable of holding 250 system messages
     motorData.xMotorQ = xQueueCreate( 250, MSG_LENGTH+1 ); 
     if( motorData.xMotorQ == 0 ) stopAll();
     
     //Create a timer
-    motorData.xTimer200ms = xTimerCreate(  
+    motorData.xMotorTimer = xTimerCreate(  
                      "MotorTimer200ms", //Just a text name
-                     ( 140 / portTICK_PERIOD_MS ), //period is 200ms
+                     ( 130 / portTICK_PERIOD_MS ), //period is 200ms
                      pdTRUE, //auto-reload when expires
                      (void *) 25, //a unique id
                      motorTimerCallback ); //pointer to callback function
     
     //Start the timer
-    if( motorData.xTimer200ms == NULL ) {
+    if( motorData.xMotorTimer == NULL ) {
         dbgOutputVal(MOTOR_TIMERINIT_FAIL);
         stopAll();
     }
-    else if( xTimerStart( motorData.xTimer200ms, 0 ) != pdPASS ) {
+    else if( xTimerStart( motorData.xMotorTimer, 0 ) != pdPASS ) {
         dbgOutputVal(MOTOR_TIMERINIT_FAIL);
         stopAll();
     }
@@ -108,7 +108,7 @@ void MOTOR_Tasks ( void )
 
 void motorSendToMsgQ() {
 
-        LATACLR = 1 << 3;
+        LATACLR = 1 << 3; // Clear LED
         
         motorData.sendCount++;
                 
@@ -117,16 +117,16 @@ void motorSendToMsgQ() {
         data[0] = MSG_START;            // Start byte
         data[1] = 'm';                  // Type byte
         data[2] = motorData.sendCount;  // Count byte
-        // Dummy values
-        data[3] = 0x20;
-        data[4] = 0x20;
-        data[5] = 0x20;
-        data[6] = 0x20; //motorData.sendCount << 1;
-        data[7] = 0x20; //motorData.sendCount >> 3;
-        data[8] = 0x20; //motorData.sendCount << 2;
+        // Dummy values (data bytes x6)
+        data[3] = 0x22;
+        data[4] = 0x33;
+        data[5] = 0x44;
+        data[6] = 0x55; 
+        data[7] = 0x66; 
+        data[8] = 0x77;
         data[9] = MSG_STOP;             // Stop byte
                 
-        putDataOnQueue(data);
+        putMsgOnSendQueue(data);
 }
 
 void putDataOnMotorQ(char* data) {
@@ -150,43 +150,13 @@ void motorReceiveFromMsgQ() {
         {
             dbgOutputVal(MOTOR_RECEIVEFROMQ);
             newData = 1;
+            
+            // Check for correct message format
             if (readdata[0] == '~' && readdata[9] == '.')
-                LATASET = 1 << 3;   
+                LATASET = 1 << 3;   // Light LED
         } 
     }
 }
-
-
-
-
-/*
-MESSAGE motorRelay = {'~', 'm', 0x0, "123456", '.'};
-
-char* motorTest = "ZZDHJGKFpo";
-
-void motorSendTimerValToMsgQ(unsigned int* sendms)
-{    
-    if (motorData.xMotorQ != 0) {
-        if (uxQueueSpacesAvailable(motorData.xMotorQ) != 0) {
-            if( xQueueSend( motorData.xMotorQ, (void*) motorTest, portMAX_DELAY) != pdPASS )
-            {
-                //stopAll(); //failed to send to queue
-            }
-        }
-    }
-}
-
-void motorSendValFromISR(unsigned int* message)
-{
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    if (xQueueSendFromISR( motorData.xMotorQ,
-                            (void*) message,
-                            &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
-    {
-        stopAll(); //failed to send to queue
-    }
-}
- * */
 
 /*******************************************************************************
  End of File

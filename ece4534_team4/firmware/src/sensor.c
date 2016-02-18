@@ -104,7 +104,6 @@ void SENSOR_Tasks ( void )
 		
 		case SENSOR_STATE_READ:
 		{
-            //dbgOutputVal(59);
 		    if (xQueueReceive(sensorData.q_adc_interrupt, &qData, portMAX_DELAY))
 			{
                 sensorData.sendCount++;
@@ -123,7 +122,7 @@ void SENSOR_Tasks ( void )
                 data[8] = (qData & 0xFF);
                 data[9] = MSG_STOP;
                 
-                putDataOnQueue(data);
+                putMsgOnSendQueue(data);
 			}
 			break;
 		}
@@ -145,20 +144,42 @@ void sendValToSensorTask(unsigned int* message)
                              portMAX_DELAY) != pdPASS )
     {
         dbgOutputVal(SENSOR_SENDTOSENSORQ_FAIL);
-        stopAll(); //failed to send to queue
+        //stopAll(); //failed to send to queue
     }
+}
+
+uint8_t removeQueueData() {
+    
+    unsigned int* qData;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    
+    if (xQueueReceiveFromISR(sensorData.q_adc_interrupt, &qData, xHigherPriorityTaskWoken)) {
+        return 0x1;
+    }
+    
+    return 0x0;
 }
 
 void sendValToSensorTaskFromISR(unsigned int* message)
 {
     
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    
+    if (xQueueIsQueueFullFromISR == pdTRUE) {
+        // If message is not removed from queue, return and signal error
+        if (removeQueueData() == 0) {
+            dbgOutputVal(SENSOR_FULLQUEUE);
+            stopAll();
+            return;
+        }
+    }
+    
     if (xQueueSendFromISR( sensorData.q_adc_interrupt,
                             (void*) message,
                             &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
     {
         dbgOutputVal(SENSOR_SENDTOSENSORQ_FAIL);
-        stopAll(); //failed to send to queue
+        //stopAll(); //failed to send to queue
     }
 }
  

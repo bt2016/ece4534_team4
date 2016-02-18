@@ -85,14 +85,15 @@ void IntHandlerDrvUsartInstance0(void)
         
         PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_RECEIVE);        
     }
-
-    /* Clear pending interrupt */
-    //if (!PLIB_USART_TransmitterIsEmpty(USART_ID_1)) {
-        
-        PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
-    //}
+ 
+    // If transmitter not enabled, interrupt never occurs here (messages still go through over wifly)
+    // Transmitter enable -> Empty Flag up      
+    if (PLIB_USART_TransmitterIsEmpty(USART_ID_1)) {
+        receiveDataFromISR();
+    }
+    
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
-
 }
  
 void IntHandlerDrvAdc(void)
@@ -119,12 +120,14 @@ void IntHandlerDrvAdc(void)
 }
  
  
-
- 
- 
-
- 
-
+/*
+     if (PLIB_USART_TransmitterIsEmpty(USART_ID_1)) {
+        //stopAll(); //Yes
+        receiveDataFromMsgQ();
+        //stopAll(); //No
+        PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);   
+    }
+*/
  
  
   

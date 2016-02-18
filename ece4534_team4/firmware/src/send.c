@@ -51,80 +51,82 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "sender.h"
 
 SEND_DATA sendData;
-char cnt = 0x0;
-char tempMsg[MSG_LENGTH];
 
-void sendWriteMessage() {
-    // Use transmit interrupt for UART 
-    // Same interrupt as receiver - account for both (clear both), handle the one that was raised
-}
+// Called from TX interrupt. Read from transmit message queue and 
+// output byte by byte to the transmit buffer
+void receiveDataFromISR() {
+    BaseType_t xTaskWokenByReceive = pdFALSE;
+    char readChar;
 
-char* addCountToMsg(char count, char* message) {
-       //char newMessage[MSG_LENGTH];
-       
-       char* k;
-       unsigned short int cur = 0;
-       
-       for (k = message; *k; ++k) {
-           
-           if (cur == 2) {
-               tempMsg[cur] = count;
-           }
-           else {
-               tempMsg[cur] = *k;
-           }
-           
-           cur++;
-       }
+    // Temporarily disable the transmit interrupt
+    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+        
+    // While the queue has available messages, read bytes and transmit
+    while (uxQueueMessagesWaitingFromISR(sendData.xTransmitQ) != 0){
+        while (xQueueReceiveFromISR(sendData.xTransmitQ, (void *) &readChar, &xTaskWokenByReceive) ) 
+        {
+            // A character was received.  Transmit the character now.
+            PLIB_USART_TransmitterByteSend(USART_ID_1, readChar);
+            // If removing the character from the queue woke the task that was
+            // posting onto the queue cTaskWokenByReceive will have been set to
+            // pdTRUE.  No matter how many times this loop iterates only one
+            // task will be woken.
+        }
+    }
 }
    
+
+// FROM SEND TASK TO TRANSMIT QUEUE (ON WAY TO UART)
 void sendDataToMsgQ(char* message) {
     
+    // Check for proper message start
     if (*message == '~') {
+        char* k = message;
+        int iter = 0;
         
-     /*   if (cnt == 0x7E) cnt = 0x1;
-        else cnt++;
-
-        addCountToMsg(cnt, message);
-      */
-        
-/*
         // SEND TO UART QUEUE
-        if (sendData.xTimerIntQ != 0) {
-            if( xQueueSend( sendData.xTimerIntQ, (void*) message, portMAX_DELAY) != pdPASS )
-            {
-                dbgOutputVal(SEND_SENDTOTRANSMITQ_FAIL);
-                stopAll(); //failed to send to queue
+        if (sendData.xTransmitQ != 0) {
+
+            //for (k = message; *k; ++k) {
+            // Add message to queue, character by character
+            for (iter = 0; iter < MSG_LENGTH; iter++) {
+
+                if( xQueueSend( sendData.xTransmitQ, (void*) k, portMAX_DELAY) != pdPASS )
+                {
+                    dbgOutputVal(SEND_SENDTOTRANSMITQ_FAIL);
+                    stopAll(); //failed to send to queue
+                }
+
+                ++k; // Iterate to next char in message
+
+                // Enable transmitter interrupt to signal empty buffer
+                PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT); 
             }
+            //PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT); 
         }
- */
     }
-    writeString(tempMsg);
 }
- 
 
-
-
+// Check queue holding the data from the motor/sensor
 void checkSourceQ()
 {    
     char readdata[MSG_LENGTH];
     char newData = 0;
     
     while (uxQueueMessagesWaiting(sendData.xDataToSendQ) != 0){
-        //writeString("Asking Queue...");
         if (xQueueReceive(sendData.xDataToSendQ, &readdata, portMAX_DELAY))
         {
             dbgOutputVal(SEND_RECEIVEFROMQ);
             newData = 1;
         } 
     }
-    
-    //if (newData == 1) writeString(readdata);
-    //if (newData == 1) sendDataToMsgQ(readdata);
-    if (newData == 1) { writeString(readdata); }
+
+    // If message received, push to UART transmit queue
+    if (newData == 1) sendDataToMsgQ(readdata);
 }
 
-void putDataOnQueue(char* data) {
+// Place data passed in from Motor or Sensor onto queue
+void putMsgOnSendQueue(char* data) {
     if (sendData.xDataToSendQ != 0) {
         
         if( xQueueSend( sendData.xDataToSendQ, (void*) data, portMAX_DELAY) != pdPASS )
@@ -140,10 +142,11 @@ void SEND_Initialize ( void )
     sendData.state = SEND_STATE_INIT;
     sendData.sendCount = 0x55;
     
-    //Create a queue capable of holding 25 unsigned long numbers
-    sendData.xTimerIntQ = xQueueCreate( 250, MSG_LENGTH+1 ); 
-    if( sendData.xTimerIntQ == 0 ) stopAll();
+    //Create a queue capable of holding 2500 characters
+    sendData.xTransmitQ = xQueueCreate( 2500, sizeof(char) );
+    if( sendData.xTransmitQ == 0 ) stopAll();
     
+    // Create a queue capable of holding 250 messages
     sendData.xDataToSendQ = xQueueCreate(250, MSG_LENGTH+1);
     if (sendData.xDataToSendQ == 0) stopAll();
     
@@ -166,38 +169,20 @@ void SEND_Initialize ( void )
     }
 }
 
+// Finite state machine definition
 void SEND_Tasks ( void )
 {
    while (1)
     {
-       char qData[MSG_LENGTH];
-
         switch ( sendData.state )
         {
             case SEND_STATE_INIT:
             {
-                //char* initVal = "~maLETSGO.";
-                //writeString("START");
-                //sendDataToMsgQ(initVal);
                 sendData.state = SEND_STATE_LOOP;
                 break;
             }
             
-            case SEND_STATE_RECEIVE:
-            {
-                //while (uxQueueMessagesWaiting(sendData.xTimerIntQ) != 0){
-                    if (xQueueReceive(sendData.xTimerIntQ, &qData, portMAX_DELAY))  { } 
-                //}
-                sendData.state = SEND_STATE_TRANSMIT;
-                break;
-            }
-
-            case SEND_STATE_TRANSMIT:
-            {
-               sendData.state = SEND_STATE_RECEIVE;
-               break;
-            }
-            
+            // Continually check data receive queue for new motor/sensor output
             case SEND_STATE_LOOP:
             {
                 checkSourceQ();
@@ -215,14 +200,17 @@ void SEND_Tasks ( void )
     }//end while
 }
 
+
+
+
+// Unused functions in current build
+
 void sendTimerValToMsgQ(unsigned int* sendms)
 {    
-    cnt++;
-    char* test = "HEYYOUZZAA";
+    char* test = "12345abcde";
     
-    if (sendData.xTimerIntQ != 0) {
-        //writeString("SENT:");
-        if( xQueueSend( sendData.xTimerIntQ, (void*) test, portMAX_DELAY) != pdPASS )
+    if (sendData.xTransmitQ != 0) {
+        if( xQueueSend( sendData.xTransmitQ, (void*) test, portMAX_DELAY) != pdPASS )
         {
             stopAll(); //failed to send to queue
         }
@@ -233,13 +221,64 @@ void sendTimerValToMsgQ(unsigned int* sendms)
 void sendValFromISR(unsigned int* message)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    if (xQueueSendFromISR( sendData.xTimerIntQ,
+    if (xQueueSendFromISR( sendData.xTransmitQ,
                             (void*) message,
                             &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
     {
         stopAll(); //failed to send to queue
     }
 }
+
+// Appends message count to output messages originating from the local task. 
+char* addCountToMsg(char count, char* message) {
+       //char newMessage[MSG_LENGTH];
+       
+       char tempMsg[MSG_LENGTH];
+    
+       char* k;
+       unsigned short int cur = 0;
+       
+       for (k = message; *k; ++k) {
+           
+           if (cur == 2) {
+               tempMsg[cur] = count;
+           }
+           else {
+               tempMsg[cur] = *k;
+           }
+           
+           cur++;
+       }
+}
+
+/*
+// PLACEHOLDER - RECEIVE FROM TRANSMIT QUEUE
+// REPLACE WITH INTERRUPT HANDLER PASSING TO UART
+void receiveDataFromMsgQ() {
+    
+    char readdata[MSG_LENGTH];
+    char newData = 0;
+    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+                   
+    if (uxQueueMessagesWaiting(sendData.xTransmitQ) != 0){
+        //stopAll();
+        //writeString("Asking Queue...");
+        if (xQueueReceive(sendData.xTransmitQ, &readdata, portMAX_DELAY))
+        {
+            dbgOutputVal(SEND_RECEIVEFROMQ);
+            newData = 1;
+        } 
+    } 
+    
+    if (newData == 1) {
+        writeString(readdata);
+        if (uxQueueMessagesWaiting(sendData.xTransmitQ) != 0) {
+            PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
+        }
+    }
+}
+    * */
+
 
 /*******************************************************************************
  End of File

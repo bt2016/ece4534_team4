@@ -68,8 +68,6 @@ extern "C" {
 typedef enum
 {
 	SEND_STATE_INIT=0,
-    SEND_STATE_RECEIVE,
-    SEND_STATE_TRANSMIT,       // USART transmit state
     SEND_STATE_LOOP 
 } SEND_STATES;
 
@@ -78,9 +76,11 @@ typedef struct
     /* The application's current state */
     SEND_STATES state;
     char sendCount;
+    int queueReadFails;
+    int txSendFails;
 
     /* TODO: Define any additional data used by the application. */
-    QueueHandle_t xTimerIntQ;
+    QueueHandle_t xTransmitQ;
     TimerHandle_t xTimer100ms;
     
     QueueHandle_t xDataToSendQ;

@@ -78,7 +78,7 @@ typedef struct
 
     /* TODO: Define any additional data used by the application. */
     QueueHandle_t xMotorQ;
-    TimerHandle_t xTimer200ms;
+    TimerHandle_t xMotorTimer;
    
 } MOTOR_DATA;
 

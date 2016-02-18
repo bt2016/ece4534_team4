@@ -80,6 +80,7 @@ typedef struct
 	QueueHandle_t q_adc_interrupt;
 	TimerHandle_t t_adc_interrupt;
     char sendCount;
+    int sendToSensorQ_Err;
 
 } SENSOR_DATA;
 
