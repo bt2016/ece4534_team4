@@ -66,7 +66,11 @@ void receiveDataFromISR() {
         while (xQueueReceiveFromISR(sendData.xTransmitQ, (void *) &readChar, &xTaskWokenByReceive) ) 
         {
             // A character was received.  Transmit the character now.
-            if (sendData.testCount % BREAK_MESSAGE_DIV != 2)
+            if (sendData.testCount % BREAK_MESSAGE_DIV != 2) // Error simulation constant (missing byte)
+                PLIB_USART_TransmitterByteSend(USART_ID_1, readChar);
+            
+            // Duplicate data error simulation constant
+            if (sendData.testCount % ADD_MESSAGE_DIV == 1)
                 PLIB_USART_TransmitterByteSend(USART_ID_1, readChar);
             
             // If removing the character from the queue woke the task that was
@@ -82,7 +86,7 @@ void receiveDataFromISR() {
 // FROM SEND TASK TO TRANSMIT QUEUE (ON WAY TO UART)
 void sendDataToMsgQ(char* message) {
     
-    // Check for proper message start
+    // Check for proper message start - minor preliminary error check
     if (*message == '~') {
         char* k = message;
         int iter = 0;
@@ -115,10 +119,11 @@ void checkSourceQ()
     char readdata[MSG_LENGTH];
     char newData = 0;
     
+    // Read data until the most recent message is received
     while (uxQueueMessagesWaiting(sendData.xDataToSendQ) != 0){
         if (xQueueReceive(sendData.xDataToSendQ, &readdata, portMAX_DELAY))
         {
-            dbgOutputVal(SEND_RECEIVEFROMQ);
+            //dbgOutputVal(SEND_RECEIVEFROMQ);
             newData = 1;
         } 
     }
@@ -127,6 +132,8 @@ void checkSourceQ()
     if (newData == 1) sendDataToMsgQ(readdata);
 }
 
+// Remove oldest data on full local data queue
+// Returns 1 if successful, 0 otherwise
 uint8_t sendRemoveQueueData() {
     char readdata[MSG_LENGTH];
 
@@ -142,6 +149,7 @@ uint8_t sendRemoveQueueData() {
 void putMsgOnSendQueue(char* data) {
     if (sendData.xDataToSendQ != 0) {
         
+        // Check for full queue. If no spaces available, call to remove oldest data.
         if (uxQueueSpacesAvailable( sendData.xDataToSendQ ) == 0) {
             // If message is not removed from queue, return and signal error
             if (sendRemoveQueueData() == 0) {
@@ -151,6 +159,7 @@ void putMsgOnSendQueue(char* data) {
             }
         }
         
+        // Send to queue, with at least one vacancy guaranteed for this data
         if( xQueueSend( sendData.xDataToSendQ, (void*) data, portMAX_DELAY) != pdPASS )
         {
             dbgOutputVal(MOTOR_SENDTOSENDQ_FAIL);
@@ -198,7 +207,7 @@ void SEND_Initialize ( void )
     }
 }
 
-// Finite state machine definition
+// Finite state machine definition, runs forever
 void SEND_Tasks ( void )
 {
    while (1)

@@ -76,7 +76,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 void IntHandlerDrvUsartInstance0(void)
 {
-
     /* TODO: Add code to process interrupt here */
     if (!DRV_USART0_ReceiverBufferIsEmpty()){
         char incomingByte = DRV_USART0_ReadByte();

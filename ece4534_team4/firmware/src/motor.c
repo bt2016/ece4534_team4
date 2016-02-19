@@ -69,7 +69,7 @@ void MOTOR_Initialize ( void )
     //Create a timer
     motorData.xMotorTimer = xTimerCreate(  
                      "MotorTimer", //Just a text name
-                     ( MOTOR_TIMER_RATE / portTICK_PERIOD_MS ), //period is 200ms
+                     ( MOTOR_TIMER_RATE / portTICK_PERIOD_MS ), //period in ms
                      pdTRUE, //auto-reload when expires
                      (void *) 25, //a unique id
                      motorTimerCallback ); //pointer to callback function
@@ -86,6 +86,7 @@ void MOTOR_Initialize ( void )
    
 }
 
+// Finite state machine, runs forever
 void MOTOR_Tasks ( void )
 {
    while (1)
@@ -109,19 +110,21 @@ void MOTOR_Tasks ( void )
     }//end while
 }
 
+// Pack and transfer message to data queue in Send task
 void motorSendToMsgQ() {
 
-        LATACLR = 1 << 3; // Clear LED
+        //LATACLR = 1 << 3; // Clear LED
         
         motorData.sendCount++;
         
+        // Error simulation constant - skip count byte in messages
         if (MESSAGE_COUNT_SKIP_DIV > (rand() % 20))
             motorData.sendCount++;
                 
         // Convert sensor data to message format character array
         char data[MSG_LENGTH];
         data[0] = MSG_START;            // Start byte
-        data[1] = 'm';                  // Type byte
+        data[1] = TYPE_LR_ENCODER;      // Type byte
         data[2] = motorData.sendCount;  // Count byte
         // Dummy values (data bytes x6)
         data[3] = 0x22;
@@ -132,9 +135,11 @@ void motorSendToMsgQ() {
         data[8] = 0x77;
         data[9] = MSG_STOP;             // Stop byte
                 
-        putMsgOnSendQueue(data);
+        putMsgOnSendQueue(data);  // Transfer message to Send task queue
 }
 
+// Remove oldest data on full local motor queue
+// Returns 1 if successful, 0 otherwise
 uint8_t motorRemoveQueueData() {
     char readdata[MSG_LENGTH];
 
@@ -146,9 +151,12 @@ uint8_t motorRemoveQueueData() {
     return 0x0;
 }
 
+// Check local motor queue for vacancies. If none, remove oldest data.
+// After, add the parameter char* message to local motor queue. 
 void putDataOnMotorQ(char* data) {
     if (motorData.xMotorQ != 0) {
         
+        // Check for full queue. If no spaces available, call to remove oldest data.
         if (uxQueueSpacesAvailable( motorData.xMotorQ ) == 0) {
             // If message is not removed from queue, return and signal error
             if (motorRemoveQueueData() == 0) {
@@ -158,6 +166,7 @@ void putDataOnMotorQ(char* data) {
             }
         }
         
+        // Send to queue, with at least one vacancy guaranteed for this data
         if( xQueueSend( motorData.xMotorQ, (void*) data, portMAX_DELAY) != pdPASS )
         {
             dbgOutputVal(RECEIVE_SENDTOMOTORQ_FAIL);
@@ -165,11 +174,12 @@ void putDataOnMotorQ(char* data) {
     }
 }
 
-
+// Read value from local message queue
 void motorReceiveFromMsgQ() {
     char readdata[MSG_LENGTH];
     char newData = 0;
     
+    // Read from messages until most recent data (FIFO queue)
     while (uxQueueMessagesWaiting(motorData.xMotorQ) != 0){
     
         if (xQueueReceive(motorData.xMotorQ, &readdata, portMAX_DELAY))
@@ -178,8 +188,8 @@ void motorReceiveFromMsgQ() {
             newData = 1;
             
             // Check for correct message format
-            if (readdata[0] == '~' && readdata[9] == '.')
-                LATASET = 1 << 3;   // Light LED
+            //if (readdata[0] == '~' && readdata[9] == '.')
+                //LATASET = 1 << 3;   // Light LED
         } 
     }
 }

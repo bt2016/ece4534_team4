@@ -69,8 +69,12 @@ typedef struct
     RECEIVE_STATES state;
     QueueHandle_t xReceiveIntQ;
     
-    TimerHandle_t xTimer125ms;
+    TimerHandle_t xReceiveTimer;
     char sendCount;
+    unsigned short int goodMsg;
+    unsigned short int shortMsg;
+    unsigned short int badMsg;
+    unsigned short int longMsg;
     
 } RECEIVE_DATA;
 
@@ -87,7 +91,7 @@ typedef struct
     
     char stop; //this is our stop value "."
     
-    char buffer[11]; // the actual buffer that holds what we've got
+    char buffer[10]; // the actual buffer that holds what we've got
     
     
     

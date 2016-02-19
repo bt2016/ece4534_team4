@@ -37,19 +37,36 @@ extern "C" {
     /* ************************************************************************** */
     /* ************************************************************************** */
 
-#define MSG_START '~'
+// Message format. Constant through system. 
+#define MSG_START 0x7E   // '~'
 #define MSG_STOP '.'
 #define MSG_LENGTH 10
     
-#define BREAK_MESSAGE_DIV 1        // Normal = 0
-#define MESSAGE_RATE_DIV 2         // Normal = 2
-#define MESSAGE_COUNT_SKIP_DIV 0   // Normal = 0
+// Message types
+#define TYPE_LR_SENSOR 0xF7
+#define TYPE_LR_ENCODER 0x7F
+#define TYPE_SENSOR 0xE7
+#define TYPE_COORDINATOR_MOTOR_CONTROL 0x5E
+#define TYPE_MESSAGE_RECEIVE_DATA 0xFE
     
-#define MOTOR_TIMER_RATE 55
-#define SENSOR_TIMER_RATE 40
-#define SEND_TIMER_RATE 100
-#define RECEIVE_TIMER_RATE 125
     
+    
+// Add duplicate byte inside message once every x bytes. Normal operation = 1
+#define ADD_MESSAGE_DIV 1      
+// Remove byte inside message once every x bytes. Normal operation = 1.
+#define BREAK_MESSAGE_DIV 1       
+// Message send rate multiplication. Normal operation = 2.
+#define MESSAGE_RATE_DIV 2       
+// Skip byte count every x messages. Normal operation = 0.
+#define MESSAGE_COUNT_SKIP_DIV 0 
+    
+#define MOTOR_TIMER_RATE 55       // Motor message send rate (ms)
+#define SENSOR_TIMER_RATE 40      // Sensor message send rate (ms)
+#define SEND_TIMER_RATE 100       
+#define RECEIVE_TIMER_RATE 125    // Receive code send to motor rate (for MS#2)
+    
+    
+// DEBUG CODE - POTENTIAL VITAL ERRORS
 #define SEND_RECEIVEFROMQ 0x03
 #define SEND_SENDTOTRANSMITQ 0x23
 #define SEND_SENDTOTRANSMITQ_FAIL 0x73
@@ -81,7 +98,7 @@ extern "C" {
 #define SENSOR_ENTERED_DEFAULT 0xE6
 #define SENSOR_SENDTOSENSORQ_FAIL 0xC6
 #define SENSOR_FULLQUEUE 0xB6
-#define SENSOR_QUEUE_FAIL 0x25
+#define SENSOR_QUEUE_FAIL 0x26
 
     // *****************************************************************************
     // *****************************************************************************
