@@ -78,6 +78,7 @@ typedef struct
     char sendCount;
     int queueReadFails;
     int txSendFails;
+    int testCount;
 
     /* TODO: Define any additional data used by the application. */
     QueueHandle_t xTransmitQ;

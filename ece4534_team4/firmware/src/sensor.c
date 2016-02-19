@@ -61,14 +61,17 @@ void SENSOR_Initialize ( void )
 	
 	//Create a queue capable of holding 25 unsigned long numbers
     sensorData.q_adc_interrupt = xQueueCreate( 2500, sizeof( unsigned int ) ); 
-    if( sensorData.q_adc_interrupt == 0 ) stopAll();
+    if( sensorData.q_adc_interrupt == 0 ) {
+        dbgOutputVal(SENSOR_QUEUE_FAIL);
+        stopAll();
+    }
 	
 	//Create a timer with rollover rate 100ms
 	sensorData.t_adc_interrupt = xTimerCreate(  
-				 "Timer100ms", //Just a text name
-				 ( 100 / portTICK_PERIOD_MS ), //period is 100ms
+				 "SensorTimer", //Just a text name
+				 ( SENSOR_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
 				 pdTRUE, //auto-reload when expires
-				 (void *) 23, //a unique id
+				 (void *) 29, //a unique id
 				 sensorTimerCallback ); //pointer to callback function
 				 
     //Start the timer
@@ -107,6 +110,9 @@ void SENSOR_Tasks ( void )
 		    if (xQueueReceive(sensorData.q_adc_interrupt, &qData, portMAX_DELAY))
 			{
                 sensorData.sendCount++;
+                
+                if (MESSAGE_COUNT_SKIP_DIV > (rand() % 10))
+                    sensorData.sendCount++;
                 
                 // Convert sensor data to message format character array
                 //qData = 0x55565758;
@@ -153,7 +159,7 @@ uint8_t removeQueueData() {
     unsigned int* qData;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     
-    if (xQueueReceiveFromISR(sensorData.q_adc_interrupt, &qData, xHigherPriorityTaskWoken)) {
+    if (xQueueReceiveFromISR(sensorData.q_adc_interrupt, &qData, &xHigherPriorityTaskWoken)) {
         return 0x1;
     }
     
@@ -165,7 +171,7 @@ void sendValToSensorTaskFromISR(unsigned int* message)
     
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     
-    if (xQueueIsQueueFullFromISR == pdTRUE) {
+    if (xQueueIsQueueFullFromISR(sensorData.q_adc_interrupt) == pdTRUE) {
         // If message is not removed from queue, return and signal error
         if (removeQueueData() == 0) {
             dbgOutputVal(SENSOR_FULLQUEUE);

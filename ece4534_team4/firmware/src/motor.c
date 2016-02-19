@@ -5,7 +5,7 @@
     Microchip Technology Inc.
   
   File Name:
-    send.c
+    motor.c
 
   Summary:
     This file contains the source code for the MPLAB Harmony application.
@@ -61,12 +61,15 @@ void MOTOR_Initialize ( void )
     
     //Create a queue capable of holding 250 system messages
     motorData.xMotorQ = xQueueCreate( 250, MSG_LENGTH+1 ); 
-    if( motorData.xMotorQ == 0 ) stopAll();
+    if( motorData.xMotorQ == 0 ) {
+        dbgOutputVal(MOTOR_QUEUE_FAIL);
+        stopAll();
+    }
     
     //Create a timer
     motorData.xMotorTimer = xTimerCreate(  
-                     "MotorTimer200ms", //Just a text name
-                     ( 130 / portTICK_PERIOD_MS ), //period is 200ms
+                     "MotorTimer", //Just a text name
+                     ( MOTOR_TIMER_RATE / portTICK_PERIOD_MS ), //period is 200ms
                      pdTRUE, //auto-reload when expires
                      (void *) 25, //a unique id
                      motorTimerCallback ); //pointer to callback function
@@ -111,6 +114,9 @@ void motorSendToMsgQ() {
         LATACLR = 1 << 3; // Clear LED
         
         motorData.sendCount++;
+        
+        if (MESSAGE_COUNT_SKIP_DIV > (rand() % 20))
+            motorData.sendCount++;
                 
         // Convert sensor data to message format character array
         char data[MSG_LENGTH];
@@ -129,8 +135,28 @@ void motorSendToMsgQ() {
         putMsgOnSendQueue(data);
 }
 
+uint8_t motorRemoveQueueData() {
+    char readdata[MSG_LENGTH];
+
+    if (xQueueReceive(motorData.xMotorQ, &readdata, portMAX_DELAY))
+    {
+        return 0x1;
+    } 
+    
+    return 0x0;
+}
+
 void putDataOnMotorQ(char* data) {
     if (motorData.xMotorQ != 0) {
+        
+        if (uxQueueSpacesAvailable( motorData.xMotorQ ) == 0) {
+            // If message is not removed from queue, return and signal error
+            if (motorRemoveQueueData() == 0) {
+                dbgOutputVal(MOTOR_FULLQUEUE);
+                stopAll();
+                return;
+            }
+        }
         
         if( xQueueSend( motorData.xMotorQ, (void*) data, portMAX_DELAY) != pdPASS )
         {

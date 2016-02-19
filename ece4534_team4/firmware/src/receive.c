@@ -93,7 +93,10 @@ void RECEIVE_Initialize ( void )
     
     //Create a queue capable of holding 2500 chararacters (bytes))
     receiveData.xReceiveIntQ = xQueueCreate(2500, sizeof( char ) ); 
-    if( receiveData.xReceiveIntQ == 0 ) stopAll(); //ERROR
+    if( receiveData.xReceiveIntQ == 0 ) {
+        dbgOutputVal(RECEIVE_QUEUE_FAIL);
+        stopAll(); //ERROR
+    }
     
     messageBuffer.nextByteAt = 0;
     messageBuffer.start = '~';
@@ -104,8 +107,8 @@ void RECEIVE_Initialize ( void )
     
     //Create a timer
     receiveData.xTimer125ms = xTimerCreate(  
-                     "ReceiveTimer125ms", //Just a text name
-                     ( 125 / portTICK_PERIOD_MS ), //period is 200ms
+                     "ReceiveTimer", //Just a text name
+                     ( RECEIVE_TIMER_RATE / portTICK_PERIOD_MS ), //period is 200ms
                      pdTRUE, //auto-reload when expires
                      (void *) 27, //a unique id
                      receiveTimerCallback ); //pointer to callback function

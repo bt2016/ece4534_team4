@@ -66,11 +66,14 @@ void receiveDataFromISR() {
         while (xQueueReceiveFromISR(sendData.xTransmitQ, (void *) &readChar, &xTaskWokenByReceive) ) 
         {
             // A character was received.  Transmit the character now.
-            PLIB_USART_TransmitterByteSend(USART_ID_1, readChar);
+            if (sendData.testCount % BREAK_MESSAGE_DIV != 2)
+                PLIB_USART_TransmitterByteSend(USART_ID_1, readChar);
+            
             // If removing the character from the queue woke the task that was
             // posting onto the queue cTaskWokenByReceive will have been set to
             // pdTRUE.  No matter how many times this loop iterates only one
             // task will be woken.
+            sendData.testCount++;
         }
     }
 }
@@ -94,7 +97,7 @@ void sendDataToMsgQ(char* message) {
                 if( xQueueSend( sendData.xTransmitQ, (void*) k, portMAX_DELAY) != pdPASS )
                 {
                     dbgOutputVal(SEND_SENDTOTRANSMITQ_FAIL);
-                    stopAll(); //failed to send to queue
+                    //stopAll(); //failed to send to queue
                 }
 
                 ++k; // Iterate to next char in message
@@ -102,7 +105,6 @@ void sendDataToMsgQ(char* message) {
                 // Enable transmitter interrupt to signal empty buffer
                 PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT); 
             }
-            //PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT); 
         }
     }
 }
@@ -125,9 +127,29 @@ void checkSourceQ()
     if (newData == 1) sendDataToMsgQ(readdata);
 }
 
+uint8_t sendRemoveQueueData() {
+    char readdata[MSG_LENGTH];
+
+    if (xQueueReceive(sendData.xDataToSendQ, &readdata, portMAX_DELAY))
+    {
+        return 0x1;
+    } 
+    
+    return 0x0;
+}
+
 // Place data passed in from Motor or Sensor onto queue
 void putMsgOnSendQueue(char* data) {
     if (sendData.xDataToSendQ != 0) {
+        
+        if (uxQueueSpacesAvailable( sendData.xDataToSendQ ) == 0) {
+            // If message is not removed from queue, return and signal error
+            if (sendRemoveQueueData() == 0) {
+                dbgOutputVal(SEND_FULLQUEUE);
+                stopAll();
+                return;
+            }
+        }
         
         if( xQueueSend( sendData.xDataToSendQ, (void*) data, portMAX_DELAY) != pdPASS )
         {
@@ -141,19 +163,26 @@ void SEND_Initialize ( void )
 {
     sendData.state = SEND_STATE_INIT;
     sendData.sendCount = 0x55;
+    sendData.testCount = 0;
     
     //Create a queue capable of holding 2500 characters
     sendData.xTransmitQ = xQueueCreate( 2500, sizeof(char) );
-    if( sendData.xTransmitQ == 0 ) stopAll();
+    if( sendData.xTransmitQ == 0 ) {
+        dbgOutputVal(SEND_QUEUE_FAIL);
+        stopAll();
+    }
     
     // Create a queue capable of holding 250 messages
     sendData.xDataToSendQ = xQueueCreate(250, MSG_LENGTH+1);
-    if (sendData.xDataToSendQ == 0) stopAll();
+    if (sendData.xDataToSendQ == 0) {
+        dbgOutputVal(SEND_QUEUE_FAIL);
+        stopAll();
+    }
     
     //Create a timer
     sendData.xTimer100ms = xTimerCreate(  
                      "SendTimer100ms", //Just a text name
-                     ( 100 / portTICK_PERIOD_MS ), //period is 100ms
+                     ( SEND_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
                      pdTRUE, //auto-reload when expires
                      (void *) 23, //a unique id
                      vTimerCallback ); //pointer to callback function

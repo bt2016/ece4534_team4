@@ -16,8 +16,11 @@
  */
 
 #include "timerCallback.h"
+#include "proj_definitions.h"
 
 unsigned int sendms = 0;
+unsigned int sensorTick = 0;
+unsigned int motorTick = 0;
 
 void vTimerCallback(TimerHandle_t pxTimer) {
     sendms += 1; //Timer is called every 100ms
@@ -27,11 +30,15 @@ void vTimerCallback(TimerHandle_t pxTimer) {
 }
 
 void sensorTimerCallback(TimerHandle_t sTimer){
-    PLIB_ADC_SamplingStart(0);
+    sensorTick++;
+    if (sensorTick % MESSAGE_RATE_DIV == 0)
+        PLIB_ADC_SamplingStart(0);
 }
 
 void motorTimerCallback(TimerHandle_t mTimer) {
-    motorSendToMsgQ();
+    motorTick++;
+    if (motorTick % MESSAGE_RATE_DIV == 0) 
+        motorSendToMsgQ();
 }
 
 void receiveTimerCallback(TimerHandle_t rTimer) {
