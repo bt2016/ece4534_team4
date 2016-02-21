@@ -68,13 +68,14 @@ extern "C" {
 typedef enum
 {
 	MOTOR_STATE_INIT=0,
+    MOTOR_LOOP
 } MOTOR_STATES;
 
 typedef struct
 {
     /* The application's current state */
     MOTOR_STATES state;
-    char sendCount;
+    unsigned short int sendCount;
 
     /* TODO: Define any additional data used by the application. */
     QueueHandle_t xMotorQ;

@@ -84,7 +84,7 @@ void receiveDataFromISR() {
    
 
 // FROM SEND TASK TO TRANSMIT QUEUE (ON WAY TO UART)
-void sendDataToMsgQ(char* message) {
+void sendDataToTransmitQ(char* message) {
     
     // Check for proper message start - minor preliminary error check
     if (*message == '~') {
@@ -101,7 +101,6 @@ void sendDataToMsgQ(char* message) {
                 if( xQueueSend( sendData.xTransmitQ, (void*) k, portMAX_DELAY) != pdPASS )
                 {
                     dbgOutputVal(SEND_SENDTOTRANSMITQ_FAIL);
-                    //stopAll(); //failed to send to queue
                 }
 
                 ++k; // Iterate to next char in message
@@ -113,8 +112,8 @@ void sendDataToMsgQ(char* message) {
     }
 }
 
-// Check queue holding the data from the motor/sensor
-void checkSourceQ()
+// Check queue holding the data from other component tasks
+void receiveFromSendQ()
 {    
     char readdata[MSG_LENGTH];
     char newData = 0;
@@ -129,14 +128,14 @@ void checkSourceQ()
     }
 
     // If message received, push to UART transmit queue
-    if (newData == 1) sendDataToMsgQ(readdata);
+    if (newData == 1) sendDataToTransmitQ(readdata);
 }
 
 // Remove oldest data on full local data queue
 // Returns 1 if successful, 0 otherwise
-uint8_t sendRemoveQueueData() {
+uint8_t removeSendQueueData() {
     char readdata[MSG_LENGTH];
-
+ 
     if (xQueueReceive(sendData.xDataToSendQ, &readdata, portMAX_DELAY))
     {
         return 0x1;
@@ -145,16 +144,23 @@ uint8_t sendRemoveQueueData() {
     return 0x0;
 }
 
-// Place data passed in from Motor or Sensor onto queue
+// Place data passed from other tasks into send queue
 void putMsgOnSendQueue(char* data) {
+    
+    sendData.enqueueCount++;
+    
+    // Error simulation code, skip send enqueue
+    if (sendData.enqueueCount % MESSAGE_SKIP_DIV == 1)
+        return;
+    
     if (sendData.xDataToSendQ != 0) {
         
         // Check for full queue. If no spaces available, call to remove oldest data.
         if (uxQueueSpacesAvailable( sendData.xDataToSendQ ) == 0) {
             // If message is not removed from queue, return and signal error
-            if (sendRemoveQueueData() == 0) {
+            if (removeSendQueueData() == 0) {
                 dbgOutputVal(SEND_FULLQUEUE);
-                stopAll();
+                //stopAll();
                 return;
             }
         }
@@ -173,9 +179,10 @@ void SEND_Initialize ( void )
     sendData.state = SEND_STATE_INIT;
     sendData.sendCount = 0x55;
     sendData.testCount = 0;
+    sendData.enqueueCount = 0;
     
-    //Create a queue capable of holding 2500 characters
-    sendData.xTransmitQ = xQueueCreate( 2500, sizeof(char) );
+    //Create a queue capable of holding 1000 characters
+    sendData.xTransmitQ = xQueueCreate( 1000, sizeof(char) );
     if( sendData.xTransmitQ == 0 ) {
         dbgOutputVal(SEND_QUEUE_FAIL);
         stopAll();
@@ -223,7 +230,7 @@ void SEND_Tasks ( void )
             // Continually check data receive queue for new motor/sensor output
             case SEND_STATE_LOOP:
             {
-                checkSourceQ();
+                receiveFromSendQ();
                 break;
             }
 

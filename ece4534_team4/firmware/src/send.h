@@ -76,9 +76,8 @@ typedef struct
     /* The application's current state */
     SEND_STATES state;
     char sendCount;
-    int queueReadFails;
-    int txSendFails;
     int testCount;
+    int enqueueCount;
 
     /* TODO: Define any additional data used by the application. */
     QueueHandle_t xTransmitQ;

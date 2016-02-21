@@ -43,7 +43,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "receive.h"
 #include "proj_definitions.h"
-//#include "receivePublic.h"
 
 RECEIVE_DATA receiveData;
 M_BUFFER messageBuffer;
@@ -55,11 +54,11 @@ void clearBuffer(){
     
 }
 
-void receiveSendToMsgQ() {
+void receiveSendToMotorQ() {
     // Convert sensor data to message format character array
     char data[MSG_LENGTH];
     data[0] = MSG_START;                         // Start byte
-    data[1] = TYPE_COORDINATOR_MOTOR_CONTROL;    // Type byte
+    data[1] = TYPEC_MOTOR_CONTROL;    // Type byte
     data[2] = 0x67;  // Count byte
     // Dummy values
     data[3] = 0x20;
@@ -88,22 +87,22 @@ void receiveSendValFromISR(char* data){
 }
 
 // Report number of good and bad messages to send queue to be transmitted to Pi via UART
-void reportMsgData() {
+void reportMsgDataToSendQ() {
     receiveData.sendCount++;
     
-        // Convert message receive data to message format character array
-        char data[MSG_LENGTH];
-        data[0] = MSG_START;                  // Start byte
-        data[1] = TYPE_MESSAGE_RECEIVE_DATA;  // Type byte
-        data[2] = receiveData.sendCount;      // Count byte
-        // Dummy values (data bytes x6)
-        data[3] = 0x0;
-        data[4] = 0x0;
-        data[5] = ((receiveData.badMsg & 0xFF00) >> 8);
-        data[6] = receiveData.badMsg & 0xFF; 
-        data[7] = ((receiveData.goodMsg & 0xFF00) >> 8); 
-        data[8] = (receiveData.goodMsg & 0xFF);
-        data[9] = MSG_STOP;             // Stop byte
+    // Convert message receive data to message format character array
+    char data[MSG_LENGTH];
+    data[0] = MSG_START;                  // Start byte
+    data[1] = TYPE_MESSAGE_RECEIVE_DATA;  // Type byte
+    data[2] = receiveData.sendCount;      // Count byte
+    // Dummy values (data bytes x6)
+    data[3] = 0x0;
+    data[4] = 0x0;
+    data[5] = ((receiveData.badMsg & 0xFF00) >> 8);
+    data[6] = receiveData.badMsg & 0xFF; 
+    data[7] = ((receiveData.goodMsg & 0xFF00) >> 8); 
+    data[8] = (receiveData.goodMsg & 0xFF);
+    data[9] = MSG_STOP;             // Stop byte
         
     putMsgOnSendQueue(data);  // Transfer message to Send task queue
     
@@ -115,12 +114,10 @@ void RECEIVE_Initialize ( void )
 {
     receiveData.state = RECEIVE_STATE_INIT;
     receiveData.goodMsg = 0;
-    receiveData.longMsg = 0;
-    receiveData.shortMsg = 0;
     receiveData.badMsg = 0;
-    
-    //Create a queue capable of holding 2500 characters (bytes))
-    receiveData.xReceiveIntQ = xQueueCreate(2500, sizeof( char ) ); 
+
+    //Create a queue capable of holding 1000 characters (bytes))
+    receiveData.xReceiveIntQ = xQueueCreate(1000, sizeof( char ) ); 
     if( receiveData.xReceiveIntQ == 0 ) {
         dbgOutputVal(RECEIVE_QUEUE_FAIL);
         stopAll(); //ERROR
@@ -133,7 +130,15 @@ void RECEIVE_Initialize ( void )
     
     //Initialize any types you want to use right here? 
     
-    //Create a timer
+    //Timer to send to internal task queue
+    receiveData.xReceiveDistTimer = xTimerCreate(  
+                     "ReceiveDistTimer", //Just a text name
+                     ( DIST_TIMER_RATE / portTICK_PERIOD_MS ), //period in ms
+                     pdTRUE, //auto-reload when expires
+                     (void *) 31, //a unique id
+                     distributeCallback ); //pointer to callback function
+    
+    //Timer for message data report
     receiveData.xReceiveTimer = xTimerCreate(  
                      "ReceiveTimer", //Just a text name
                      ( RECEIVE_TIMER_RATE / portTICK_PERIOD_MS ), //period in ms
@@ -141,7 +146,17 @@ void RECEIVE_Initialize ( void )
                      (void *) 27, //a unique id
                      receiveTimerCallback ); //pointer to callback function
     
-    //Start the timer
+    //Start the timers
+        //Start the timer
+    if( receiveData.xReceiveDistTimer == NULL ) {
+        dbgOutputVal(RECEIVE_TIMERINIT_FAIL);
+        stopAll();
+    }
+    else if( xTimerStart( receiveData.xReceiveDistTimer, 0 ) != pdPASS ) {
+        dbgOutputVal(RECEIVE_TIMERINIT_FAIL);
+        stopAll();
+    }
+    
     if( receiveData.xReceiveTimer == NULL ) {
         dbgOutputVal(RECEIVE_TIMERINIT_FAIL);
         stopAll();
@@ -164,7 +179,7 @@ void RECEIVE_Tasks ( void )
         dbgOutputVal(qData);   
 
         if(qData == messageBuffer.start){
-       
+            
             LATASET = 1 << 3;
             clearBuffer();
             messageBuffer.buffer[0] = qData; // ~ 
@@ -214,6 +229,7 @@ void RECEIVE_Tasks ( void )
         default:
         {
             dbgOutputVal(RECEIVE_ENTERED_DEFAULT);
+            receiveData.state = RECEIVE_STATE_INIT;
             break;
         }
     }

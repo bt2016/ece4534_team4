@@ -53,6 +53,82 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 MOTOR_DATA motorData;
 
+// Pack and transfer message to data queue in Send task
+void motorSendToMsgQ() {
+    
+    // If disable bool set, do not give message to Send queue
+    if (CUT_MOTOR) return;
+                
+    // Convert sensor data to message format character array
+    char data[MSG_LENGTH];
+    data[0] = MSG_START;            // Start byte
+    data[1] = TYPE_LR_ENCODER;      // Type byte
+    data[2] = motorData.sendCount;  // Count byte
+    // Dummy values (data bytes x6)
+    data[3] = 0x22;
+    data[4] = 0x33;
+    data[5] = 0x44;
+    data[6] = 0x55; 
+    data[7] = 0x66; 
+    data[8] = 0x77;
+    data[9] = MSG_STOP;             // Stop byte
+          
+    putMsgOnSendQueue(data);  // Transfer message to Send task queue
+            
+    motorData.sendCount++;
+}
+
+// Remove oldest data on full local motor queue
+// Returns 1 if successful, 0 otherwise
+uint8_t removeMotorQueueData() {
+    char readdata[MSG_LENGTH];
+
+    if (xQueueReceive(motorData.xMotorQ, &readdata, portMAX_DELAY))
+    {
+        return 0x1;
+    } 
+    
+    return 0x0;
+}
+
+// Check local motor queue for vacancies. If none, remove oldest data.
+// After, add the parameter char* message to local motor queue. 
+void putDataOnMotorQ(char* data) {
+    if (motorData.xMotorQ != 0) {
+        
+        // Check for full queue. If no spaces available, call to remove oldest data.
+        if (uxQueueSpacesAvailable( motorData.xMotorQ ) == 0) {
+            // If message is not removed from queue, return and signal error
+            if (removeMotorQueueData() == 0) {
+                dbgOutputVal(MOTOR_FULLQUEUE);
+                stopAll();
+                return;
+            }
+        }
+        
+        // Send to queue, with at least one vacancy guaranteed for this data
+        if( xQueueSend( motorData.xMotorQ, (void*) data, portMAX_DELAY) != pdPASS )
+        {
+            dbgOutputVal(RECEIVE_SENDTOMOTORQ_FAIL);
+        }
+    }
+}
+
+// Read value from local message queue
+void receiveFromMotorQ() {
+    char readdata[MSG_LENGTH];
+
+    // Read from messages until most recent data (FIFO queue)
+    while (uxQueueMessagesWaiting(motorData.xMotorQ) != 0){
+    
+        if (xQueueReceive(motorData.xMotorQ, &readdata, portMAX_DELAY))
+        {
+            //dbgOutputVal(MOTOR_RECEIVEFROMQ);
+        } 
+    }
+}
+
+
 void MOTOR_Initialize ( void )
 {
     motorData.sendCount = 0;
@@ -69,7 +145,7 @@ void MOTOR_Initialize ( void )
     //Create a timer
     motorData.xMotorTimer = xTimerCreate(  
                      "MotorTimer", //Just a text name
-                     ( MOTOR_TIMER_RATE / portTICK_PERIOD_MS ), //period in ms
+                     ( LR_MOTOR_TIMER_RATE / portTICK_PERIOD_MS ), //period in ms
                      pdTRUE, //auto-reload when expires
                      (void *) 25, //a unique id
                      motorTimerCallback ); //pointer to callback function
@@ -95,103 +171,25 @@ void MOTOR_Tasks ( void )
         {
             case MOTOR_STATE_INIT:
             {
-                motorReceiveFromMsgQ();
+                motorData.state = MOTOR_LOOP;
+                break;
+            }
+            
+            case MOTOR_LOOP:
+            {
+                receiveFromMotorQ();
                 break;
             }
 
             default: /* The default state should never be executed. */
             {
-                motorData.state = MOTOR_STATE_INIT;
+                motorData.state = MOTOR_LOOP;
                 dbgOutputVal(MOTOR_ENTERED_DEFAULT);
                 break;
             }
 
         }//end switch
     }//end while
-}
-
-// Pack and transfer message to data queue in Send task
-void motorSendToMsgQ() {
-
-        //LATACLR = 1 << 3; // Clear LED
-        
-        motorData.sendCount++;
-        
-        // Error simulation constant - skip count byte in messages
-        if (MESSAGE_COUNT_SKIP_DIV > (rand() % 20))
-            motorData.sendCount++;
-                
-        // Convert sensor data to message format character array
-        char data[MSG_LENGTH];
-        data[0] = MSG_START;            // Start byte
-        data[1] = TYPE_LR_ENCODER;      // Type byte
-        data[2] = motorData.sendCount;  // Count byte
-        // Dummy values (data bytes x6)
-        data[3] = 0x22;
-        data[4] = 0x33;
-        data[5] = 0x44;
-        data[6] = 0x55; 
-        data[7] = 0x66; 
-        data[8] = 0x77;
-        data[9] = MSG_STOP;             // Stop byte
-                
-        putMsgOnSendQueue(data);  // Transfer message to Send task queue
-}
-
-// Remove oldest data on full local motor queue
-// Returns 1 if successful, 0 otherwise
-uint8_t motorRemoveQueueData() {
-    char readdata[MSG_LENGTH];
-
-    if (xQueueReceive(motorData.xMotorQ, &readdata, portMAX_DELAY))
-    {
-        return 0x1;
-    } 
-    
-    return 0x0;
-}
-
-// Check local motor queue for vacancies. If none, remove oldest data.
-// After, add the parameter char* message to local motor queue. 
-void putDataOnMotorQ(char* data) {
-    if (motorData.xMotorQ != 0) {
-        
-        // Check for full queue. If no spaces available, call to remove oldest data.
-        if (uxQueueSpacesAvailable( motorData.xMotorQ ) == 0) {
-            // If message is not removed from queue, return and signal error
-            if (motorRemoveQueueData() == 0) {
-                dbgOutputVal(MOTOR_FULLQUEUE);
-                stopAll();
-                return;
-            }
-        }
-        
-        // Send to queue, with at least one vacancy guaranteed for this data
-        if( xQueueSend( motorData.xMotorQ, (void*) data, portMAX_DELAY) != pdPASS )
-        {
-            dbgOutputVal(RECEIVE_SENDTOMOTORQ_FAIL);
-        }
-    }
-}
-
-// Read value from local message queue
-void motorReceiveFromMsgQ() {
-    char readdata[MSG_LENGTH];
-    char newData = 0;
-    
-    // Read from messages until most recent data (FIFO queue)
-    while (uxQueueMessagesWaiting(motorData.xMotorQ) != 0){
-    
-        if (xQueueReceive(motorData.xMotorQ, &readdata, portMAX_DELAY))
-        {
-            dbgOutputVal(MOTOR_RECEIVEFROMQ);
-            newData = 1;
-            
-            // Check for correct message format
-            //if (readdata[0] == '~' && readdata[9] == '.')
-                //LATASET = 1 << 3;   // Light LED
-        } 
-    }
 }
 
 /*******************************************************************************

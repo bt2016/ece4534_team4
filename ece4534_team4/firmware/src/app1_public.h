@@ -1,5 +1,9 @@
 /* ************************************************************************** */
-/** Descriptive File Name
+/** 
+  @Project
+     ECE 4534 Embedded Design
+     Team 4 - 11:00 TR
+ 
   @File Name
     app1_public.h
 

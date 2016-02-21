@@ -1,17 +1,14 @@
 /* ************************************************************************** */
-/** Descriptive File Name
-
-  @Company
-    Company Name
+/** 
+  @Project
+     ECE 4534 Embedded Design
+     Team 4 - 11:00 TR
 
   @File Name
     proj_definitions.h
 
   @Summary
      Location of key constants and values used throughout system
-
-  @Description
-    Describe the purpose of this file.
  */
 /* ************************************************************************** */
 
@@ -38,32 +35,56 @@ extern "C" {
     /* ************************************************************************** */
 
 // Message format. Constant through system. 
-#define MSG_START 0x7E   // '~'
-#define MSG_STOP '.'
-#define MSG_LENGTH 10
+#define MSG_START 0x7E   // '~'  126
+#define MSG_STOP 0x2E    // '.'  46
+#define MSG_LENGTH 10    // START - TYPE - COUNT - DATA x6 - STOP
     
-// Message types
-#define TYPE_LR_SENSOR 0xF7
-#define TYPE_LR_ENCODER 0x7F
-#define TYPE_SENSOR 0xE7
-#define TYPE_COORDINATOR_MOTOR_CONTROL 0x5E
-#define TYPE_MESSAGE_RECEIVE_DATA 0xFE
+// MESSAGE TYPES
+// Coordinator
+#define TYPEC_LR_SENSOR_TO_FR 0x8F  //143 - Token found message to send ot Follower Rover
+#define TYPEC_LR_HANDSHAKE 0x4f     //79  - Confirm 'Token found' message receive to Lead Rover
+#define TYPEC_MOTOR_CONTROL 0x5E   //94 - Rover motor control
+// Lead Rover
+#define TYPE_LR_SENSOR 0xF7     //247 - Lead Rover line sensor reading
+#define TYPE_LR_ENCODER 0x7F    //127 - Lead Rover encoder report data
+// Follower Rover
+#define TYPE_FR_ENCODER 0x6F    //111 - Motor encoder report data
+#define TYPE_FR_DIST 0x5F       //95  - Follower forward distance data
+#define TYPE_FR_IR 0x9F         //159 - Follower IR receiver data
+// Sensors
+#define TYPE_SENSOR_DIST 0xE7        //231 - Field IR distance sensor data
+#define TYPE_SENSOR_IR_REC 0xE8      //232 - Field IR receiver data
+// Shared in all components
+#define TYPE_MESSAGE_RECEIVE_DATA 0xFE    //254 - Reports UART received message data 
     
+// Message send disablers
+#define CUT_SENSOR 0
+#define CUT_MOTOR 0
+#define CUT_RECEIVE_DATA 1
     
-    
-// Add duplicate byte inside message once every x bytes. Normal operation = 1
+// SIMULATED ERROR CONSTANTS
+// Add duplicate byte inside message once every x bytes. NORMAL OPERATION = 1
 #define ADD_MESSAGE_DIV 1      
-// Remove byte inside message once every x bytes. Normal operation = 1.
-#define BREAK_MESSAGE_DIV 1       
-// Message send rate multiplication. Normal operation = 2.
-#define MESSAGE_RATE_DIV 2       
-// Skip byte count every x messages. Normal operation = 0.
-#define MESSAGE_COUNT_SKIP_DIV 0 
+// Remove byte inside message once every x bytes. NORMAL OPERATION = 1.
+#define BREAK_MESSAGE_DIV 1 
+// Message send rate multiplication. NORMAL OPERATION = 2.
+#define MESSAGE_RATE_DIV 2     
+// Skip entire message (including count) once every x messages. NORMAL OPERATION = 1
+#define MESSAGE_SKIP_DIV 1
     
-#define MOTOR_TIMER_RATE 55       // Motor message send rate (ms)
-#define SENSOR_TIMER_RATE 40      // Sensor message send rate (ms)
+    
+// SYSTEM MESSAGE RATES (message every 2x milliseconds)
+// 55 on Motor gives error every 10 messages - Debug
+#define LR_MOTOR_TIMER_RATE 33      // Motor message send rate (ms)
+#define LR_SENSOR_TIMER_RATE 40      // Sensor message send rate (ms)
+    
+#define FR_MOTOR_TIMER_RATE 50  // Follower rover motor message send rate
+#define FR_IR_TIMER_RATE 50     // Follower rover IR receive rate
+#define FR_DIST_TIMER_RAT 50    // Follower rover distance sensor rate
+    
 #define SEND_TIMER_RATE 100       
-#define RECEIVE_TIMER_RATE 125    // Receive code send to motor rate (for MS#2)
+#define DIST_TIMER_RATE 125     // Receive code send to motor rate (for MS#2)
+#define RECEIVE_TIMER_RATE 4000    // Message received data report timer
     
     
 // DEBUG CODE - POTENTIAL VITAL ERRORS

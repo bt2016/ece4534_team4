@@ -1,9 +1,9 @@
 
 /* ************************************************************************** */
-/** Descriptive File Name
-
-  @Company
-    Company Name
+/** 
+  @Project
+     ECE 4534 Embedded Design
+     Team 4 - 11:00 TR
 
   @File Name
     filename.c
@@ -21,16 +21,10 @@
 unsigned int sendms = 0;
 unsigned int sensorTick = 0;
 unsigned int motorTick = 0;
-unsigned int receiveTick = 0;
 
-// Called from App Timer rollover
+// Called from Send Timer rollover
 void vTimerCallback(TimerHandle_t pxTimer) {
-    sendms += 1; //Timer is called every 100ms
-    /*
-    if (sendms % 600 == 0) {
-        writeString("TIME");
-    }
-     */
+    sendms += 1; 
 }
 
 // Called on Sensor Timer rollover
@@ -51,14 +45,15 @@ void motorTimerCallback(TimerHandle_t mTimer) {
         motorSendToMsgQ(); // Send data to Send task
 }
 
+// Report message received stats on rollover
+void distributeCallback(TimerHandle_t dTimer) {
+    if (!CUT_RECEIVE_DATA)
+        reportMsgDataToSendQ();
+}
+
 // Called on Receiver Timer rollover
 void receiveTimerCallback(TimerHandle_t rTimer) {
-    receiveTick++;
-    
-    if (receiveTick % 8 == 0) 
-        reportMsgData();
-        
-    receiveSendToMsgQ(); // Send dummy data to motor
+    receiveSendToMotorQ(); // Send dummy data to motor
 }
 
 

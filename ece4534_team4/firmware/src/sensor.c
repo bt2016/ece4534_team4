@@ -69,7 +69,7 @@ void SENSOR_Initialize ( void )
 	//Create a timer with rollover rate 100ms
 	sensorData.t_adc_interrupt = xTimerCreate(  
 				 "SensorTimer", //Just a text name
-				 ( SENSOR_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
+				 ( LR_SENSOR_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
 				 pdTRUE, //auto-reload when expires
 				 (void *) 29, //a unique id
 				 sensorTimerCallback ); //pointer to callback function
@@ -110,17 +110,11 @@ void SENSOR_Tasks ( void )
             // Receive from sensor queue
 		    if (xQueueReceive(sensorData.q_adc_interrupt, &qData, portMAX_DELAY))
 			{
-                sensorData.sendCount++;
-                
-                // Error simulation constant - skip count byte in messages
-                if (MESSAGE_COUNT_SKIP_DIV > (rand() % 10))
-                    sensorData.sendCount++;
-                
                 // Convert sensor data to message format character array
                 //qData = 0x55565758;
                 char data[10];
                 data[0] = MSG_START;
-                data[1] = TYPE_SENSOR;
+                data[1] = TYPE_LR_SENSOR;
                 data[2] = sensorData.sendCount >> 1;
                 data[3] = 0x20;
                 data[4] = 0x20;
@@ -130,7 +124,12 @@ void SENSOR_Tasks ( void )
                 data[8] = (qData & 0xFF);
                 data[9] = MSG_STOP;
                 
-                putMsgOnSendQueue(data); // Transfer message to Send task queue
+                // Error simulation constant - skip count byte in messages
+                if (!CUT_SENSOR)
+                    putMsgOnSendQueue(data); // Transfer message to Send task queue
+                
+                sensorData.sendCount++;
+                
 			}
 			break;
 		}
@@ -158,7 +157,7 @@ void sendValToSensorTask(unsigned int* message)
 
 // Remove oldest data on full local sensor queue
 // Returns 1 if successful, 0 otherwise
-uint8_t removeQueueData() {
+uint8_t removeSensorQueueData() {
     
     unsigned int* qData;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -178,7 +177,7 @@ void sendValToSensorTaskFromISR(unsigned int* message)
     // Check for full queue. If no spaces available, call to remove oldest data.
     if (xQueueIsQueueFullFromISR(sensorData.q_adc_interrupt) == pdTRUE) {
         // If message is not removed from queue, return and signal error
-        if (removeQueueData() == 0) {
+        if (removeSensorQueueData() == 0) {
             dbgOutputVal(SENSOR_FULLQUEUE);
             stopAll();
             return;

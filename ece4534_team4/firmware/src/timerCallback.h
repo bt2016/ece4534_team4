@@ -1,8 +1,8 @@
 /* ************************************************************************** */
-/** Descriptive File Name
-
-  @Company
-    Company Name
+/** 
+  @Project
+     ECE 4534 Embedded Design
+     Team 4 - 11:00 TR
 
   @File Name
     filename.h
@@ -33,6 +33,7 @@ void motorSendToMsgQ();
 void motorReceiveFromMsgQ();
 void sensorTimerCallback(TimerHandle_t sTimer);
 void receiveTimerCallback(TimerHandle_t rTimer);
+void distributeCallback(TimerHandle_t dTimer);
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus

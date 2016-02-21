@@ -70,11 +70,10 @@ typedef struct
     QueueHandle_t xReceiveIntQ;
     
     TimerHandle_t xReceiveTimer;
+    TimerHandle_t xReceiveDistTimer;
     char sendCount;
     unsigned short int goodMsg;
-    unsigned short int shortMsg;
     unsigned short int badMsg;
-    unsigned short int longMsg;
     
 } RECEIVE_DATA;
 
