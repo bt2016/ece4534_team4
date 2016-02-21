@@ -55,7 +55,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "queue.h"        //FreeRTOS file
 #include "timers.h"       //FreeRTOS file
-#include "app1_public.h"  //Created by me
 #include "sensor_public.h"//Created by me
 #include "debug.h"        //Created by me
 #include "timerCallback.h"//Created by me

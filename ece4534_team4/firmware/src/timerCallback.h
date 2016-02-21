@@ -28,9 +28,6 @@ extern "C" {
 
 void vTimerCallback(TimerHandle_t pxTimer);
 void motorTimerCallback(TimerHandle_t mTimer);
-void sendToMotorQ();
-void motorSendToMsgQ();
-void motorReceiveFromMsgQ();
 void sensorTimerCallback(TimerHandle_t sTimer);
 void receiveTimerCallback(TimerHandle_t rTimer);
 void distributeCallback(TimerHandle_t dTimer);
