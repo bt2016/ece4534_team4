@@ -202,7 +202,7 @@ void SEND_Initialize ( void )
     }
     
     //Create a timer
-    sendData.xTimer100ms = xTimerCreate(  
+    sendData.sendTimer_CD = xTimerCreate(  
                      "SendTimer100ms", //Just a text name
                      ( SEND_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
                      pdTRUE, //auto-reload when expires
@@ -210,11 +210,11 @@ void SEND_Initialize ( void )
                      vTimerCallback ); //pointer to callback function
     
     //Start the timer
-    if( sendData.xTimer100ms == NULL ) {
+    if( sendData.sendTimer_CD == NULL ) {
         dbgOutputVal(SEND_TIMERINIT_FAIL);
         stopAll();
     }
-    else if( xTimerStart( sendData.xTimer100ms, 0 ) != pdPASS ) {
+    else if( xTimerStart( sendData.sendTimer_CD, 0 ) != pdPASS ) {
         dbgOutputVal(SEND_TIMERINIT_FAIL);
         stopAll();
     }

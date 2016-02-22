@@ -5,7 +5,7 @@
     Microchip Technology Inc.
 
   File Name:
-    send.h
+    sensor.h
 
   Summary:
     This header file provides prototypes and definitions for the application.
@@ -43,8 +43,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 //DOM-IGNORE-END
 
-#ifndef _SEND_H
-#define _SEND_H
+#ifndef _SENSOR_H
+#define _SENSOR_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -55,6 +55,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "queue.h"        //FreeRTOS file
 #include "timers.h"       //FreeRTOS file
+#include "sensor_public.h"//Created by me
 #include "debug.h"        //Created by me
 #include "timerCallback.h"//Created by me
 
@@ -64,36 +65,30 @@ extern "C" {
 #endif
 // DOM-IGNORE-END 
 
+
 typedef enum
 {
-	SEND_STATE_INIT=0,
-    SEND_STATE_LOOP 
-} SEND_STATES;
+	SENSOR_STATE_INIT=0,
+	SENSOR_STATE_READ=1
+
+} SENSOR_STATES;
 
 typedef struct
 {
-    /* The application's current state */
-    SEND_STATES state;
-    char sendCount;
-    int testCount;
-    int enqueueCount;
-    char prevType;
-    char prevCount;
+    SENSOR_STATES state;
+	QueueHandle_t sensorQ_SA;
+	TimerHandle_t sensorDistTimer_SA;
+    unsigned int senseCount;
+    unsigned short int sendCount;
+    int sendToSensorQ_Err;
 
-    /* TODO: Define any additional data used by the application. */
-    QueueHandle_t transmitQ_CD;
-    TimerHandle_t sendTimer_CD;
-    
-    QueueHandle_t sendQ_CD;
+} SENSOR_DATA;
 
-} SEND_DATA;
+void SENSOR_Initialize ( void );
+void SENSOR_Tasks( void );
 
 
-void SEND_Initialize ( void );
-void SEND_Tasks( void );
-
-
-#endif /* _SEND_H */
+#endif /* _SENSOR_H */
 
 //DOM-IGNORE-BEGIN
 #ifdef __cplusplus

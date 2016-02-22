@@ -54,6 +54,7 @@ extern "C" {
 // Sensors
 #define TYPE_SENSOR_DIST 0xE7        //231 - Field IR distance sensor data
 #define TYPE_SENSOR_IR_REC 0xE8      //232 - Field IR receiver data
+#define TYPE_SENSORARRAY_PROCESSED 0xE9   //233 - Processed Field data from sensor array
 // Shared in all components
 #define TYPE_MESSAGE_RECEIVE_DATA 0xFE    //254 - Reports UART received message data 
     
@@ -74,6 +75,7 @@ extern "C" {
     
     
 // SYSTEM MESSAGE RATES (message every 2x milliseconds)
+// 55 on Motor gives error every 10 messages - Debug
 #define LR_MOTOR_TIMER_RATE 50      // Motor message send rate (ms)
 #define LR_SENSOR_TIMER_RATE 50      // Sensor message send rate (ms)
     
@@ -86,6 +88,10 @@ extern "C" {
 #define DIST_TIMER_RATE 100     // Receive code send to motor rate (for MS#2)
 #define MOTOR_CTRL_TIMER_RATE 50  // Coordinator -> Lead Rover instruction timer rate
 #define RECEIVE_TIMER_RATE 10000    // Message received data report timer
+    
+#define SA_DIST_TIMER_RATE 20
+#define SA_IR_TIMER_RATE 50
+#define SA_PROC_TIMER_RATE 25
     
     
 // DEBUG CODE - POTENTIAL VITAL ERRORS
@@ -116,14 +122,16 @@ extern "C" {
 #define SENSOR_SENDTOSENDQ 0x06
 #define SENSOR_RECEIVEFROMSENSOR 0x16
 #define SENSOR_SENDTOSENDQ_FAIL 0x76
+#define SENSOR_SENDTOPROCESSQ_FAIL 0xA6
 #define SENSOR_TIMERINIT_FAIL 0x66
 #define SENSOR_ENTERED_DEFAULT 0xE6
 #define SENSOR_SENDTOSENSORQ_FAIL 0xC6
 #define SENSOR_FULLQUEUE 0xB6
 #define SENSOR_QUEUE_FAIL 0x26
-
+    
 #define PROCESS_TIMERINIT_FAIL 0x67
 #define PROCESS_QUEUE_FAIL 0x27
+
     // *****************************************************************************
     // *****************************************************************************
     // Section: Data Types

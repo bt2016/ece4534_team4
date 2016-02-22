@@ -57,6 +57,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "timers.h"       //FreeRTOS file
 #include "debug.h"        //Created by me
 #include "timerCallback.h"//Created by me
+#include "proj_definitions.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -81,10 +82,10 @@ typedef struct
     char prevCount;
 
     /* TODO: Define any additional data used by the application. */
-    QueueHandle_t transmitQ_CD;
-    TimerHandle_t sendTimer_CD;
+    QueueHandle_t transmitQ_SA;
+    TimerHandle_t sendTimer_SA;
     
-    QueueHandle_t sendQ_CD;
+    QueueHandle_t sendQ_LR;
 
 } SEND_DATA;
 

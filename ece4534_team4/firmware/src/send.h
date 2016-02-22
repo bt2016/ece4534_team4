@@ -83,7 +83,7 @@ typedef struct
 
     /* TODO: Define any additional data used by the application. */
     QueueHandle_t transmitQ_LR;
-    TimerHandle_t xTimer100ms;
+    TimerHandle_t sendTimer_LR;
     
     QueueHandle_t sendQ_LR;
 

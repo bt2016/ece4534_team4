@@ -61,26 +61,26 @@ void SENSOR_Initialize ( void )
     sensorData.state = SENSOR_STATE_INIT;
 	
 	//Create a queue capable of holding 25 unsigned long numbers
-    sensorData.sensorQ_LR = xQueueCreate( 2500, sizeof( unsigned int ) ); 
-    if( sensorData.sensorQ_LR == 0 ) {
+    sensorData.sensorQ_SA = xQueueCreate( 2500, sizeof( unsigned int ) ); 
+    if( sensorData.sensorQ_SA == 0 ) {
         dbgOutputVal(SENSOR_QUEUE_FAIL);
         stopAll();
     }
 	
 	//Create a timer with rollover rate 100ms
-	sensorData.IRTimer_LR = xTimerCreate(  
+	sensorData.sensorDistTimer_SA = xTimerCreate(  
 				 "SensorTimer", //Just a text name
-				 ( LR_SENSOR_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
+				 ( SA_DIST_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
 				 pdTRUE, //auto-reload when expires
 				 (void *) 29, //a unique id
 				 sensorTimerCallback ); //pointer to callback function
 				 
     //Start the timer
-    if( sensorData.IRTimer_LR == NULL ) {
+    if( sensorData.sensorDistTimer_SA == NULL ) {
         dbgOutputVal(SENSOR_TIMERINIT_FAIL);
         stopAll();
     }
-    else if( xTimerStart( sensorData.IRTimer_LR, 0 ) != pdPASS ) {
+    else if( xTimerStart( sensorData.sensorDistTimer_SA, 0 ) != pdPASS ) {
         dbgOutputVal(SENSOR_TIMERINIT_FAIL);
         stopAll();
     }
@@ -109,17 +109,14 @@ void SENSOR_Tasks ( void )
 		case SENSOR_STATE_READ:
 		{
             // Receive from sensor queue
-		    if (xQueueReceive(sensorData.sensorQ_LR, &qData, portMAX_DELAY))
+		    if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY))
 			{
-                sensorData.senseCount++;
-                
-                if (!CUT_SENSOR && (sensorData.senseCount % 10 == 0)) {
+                if (!CUT_SENSOR) {
                     
                     // Convert sensor data to message format character array
-                    //qData = 0x55565758;
                     char data[10];
                     data[0] = MSG_START;
-                    data[1] = TYPE_LR_SENSOR;
+                    data[1] = TYPE_SENSOR_DIST;
                     data[2] = sensorData.sendCount;
                     data[3] = 0x20;
                     data[4] = 0x20;
@@ -131,7 +128,7 @@ void SENSOR_Tasks ( void )
 
                     // Error simulation constant - skip count byte in messages
                     // Only report token found to send queue (UART) every 10 readings (MS#2 TESTING)
-                    putMsgOnSendQueue(data); // Transfer message to Send task queue
+                    putDataOnProcessQ(data); // Transfer message to Send task queue
 
                     sensorData.sendCount++;
                 }
@@ -152,7 +149,7 @@ void SENSOR_Tasks ( void )
 
 void sendValToSensorTask(unsigned int* message)
 {
-    if( xQueueSend( sensorData.sensorQ_LR,
+    if( xQueueSend( sensorData.sensorQ_SA,
                              (void*) message,
                              portMAX_DELAY) != pdPASS )
     {
@@ -168,7 +165,7 @@ uint8_t removeSensorQueueData() {
     unsigned int* qData;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     
-    if (xQueueReceiveFromISR(sensorData.sensorQ_LR, &qData, &xHigherPriorityTaskWoken)) {
+    if (xQueueReceiveFromISR(sensorData.sensorQ_SA, &qData, &xHigherPriorityTaskWoken)) {
         return 0x1;
     }
     
@@ -181,7 +178,7 @@ void sendValToSensorTaskFromISR(unsigned int* message)
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     
     // Check for full queue. If no spaces available, call to remove oldest data.
-    if (xQueueIsQueueFullFromISR(sensorData.sensorQ_LR) == pdTRUE) {
+    if (xQueueIsQueueFullFromISR(sensorData.sensorQ_SA) == pdTRUE) {
         // If message is not removed from queue, return and signal error
         if (removeSensorQueueData() == 0) {
             dbgOutputVal(SENSOR_FULLQUEUE);
@@ -191,7 +188,7 @@ void sendValToSensorTaskFromISR(unsigned int* message)
     }
     
     // Send to queue, with at least one vacancy guaranteed for this data
-    if (xQueueSendFromISR( sensorData.sensorQ_LR,
+    if (xQueueSendFromISR( sensorData.sensorQ_SA,
                             (void*) message,
                             &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
     {

@@ -5,7 +5,7 @@
     Microchip Technology Inc.
 
   File Name:
-    send.h
+    process.h
 
   Summary:
     This header file provides prototypes and definitions for the application.
@@ -43,8 +43,14 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 //DOM-IGNORE-END
 
-#ifndef _SEND_H
-#define _SEND_H
+#ifndef _PROCESS_H
+#define _PROCESS_H
+
+// *****************************************************************************
+// *****************************************************************************
+// Section: Included Files
+// *****************************************************************************
+// *****************************************************************************
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -52,48 +58,50 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <stdlib.h>
 #include "system_config.h"
 #include "system_definitions.h"
-
-#include "queue.h"        //FreeRTOS file
-#include "timers.h"       //FreeRTOS file
-#include "debug.h"        //Created by me
-#include "timerCallback.h"//Created by me
+#include <timers.h>
+#include <queue.h>
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
+
 extern "C" {
+
 #endif
 // DOM-IGNORE-END 
 
+
+
 typedef enum
 {
-	SEND_STATE_INIT=0,
-    SEND_STATE_LOOP 
-} SEND_STATES;
+	/* Application's state machine's initial state. */
+	PROCESS_STATE_INIT=0,
+    PROCESS_STATE_PROCESS
+
+	/* TODO: Define states used by the application state machine. */
+
+} PROCESS_STATES;
+
 
 typedef struct
 {
     /* The application's current state */
-    SEND_STATES state;
-    char sendCount;
-    int testCount;
-    int enqueueCount;
-    char prevType;
-    char prevCount;
+    PROCESS_STATES state;
+    unsigned short int sendCount;
 
-    /* TODO: Define any additional data used by the application. */
-    QueueHandle_t transmitQ_CD;
-    TimerHandle_t sendTimer_CD;
+    QueueHandle_t processQ_SA;
+	TimerHandle_t process_Timer_SA;
     
-    QueueHandle_t sendQ_CD;
-
-} SEND_DATA;
+    /* TODO: Define any additional data used by the application. */
 
 
-void SEND_Initialize ( void );
-void SEND_Tasks( void );
+} PROCESS_DATA;
 
 
-#endif /* _SEND_H */
+void PROCESS_Initialize ( void );
+void PROCESS_Tasks( void );
+
+
+#endif /* _PROCESS_H */
 
 //DOM-IGNORE-BEGIN
 #ifdef __cplusplus

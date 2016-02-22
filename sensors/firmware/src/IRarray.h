@@ -5,7 +5,7 @@
     Microchip Technology Inc.
 
   File Name:
-    send.h
+    sensor.h
 
   Summary:
     This header file provides prototypes and definitions for the application.
@@ -43,8 +43,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 //DOM-IGNORE-END
 
-#ifndef _SEND_H
-#define _SEND_H
+#ifndef _IRARRAY_H
+#define _IRARRAY_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -55,6 +55,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "queue.h"        //FreeRTOS file
 #include "timers.h"       //FreeRTOS file
+#include "sensor_public.h"//Created by me
 #include "debug.h"        //Created by me
 #include "timerCallback.h"//Created by me
 
@@ -64,36 +65,30 @@ extern "C" {
 #endif
 // DOM-IGNORE-END 
 
+
 typedef enum
 {
-	SEND_STATE_INIT=0,
-    SEND_STATE_LOOP 
-} SEND_STATES;
+	IRARRAY_STATE_INIT=0,
+	IRARRAY_STATE_READ=1
+
+} IRARRAY_STATES;
 
 typedef struct
 {
-    /* The application's current state */
-    SEND_STATES state;
-    char sendCount;
-    int testCount;
-    int enqueueCount;
-    char prevType;
-    char prevCount;
+    IRARRAY_STATES state;
+	QueueHandle_t IRArrayQ_SA;
+	TimerHandle_t IRTimer_SA;
+    unsigned int senseCount;
+    unsigned short int sendCount;
+    int sendToSensorQ_Err;
 
-    /* TODO: Define any additional data used by the application. */
-    QueueHandle_t transmitQ_CD;
-    TimerHandle_t sendTimer_CD;
-    
-    QueueHandle_t sendQ_CD;
+} IRARRAY_DATA;
 
-} SEND_DATA;
+void IRARRAY_Initialize ( void );
+void IRARRAY_Tasks( void );
 
 
-void SEND_Initialize ( void );
-void SEND_Tasks( void );
-
-
-#endif /* _SEND_H */
+#endif /* _IRARRAY_H */
 
 //DOM-IGNORE-BEGIN
 #ifdef __cplusplus

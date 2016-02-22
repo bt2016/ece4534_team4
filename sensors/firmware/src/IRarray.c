@@ -46,41 +46,41 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 // DOM-IGNORE-END
 
-#include "sensor.h"
+#include "IRarray.h"
 #include "sender.h"
 
-SENSOR_DATA sensorData;
+IRARRAY_DATA IRarrayData;
 
 //runs once
-void SENSOR_Initialize ( void )
+void IRARRAY_Initialize ( void )
 {
-    sensorData.sendCount = 0;
-    sensorData.senseCount = 0;
+    IRarrayData.sendCount = 0;
+    IRarrayData.senseCount = 0;
     
 	//Initialize task variables
-    sensorData.state = SENSOR_STATE_INIT;
+    IRarrayData.state = IRARRAY_STATE_INIT;
 	
 	//Create a queue capable of holding 25 unsigned long numbers
-    sensorData.sensorQ_LR = xQueueCreate( 2500, sizeof( unsigned int ) ); 
-    if( sensorData.sensorQ_LR == 0 ) {
+    IRarrayData.IRArrayQ_SA = xQueueCreate( 2500, sizeof( unsigned int ) ); 
+    if( IRarrayData.IRArrayQ_SA == 0 ) {
         dbgOutputVal(SENSOR_QUEUE_FAIL);
         stopAll();
     }
 	
 	//Create a timer with rollover rate 100ms
-	sensorData.IRTimer_LR = xTimerCreate(  
-				 "SensorTimer", //Just a text name
-				 ( LR_SENSOR_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
+	IRarrayData.IRTimer_SA = xTimerCreate(  
+				 "IRTimer", //Just a text name
+				 ( SA_IR_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
 				 pdTRUE, //auto-reload when expires
 				 (void *) 29, //a unique id
-				 sensorTimerCallback ); //pointer to callback function
+				 IRArrayTimerCallback ); //pointer to callback function
 				 
     //Start the timer
-    if( sensorData.IRTimer_LR == NULL ) {
+    if( IRarrayData.IRTimer_SA == NULL ) {
         dbgOutputVal(SENSOR_TIMERINIT_FAIL);
         stopAll();
     }
-    else if( xTimerStart( sensorData.IRTimer_LR, 0 ) != pdPASS ) {
+    else if( xTimerStart( IRarrayData.IRTimer_SA, 0 ) != pdPASS ) {
         dbgOutputVal(SENSOR_TIMERINIT_FAIL);
         stopAll();
     }
@@ -93,34 +93,34 @@ void SENSOR_Initialize ( void )
 }
 
 // Finite State Machine, runs forever.
-void SENSOR_Tasks ( void )
+void IRARRAY_Tasks ( void )
 {
     unsigned int qData;
     char data[MSG_LENGTH];
     
-	switch ( sensorData.state )
+	switch ( IRarrayData.state )
     {
-        case SENSOR_STATE_INIT:
+        case IRARRAY_STATE_INIT:
         {
-			sensorData.state = SENSOR_STATE_READ;
+			IRarrayData.state = IRARRAY_STATE_READ;
             break;
         }
 		
-		case SENSOR_STATE_READ:
+		case IRARRAY_STATE_READ:
 		{
             // Receive from sensor queue
-		    if (xQueueReceive(sensorData.sensorQ_LR, &qData, portMAX_DELAY))
+		    if (xQueueReceive(IRarrayData.IRArrayQ_SA, &qData, portMAX_DELAY))
 			{
-                sensorData.senseCount++;
+                IRarrayData.senseCount++;
                 
-                if (!CUT_SENSOR && (sensorData.senseCount % 10 == 0)) {
+                if (!CUT_SENSOR && (IRarrayData.senseCount % 20 == 0)) {
                     
                     // Convert sensor data to message format character array
                     //qData = 0x55565758;
                     char data[10];
                     data[0] = MSG_START;
-                    data[1] = TYPE_LR_SENSOR;
-                    data[2] = sensorData.sendCount;
+                    data[1] = TYPE_SENSOR_IR_REC;
+                    data[2] = IRarrayData.sendCount;
                     data[3] = 0x20;
                     data[4] = 0x20;
                     data[5] = 0x20;
@@ -131,9 +131,9 @@ void SENSOR_Tasks ( void )
 
                     // Error simulation constant - skip count byte in messages
                     // Only report token found to send queue (UART) every 10 readings (MS#2 TESTING)
-                    putMsgOnSendQueue(data); // Transfer message to Send task queue
+                    putDataOnProcessQ(data); // Transfer message to Send task queue
 
-                    sensorData.sendCount++;
+                    IRarrayData.sendCount++;
                 }
 
 			}
@@ -147,12 +147,12 @@ void SENSOR_Tasks ( void )
             break;
         }
     }//end switch
-}//end SENSOR_Tasks()
+}//end IRARRAY_Tasks()
 
 
-void sendValToSensorTask(unsigned int* message)
+void sendValToIRArrayTask(unsigned int* message)
 {
-    if( xQueueSend( sensorData.sensorQ_LR,
+    if( xQueueSend( IRarrayData.IRArrayQ_SA,
                              (void*) message,
                              portMAX_DELAY) != pdPASS )
     {
@@ -163,12 +163,12 @@ void sendValToSensorTask(unsigned int* message)
 
 // Remove oldest data on full local sensor queue
 // Returns 1 if successful, 0 otherwise
-uint8_t removeSensorQueueData() {
+uint8_t removeIRArrayQueueData() {
     
     unsigned int* qData;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     
-    if (xQueueReceiveFromISR(sensorData.sensorQ_LR, &qData, &xHigherPriorityTaskWoken)) {
+    if (xQueueReceiveFromISR(IRarrayData.IRArrayQ_SA, &qData, &xHigherPriorityTaskWoken)) {
         return 0x1;
     }
     
@@ -176,14 +176,14 @@ uint8_t removeSensorQueueData() {
 }
 
 // Place data read from Sensor onto local queue
-void sendValToSensorTaskFromISR(unsigned int* message)
+void sendValToIRArrayTaskFromISR(unsigned int* message)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     
     // Check for full queue. If no spaces available, call to remove oldest data.
-    if (xQueueIsQueueFullFromISR(sensorData.sensorQ_LR) == pdTRUE) {
+    if (xQueueIsQueueFullFromISR(IRarrayData.IRArrayQ_SA) == pdTRUE) {
         // If message is not removed from queue, return and signal error
-        if (removeSensorQueueData() == 0) {
+        if (removeIRArrayQueueData() == 0) {
             dbgOutputVal(SENSOR_FULLQUEUE);
             stopAll();
             return;
@@ -191,7 +191,7 @@ void sendValToSensorTaskFromISR(unsigned int* message)
     }
     
     // Send to queue, with at least one vacancy guaranteed for this data
-    if (xQueueSendFromISR( sensorData.sensorQ_LR,
+    if (xQueueSendFromISR( IRarrayData.IRArrayQ_SA,
                             (void*) message,
                             &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
     {

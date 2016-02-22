@@ -5,7 +5,7 @@
     Microchip Technology Inc.
 
   File Name:
-    send.h
+    motor.h
 
   Summary:
     This header file provides prototypes and definitions for the application.
@@ -43,8 +43,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 //DOM-IGNORE-END
 
-#ifndef _SEND_H
-#define _SEND_H
+#ifndef _MOTOR_H
+#define _MOTOR_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -66,34 +66,29 @@ extern "C" {
 
 typedef enum
 {
-	SEND_STATE_INIT=0,
-    SEND_STATE_LOOP 
-} SEND_STATES;
+	MOTOR_STATE_INIT=0,
+    MOTOR_LOOP
+} MOTOR_STATES;
 
 typedef struct
 {
     /* The application's current state */
-    SEND_STATES state;
-    char sendCount;
-    int testCount;
-    int enqueueCount;
-    char prevType;
-    char prevCount;
+    MOTOR_STATES state;
+    unsigned short int sendCount;
 
     /* TODO: Define any additional data used by the application. */
-    QueueHandle_t transmitQ_CD;
-    TimerHandle_t sendTimer_CD;
-    
-    QueueHandle_t sendQ_CD;
+    QueueHandle_t motorQ_LR;
+    QueueHandle_t actuatorQ_LR;
+    TimerHandle_t motorTimer_LR;
+    TimerHandle_t actuatorTimer_LR;
+   
+} MOTOR_DATA;
 
-} SEND_DATA;
+void MOTOR_Initialize ( void );
+void MOTOR_Tasks( void );
 
 
-void SEND_Initialize ( void );
-void SEND_Tasks( void );
-
-
-#endif /* _SEND_H */
+#endif /* _MOTOR_H */
 
 //DOM-IGNORE-BEGIN
 #ifdef __cplusplus

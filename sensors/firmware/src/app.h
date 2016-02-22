@@ -5,7 +5,7 @@
     Microchip Technology Inc.
 
   File Name:
-    send.h
+    app.h
 
   Summary:
     This header file provides prototypes and definitions for the application.
@@ -43,8 +43,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 //DOM-IGNORE-END
 
-#ifndef _SEND_H
-#define _SEND_H
+#ifndef _APP_H
+#define _APP_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -66,34 +66,27 @@ extern "C" {
 
 typedef enum
 {
-	SEND_STATE_INIT=0,
-    SEND_STATE_LOOP 
-} SEND_STATES;
+	APP_STATE_INIT=0, //Application's state machine's initial state.
+    APP_STATE_TX,       // USART transmit state
+    APP_STATE_RX        // USART receive state
+            
+} APP_STATES;
 
 typedef struct
 {
-    /* The application's current state */
-    SEND_STATES state;
-    char sendCount;
-    int testCount;
-    int enqueueCount;
-    char prevType;
-    char prevCount;
-
-    /* TODO: Define any additional data used by the application. */
-    QueueHandle_t transmitQ_CD;
-    TimerHandle_t sendTimer_CD;
+    APP_STATES state; //The application's current state
+    QueueHandle_t xTimerIntQ;
+    TimerHandle_t xTimer100ms;
     
-    QueueHandle_t sendQ_CD;
+    char rx_byte;       // byte received
+    char tx_byte;       // byte to send
+    
+} APP_DATA;
 
-} SEND_DATA;
+void APP_Initialize ( void );
+void APP_Tasks( void );
 
-
-void SEND_Initialize ( void );
-void SEND_Tasks( void );
-
-
-#endif /* _SEND_H */
+#endif /* _APP_H */
 
 //DOM-IGNORE-BEGIN
 #ifdef __cplusplus
