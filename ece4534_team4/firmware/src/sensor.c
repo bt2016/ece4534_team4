@@ -121,7 +121,12 @@ void SENSOR_Tasks ( void )
                     data[0] = MSG_START;
                     data[1] = TYPE_LR_SENSOR;
                     data[2] = sensorData.sendCount;
-                    data[3] = 0x20;
+                    
+                    if (SHOW_SENSOR == 1)
+                        data[3] = 0x58;
+                    else
+                        data[3] = 0x00;
+                    
                     data[4] = 0x20;
                     data[5] = 0x20;
                     data[6] = 0x20;

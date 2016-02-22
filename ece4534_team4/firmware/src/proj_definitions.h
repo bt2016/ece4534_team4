@@ -68,10 +68,10 @@ extern "C" {
 // Remove byte inside message once every x bytes. NORMAL OPERATION = 1.
 #define BREAK_MESSAGE_DIV 1 
 // Message send rate multiplication. NORMAL OPERATION = 2.
-#define MESSAGE_RATE_DIV 2     
+#define MESSAGE_RATE_DIV 2   
 // Skip entire message (including count) once every x messages. NORMAL OPERATION = 1
 #define MESSAGE_SKIP_DIV 1
-    
+#define SHOW_SENSOR 0
     
 // SYSTEM MESSAGE RATES (message every 2x milliseconds)
 #define LR_MOTOR_TIMER_RATE 50      // Motor message send rate (ms)

@@ -87,6 +87,7 @@ typedef struct
     /* The application's current state */
     PROCESS_STATES state;
     unsigned short int sendCount;
+    unsigned short int prevSensorData;
 
     QueueHandle_t processQ_SA;
 	TimerHandle_t process_Timer_SA;

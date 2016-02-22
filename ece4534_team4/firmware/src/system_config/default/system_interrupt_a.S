@@ -46,7 +46,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "ISR_Support.h"
 
 /* ADC Interrupt */
-   .extern  IntHandlerIR_LR
+   .extern  IntHandlerDrvAdc
 
    .section	.vector_27,code, keep
    .equ     __vector_dispatch_27, IntVectorDrvAdc
@@ -58,7 +58,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
    .ent  IntVectorDrvAdc
 
 IntVectorDrvAdc:
-    la    $26,  _IntHandlerIR_LR         
+    la    $26,  _IntHandlerDrvAdc         
     jr    $26
     nop
 	.end	IntVectorDrvAdc
@@ -68,15 +68,15 @@ IntVectorDrvAdc:
    .set     noreorder
    .set     nomips16
    .set     noat
-   .ent  _IntHandlerIR_LR
+   .ent  _IntHandlerDrvAdc
 
-_IntHandlerIR_LR:
+_IntHandlerDrvAdc:
     portSAVE_CONTEXT
-    la    s6,  IntHandlerIR_LR
+    la    s6,  IntHandlerDrvAdc
     jalr  s6
     nop
     portRESTORE_CONTEXT
-    .end	_IntHandlerIR_LR
+    .end	_IntHandlerDrvAdc
 
 
 /* USART Instance 0 Interrupt */

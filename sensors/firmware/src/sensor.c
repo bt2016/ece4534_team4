@@ -122,7 +122,7 @@ void SENSOR_Tasks ( void )
                     data[4] = 0x20;
                     data[5] = 0x20;
                     data[6] = 0x20;
-                    data[7] = 0x20;
+                    data[7] = ((qData & 0xFF00) >> 8);
                     data[8] = (qData & 0xFF);
                     data[9] = MSG_STOP;
 

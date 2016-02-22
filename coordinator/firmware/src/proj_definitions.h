@@ -85,7 +85,7 @@ extern "C" {
 #define SEND_TIMER_RATE 60       
 #define DIST_TIMER_RATE 100     // Receive code send to motor rate (for MS#2)
 #define MOTOR_CTRL_TIMER_RATE 50  // Coordinator -> Lead Rover instruction timer rate
-#define RECEIVE_TIMER_RATE 10000    // Message received data report timer
+#define RECEIVE_TIMER_RATE 5000    // Message received data report timer
     
     
 // DEBUG CODE - POTENTIAL VITAL ERRORS

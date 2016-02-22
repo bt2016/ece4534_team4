@@ -76,7 +76,7 @@ void sendProcessedData() {
     data[5] = 0x44;
     data[6] = 0x55; 
     data[7] = 0x66; 
-    data[8] = 0x77;
+    data[8] = processData.prevSensorData;
     data[9] = MSG_STOP;             // Stop byte
           
     putMsgOnSendQueue(data);  // Transfer message to Send task queue
@@ -126,6 +126,7 @@ void PROCESS_Initialize ( void )
     /* Place the App state machine in its initial state. */
     processData.state = PROCESS_STATE_INIT;
     processData.sendCount = 0;
+    processData.prevSensorData = 0;
     
         //Create a queue capable of holding 1000 characters (bytes))
     processData.processQ_SA = xQueueCreate(1000, MSG_LENGTH+1 ); 
@@ -175,6 +176,7 @@ void PROCESS_Tasks ( void )
            // Receive from sensor queue
 		    if (xQueueReceive(processData.processQ_SA, &qData, portMAX_DELAY))
 			{
+                processData.prevSensorData = qData[8];
                 processSensorData(qData);
 			}
 			break;
