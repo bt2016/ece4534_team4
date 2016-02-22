@@ -76,7 +76,7 @@ extern "C" {
 // SYSTEM MESSAGE RATES (message every 2x milliseconds)
 // 55 on Motor gives error every 10 messages - Debug
 #define LR_MOTOR_TIMER_RATE 33      // Motor message send rate (ms)
-#define LR_SENSOR_TIMER_RATE 50      // Sensor message send rate (ms)
+#define LR_SENSOR_TIMER_RATE 40      // Sensor message send rate (ms)
     
 #define FR_MOTOR_TIMER_RATE 50  // Follower rover motor message send rate
 #define FR_IR_TIMER_RATE 50     // Follower rover IR receive rate
@@ -84,7 +84,8 @@ extern "C" {
     
 #define SEND_TIMER_RATE 100       
 #define DIST_TIMER_RATE 125     // Receive code send to motor rate (for MS#2)
-#define RECEIVE_TIMER_RATE 5000    // Message received data report timer
+#define MOTOR_CTRL_TIMER_RATE 50  // Coordinator -> Lead Rover instruction timer rate
+#define RECEIVE_TIMER_RATE 4000    // Message received data report timer
     
     
 // DEBUG CODE - POTENTIAL VITAL ERRORS

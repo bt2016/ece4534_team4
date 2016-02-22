@@ -5,7 +5,7 @@
     Microchip Technology Inc.
 
   File Name:
-    send.h
+    motor.h
 
   Summary:
     This header file provides prototypes and definitions for the application.
@@ -43,8 +43,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 //DOM-IGNORE-END
 
-#ifndef _SEND_H
-#define _SEND_H
+#ifndef _MOTOR_H
+#define _MOTOR_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -57,7 +57,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "timers.h"       //FreeRTOS file
 #include "debug.h"        //Created by me
 #include "timerCallback.h"//Created by me
-#include "proj_definitions.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -67,34 +66,27 @@ extern "C" {
 
 typedef enum
 {
-	SEND_STATE_INIT=0,
-    SEND_STATE_LOOP 
-} SEND_STATES;
+	MOTOR_STATE_INIT=0,
+    MOTOR_LOOP
+} MOTOR_STATES;
 
 typedef struct
 {
     /* The application's current state */
-    SEND_STATES state;
-    char sendCount;
-    int testCount;
-    int enqueueCount;
-    char prevType;
-    char prevCount;
+    MOTOR_STATES state;
+    unsigned short int sendCount;
 
     /* TODO: Define any additional data used by the application. */
-    QueueHandle_t xTransmitQ;
-    TimerHandle_t xTimer100ms;
-    
-    QueueHandle_t xDataToSendQ;
+    QueueHandle_t xMotorQ;
+    TimerHandle_t xMotorTimer;
+   
+} MOTOR_DATA;
 
-} SEND_DATA;
-
-
-void SEND_Initialize ( void );
-void SEND_Tasks( void );
+void MOTOR_Initialize ( void );
+void MOTOR_Tasks( void );
 
 
-#endif /* _SEND_H */
+#endif /* _MOTOR_H */
 
 //DOM-IGNORE-BEGIN
 #ifdef __cplusplus

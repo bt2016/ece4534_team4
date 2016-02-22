@@ -78,6 +78,7 @@ typedef struct
     SENSOR_STATES state;
 	QueueHandle_t q_adc_interrupt;
 	TimerHandle_t t_adc_interrupt;
+    unsigned int senseCount;
     unsigned short int sendCount;
     int sendToSensorQ_Err;
 

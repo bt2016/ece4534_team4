@@ -49,7 +49,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "send.h"
 #include "sender.h"
-#include <string.h>
 
 SEND_DATA sendData;
 
@@ -116,7 +115,7 @@ void sendDataToTransmitQ(char* message) {
 // Check queue holding the data from other component tasks
 void receiveFromSendQ()
 {    
-    char newData = 0;
+   char newData = 0;
     char read[MSG_LENGTH];
 
     // Read the top message of the queue
@@ -178,13 +177,14 @@ void putMsgOnSendQueue(char* data) {
     }
 }
 
+
 void SEND_Initialize ( void )
 {
     sendData.state = SEND_STATE_INIT;
     sendData.sendCount = 0x55;
     sendData.testCount = 0;
     sendData.enqueueCount = 0;
-    sendData.prevType = 'a';
+        sendData.prevType = 'a';
     sendData.prevCount = 'a';
     
     //Create a queue capable of holding 1000 characters
@@ -250,85 +250,6 @@ void SEND_Tasks ( void )
         }//end switch
     }//end while
 }
-
-
-
-
-// Unused functions in current build
-
-void sendTimerValToMsgQ(unsigned int* sendms)
-{    
-    char* test = "12345abcde";
-    
-    if (sendData.xTransmitQ != 0) {
-        if( xQueueSend( sendData.xTransmitQ, (void*) test, portMAX_DELAY) != pdPASS )
-        {
-            stopAll(); //failed to send to queue
-        }
-    }
-
-}
-
-void sendValFromISR(unsigned int* message)
-{
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    if (xQueueSendFromISR( sendData.xTransmitQ,
-                            (void*) message,
-                            &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
-    {
-        stopAll(); //failed to send to queue
-    }
-}
-
-// Appends message count to output messages originating from the local task. 
-char* addCountToMsg(char count, char* message) {
-       //char newMessage[MSG_LENGTH];
-       
-       char tempMsg[MSG_LENGTH];
-    
-       char* k;
-       unsigned short int cur = 0;
-       
-       for (k = message; *k; ++k) {
-           
-           if (cur == 2) {
-               tempMsg[cur] = count;
-           }
-           else {
-               tempMsg[cur] = *k;
-           }
-           
-           cur++;
-       }
-}
-
-/*
-// PLACEHOLDER - RECEIVE FROM TRANSMIT QUEUE
-// REPLACE WITH INTERRUPT HANDLER PASSING TO UART
-void receiveDataFromMsgQ() {
-    
-    char readdata[MSG_LENGTH];
-    char newData = 0;
-    PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
-                   
-    if (uxQueueMessagesWaiting(sendData.xTransmitQ) != 0){
-        //stopAll();
-        //writeString("Asking Queue...");
-        if (xQueueReceive(sendData.xTransmitQ, &readdata, portMAX_DELAY))
-        {
-            dbgOutputVal(SEND_RECEIVEFROMQ);
-            newData = 1;
-        } 
-    } 
-    
-    if (newData == 1) {
-        writeString(readdata);
-        if (uxQueueMessagesWaiting(sendData.xTransmitQ) != 0) {
-            PLIB_INT_SourceEnable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
-        }
-    }
-}
-    * */
 
 
 /*******************************************************************************

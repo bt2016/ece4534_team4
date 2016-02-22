@@ -19,7 +19,6 @@
 #include "proj_definitions.h"
 
 unsigned int sendms = 0;
-unsigned int sensorTick = 0;
 unsigned int motorTick = 0;
 
 // Called from Send Timer rollover
@@ -27,32 +26,18 @@ void vTimerCallback(TimerHandle_t pxTimer) {
     sendms += 1; 
 }
 
-// Called on Sensor Timer rollover
-void sensorTimerCallback(TimerHandle_t sTimer){
-    sensorTick++;
-    
-    // Error simulation constant - straddle message rate
-    if (sensorTick % MESSAGE_RATE_DIV == 0)
-        PLIB_ADC_SamplingStart(0);  // Sample from sensor
-}
-
-// Called on Motor Timer rollover
-void motorTimerCallback(TimerHandle_t mTimer) {
+// Distribute messages to internal task queues
+void receiveMotorCallback(TimerHandle_t dTimer) {
     motorTick++;
     
     // Error simulation constant - straddle message rate
-    if (motorTick % MESSAGE_RATE_DIV == 0) 
-        motorSendToMsgQ(); // Send data to Send task
+    if (motorTick % MESSAGE_RATE_DIV == 0)
+        sendLRMotorInstruction();
 }
 
-// Distribute message to motor on timer rollover
-void distributeCallback(TimerHandle_t dTimer) {
-    receiveSendToMotorQ(); // Send dummy data to motor
-}
-
-// Report message received stats on rollover
+// Report message receive statistics to send queue
 void receiveTimerCallback(TimerHandle_t rTimer) {
-    if (!CUT_RECEIVE_DATA)
+     if (!CUT_RECEIVE_DATA)
         reportMsgDataToSendQ();
 }
 
