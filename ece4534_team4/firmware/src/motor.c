@@ -83,7 +83,7 @@ void motorSendToMsgQ() {
 uint8_t removeMotorQueueData() {
     char readdata[MSG_LENGTH];
 
-    if (xQueueReceive(motorData.xMotorQ, &readdata, portMAX_DELAY))
+    if (xQueueReceive(motorData.motorQ_LR, &readdata, portMAX_DELAY))
     {
         return 0x1;
     } 
@@ -94,10 +94,10 @@ uint8_t removeMotorQueueData() {
 // Check local motor queue for vacancies. If none, remove oldest data.
 // After, add the parameter char* message to local motor queue. 
 void putDataOnMotorQ(char* data) {
-    if (motorData.xMotorQ != 0) {
+    if (motorData.motorQ_LR != 0) {
         
         // Check for full queue. If no spaces available, call to remove oldest data.
-        if (uxQueueSpacesAvailable( motorData.xMotorQ ) == 0) {
+        if (uxQueueSpacesAvailable( motorData.motorQ_LR ) == 0) {
             // If message is not removed from queue, return and signal error
             if (removeMotorQueueData() == 0) {
                 dbgOutputVal(MOTOR_FULLQUEUE);
@@ -107,7 +107,7 @@ void putDataOnMotorQ(char* data) {
         }
         
         // Send to queue, with at least one vacancy guaranteed for this data
-        if( xQueueSend( motorData.xMotorQ, (void*) data, portMAX_DELAY) != pdPASS )
+        if( xQueueSend( motorData.motorQ_LR, (void*) data, portMAX_DELAY) != pdPASS )
         {
             dbgOutputVal(RECEIVE_SENDTOMOTORQ_FAIL);
         }
@@ -119,13 +119,17 @@ void receiveFromMotorQ() {
     char readdata[MSG_LENGTH];
 
     // Read from messages until most recent data (FIFO queue)
-    while (uxQueueMessagesWaiting(motorData.xMotorQ) != 0){
+    while (uxQueueMessagesWaiting(motorData.motorQ_LR) != 0){
     
-        if (xQueueReceive(motorData.xMotorQ, &readdata, portMAX_DELAY))
+        if (xQueueReceive(motorData.motorQ_LR, &readdata, portMAX_DELAY))
         {
             //dbgOutputVal(MOTOR_RECEIVEFROMQ);
         } 
     }
+}
+
+void sendMotorControls() {
+    
 }
 
 
@@ -136,26 +140,51 @@ void MOTOR_Initialize ( void )
     motorData.state = MOTOR_STATE_INIT;
     
     //Create a queue capable of holding 250 system messages
-    motorData.xMotorQ = xQueueCreate( 250, MSG_LENGTH+1 ); 
-    if( motorData.xMotorQ == 0 ) {
+    motorData.motorQ_LR = xQueueCreate( 250, MSG_LENGTH+1 ); 
+    if( motorData.motorQ_LR == 0 ) {
+        dbgOutputVal(MOTOR_QUEUE_FAIL);
+        stopAll();
+    }
+    
+    //Create a queue capable of holding 250 system messages
+    motorData.actuatorQ_LR = xQueueCreate( 250, MSG_LENGTH+1 ); 
+    if( motorData.actuatorQ_LR == 0 ) {
         dbgOutputVal(MOTOR_QUEUE_FAIL);
         stopAll();
     }
     
     //Create a timer
-    motorData.xMotorTimer = xTimerCreate(  
+    motorData.motorTimer_LR = xTimerCreate(  
                      "MotorTimer", //Just a text name
                      ( LR_MOTOR_TIMER_RATE / portTICK_PERIOD_MS ), //period in ms
                      pdTRUE, //auto-reload when expires
                      (void *) 25, //a unique id
                      motorTimerCallback ); //pointer to callback function
     
+        //Create a timer
+    motorData.actuatorTimer_LR = xTimerCreate(  
+                     "ActuatorTimer", //Just a text name
+                     ( LR_MOTOR_TIMER_RATE / portTICK_PERIOD_MS ), //period in ms
+                     pdTRUE, //auto-reload when expires
+                     (void *) 25, //a unique id
+                     actuatorTimerCallback ); //pointer to callback function
+    
     //Start the timer
-    if( motorData.xMotorTimer == NULL ) {
+    if( motorData.motorTimer_LR == NULL ) {
         dbgOutputVal(MOTOR_TIMERINIT_FAIL);
         stopAll();
     }
-    else if( xTimerStart( motorData.xMotorTimer, 0 ) != pdPASS ) {
+    else if( xTimerStart( motorData.motorTimer_LR, 0 ) != pdPASS ) {
+        dbgOutputVal(MOTOR_TIMERINIT_FAIL);
+        stopAll();
+    }
+    
+        //Start the timer
+    if( motorData.actuatorTimer_LR == NULL ) {
+        dbgOutputVal(MOTOR_TIMERINIT_FAIL);
+        stopAll();
+    }
+    else if( xTimerStart( motorData.actuatorTimer_LR, 0 ) != pdPASS ) {
         dbgOutputVal(MOTOR_TIMERINIT_FAIL);
         stopAll();
     }

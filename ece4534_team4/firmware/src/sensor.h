@@ -76,8 +76,8 @@ typedef enum
 typedef struct
 {
     SENSOR_STATES state;
-	QueueHandle_t q_adc_interrupt;
-	TimerHandle_t t_adc_interrupt;
+	QueueHandle_t sensorQ_LR;
+	TimerHandle_t IRTimer_LR;
     unsigned int senseCount;
     unsigned short int sendCount;
     int sendToSensorQ_Err;

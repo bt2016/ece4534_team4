@@ -76,7 +76,7 @@ void receiveSendToMotorQ() {
 void receiveSendValFromISR(char* data){
     
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    if (xQueueSendFromISR( receiveData.xReceiveIntQ,
+    if (xQueueSendFromISR( receiveData.receiveIntQ_LR,
                             (void*) data,
                             &xHigherPriorityTaskWoken)
                                 != pdPASS)//errQUEUE_FULL)
@@ -117,8 +117,8 @@ void RECEIVE_Initialize ( void )
     receiveData.badMsg = 0;
 
     //Create a queue capable of holding 1000 characters (bytes))
-    receiveData.xReceiveIntQ = xQueueCreate(1000, sizeof( char ) ); 
-    if( receiveData.xReceiveIntQ == 0 ) {
+    receiveData.receiveIntQ_LR = xQueueCreate(1000, sizeof( char ) ); 
+    if( receiveData.receiveIntQ_LR == 0 ) {
         dbgOutputVal(RECEIVE_QUEUE_FAIL);
         stopAll(); //ERROR
     }
@@ -131,7 +131,7 @@ void RECEIVE_Initialize ( void )
     //Initialize any types you want to use right here? 
     
     //Timer to send to internal task queue
-    receiveData.xReceiveDistTimer = xTimerCreate(  
+    receiveData.receiveDistTimer_LR = xTimerCreate(  
                      "ReceiveDistTimer", //Just a text name
                      ( DIST_TIMER_RATE / portTICK_PERIOD_MS ), //period in ms
                      pdTRUE, //auto-reload when expires
@@ -139,7 +139,7 @@ void RECEIVE_Initialize ( void )
                      distributeCallback ); //pointer to callback function
     
     //Timer for message data report
-    receiveData.xReceiveTimer = xTimerCreate(  
+    receiveData.receiveTimer_LR = xTimerCreate(  
                      "ReceiveTimer", //Just a text name
                      ( RECEIVE_TIMER_RATE / portTICK_PERIOD_MS ), //period in ms
                      pdTRUE, //auto-reload when expires
@@ -148,20 +148,20 @@ void RECEIVE_Initialize ( void )
     
     //Start the timers
         //Start the timer
-    if( receiveData.xReceiveDistTimer == NULL ) {
+    if( receiveData.receiveDistTimer_LR == NULL ) {
         dbgOutputVal(RECEIVE_TIMERINIT_FAIL);
         stopAll();
     }
-    else if( xTimerStart( receiveData.xReceiveDistTimer, 0 ) != pdPASS ) {
+    else if( xTimerStart( receiveData.receiveDistTimer_LR, 0 ) != pdPASS ) {
         dbgOutputVal(RECEIVE_TIMERINIT_FAIL);
         stopAll();
     }
     
-    if( receiveData.xReceiveTimer == NULL ) {
+    if( receiveData.receiveTimer_LR == NULL ) {
         dbgOutputVal(RECEIVE_TIMERINIT_FAIL);
         stopAll();
     }
-    else if( xTimerStart( receiveData.xReceiveTimer, 0 ) != pdPASS ) {
+    else if( xTimerStart( receiveData.receiveTimer_LR, 0 ) != pdPASS ) {
         dbgOutputVal(RECEIVE_TIMERINIT_FAIL);
         stopAll();
     }
@@ -174,7 +174,7 @@ void RECEIVE_Tasks ( void )
     //Function to receive data from the queue
     //Blocks until it receives a byte
     char qData;
-    if (xQueueReceive(receiveData.xReceiveIntQ, &qData, portMAX_DELAY))
+    if (xQueueReceive(receiveData.receiveIntQ_LR, &qData, portMAX_DELAY))
     {
         dbgOutputVal(qData);   
 

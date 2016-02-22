@@ -56,6 +56,10 @@ void receiveTimerCallback(TimerHandle_t rTimer) {
         reportMsgDataToSendQ();
 }
 
+void actuatorTimerCallback(TimerHandle_t aTimer) {
+    sendMotorControls();
+}
+
 
 /* *****************************************************************************
  End of File

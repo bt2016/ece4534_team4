@@ -95,7 +95,7 @@ void IntHandlerDrvUsartInstance0(void)
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_USART_1_ERROR);
 }
  
-void IntHandlerDrvAdc(void)
+void IntHandlerIR_LR(void)
 {
     //TODO: make sure this corresponds to the Harmony config!!!
     int numberSamplesPerInterrupt = 1;

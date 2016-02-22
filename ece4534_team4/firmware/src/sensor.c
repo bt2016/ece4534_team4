@@ -61,14 +61,14 @@ void SENSOR_Initialize ( void )
     sensorData.state = SENSOR_STATE_INIT;
 	
 	//Create a queue capable of holding 25 unsigned long numbers
-    sensorData.q_adc_interrupt = xQueueCreate( 2500, sizeof( unsigned int ) ); 
-    if( sensorData.q_adc_interrupt == 0 ) {
+    sensorData.sensorQ_LR = xQueueCreate( 2500, sizeof( unsigned int ) ); 
+    if( sensorData.sensorQ_LR == 0 ) {
         dbgOutputVal(SENSOR_QUEUE_FAIL);
         stopAll();
     }
 	
 	//Create a timer with rollover rate 100ms
-	sensorData.t_adc_interrupt = xTimerCreate(  
+	sensorData.IRTimer_LR = xTimerCreate(  
 				 "SensorTimer", //Just a text name
 				 ( LR_SENSOR_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
 				 pdTRUE, //auto-reload when expires
@@ -76,11 +76,11 @@ void SENSOR_Initialize ( void )
 				 sensorTimerCallback ); //pointer to callback function
 				 
     //Start the timer
-    if( sensorData.t_adc_interrupt == NULL ) {
+    if( sensorData.IRTimer_LR == NULL ) {
         dbgOutputVal(SENSOR_TIMERINIT_FAIL);
         stopAll();
     }
-    else if( xTimerStart( sensorData.t_adc_interrupt, 0 ) != pdPASS ) {
+    else if( xTimerStart( sensorData.IRTimer_LR, 0 ) != pdPASS ) {
         dbgOutputVal(SENSOR_TIMERINIT_FAIL);
         stopAll();
     }
@@ -109,7 +109,7 @@ void SENSOR_Tasks ( void )
 		case SENSOR_STATE_READ:
 		{
             // Receive from sensor queue
-		    if (xQueueReceive(sensorData.q_adc_interrupt, &qData, portMAX_DELAY))
+		    if (xQueueReceive(sensorData.sensorQ_LR, &qData, portMAX_DELAY))
 			{
                 sensorData.senseCount++;
                 
@@ -152,7 +152,7 @@ void SENSOR_Tasks ( void )
 
 void sendValToSensorTask(unsigned int* message)
 {
-    if( xQueueSend( sensorData.q_adc_interrupt,
+    if( xQueueSend( sensorData.sensorQ_LR,
                              (void*) message,
                              portMAX_DELAY) != pdPASS )
     {
@@ -168,7 +168,7 @@ uint8_t removeSensorQueueData() {
     unsigned int* qData;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     
-    if (xQueueReceiveFromISR(sensorData.q_adc_interrupt, &qData, &xHigherPriorityTaskWoken)) {
+    if (xQueueReceiveFromISR(sensorData.sensorQ_LR, &qData, &xHigherPriorityTaskWoken)) {
         return 0x1;
     }
     
@@ -181,7 +181,7 @@ void sendValToSensorTaskFromISR(unsigned int* message)
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     
     // Check for full queue. If no spaces available, call to remove oldest data.
-    if (xQueueIsQueueFullFromISR(sensorData.q_adc_interrupt) == pdTRUE) {
+    if (xQueueIsQueueFullFromISR(sensorData.sensorQ_LR) == pdTRUE) {
         // If message is not removed from queue, return and signal error
         if (removeSensorQueueData() == 0) {
             dbgOutputVal(SENSOR_FULLQUEUE);
@@ -191,7 +191,7 @@ void sendValToSensorTaskFromISR(unsigned int* message)
     }
     
     // Send to queue, with at least one vacancy guaranteed for this data
-    if (xQueueSendFromISR( sensorData.q_adc_interrupt,
+    if (xQueueSendFromISR( sensorData.sensorQ_LR,
                             (void*) message,
                             &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
     {

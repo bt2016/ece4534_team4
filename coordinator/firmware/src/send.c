@@ -62,8 +62,8 @@ void receiveDataFromISR() {
     PLIB_INT_SourceDisable(INT_ID_0, INT_SOURCE_USART_1_TRANSMIT);
         
     // While the queue has available messages, read bytes and transmit
-    while (uxQueueMessagesWaitingFromISR(sendData.xTransmitQ) != 0){
-        while (xQueueReceiveFromISR(sendData.xTransmitQ, (void *) &readChar, &xTaskWokenByReceive) ) 
+    while (uxQueueMessagesWaitingFromISR(sendData.transmitQ_CD) != 0){
+        while (xQueueReceiveFromISR(sendData.transmitQ_CD, (void *) &readChar, &xTaskWokenByReceive) ) 
         {
             // A character was received.  Transmit the character now.
             if (sendData.testCount % BREAK_MESSAGE_DIV != 2) // Error simulation constant (missing byte)
@@ -92,13 +92,13 @@ void sendDataToTransmitQ(char* message) {
         int iter = 0;
         
         // SEND TO UART QUEUE
-        if (sendData.xTransmitQ != 0) {
+        if (sendData.transmitQ_CD != 0) {
 
             //for (k = message; *k; ++k) {
             // Add message to queue, character by character
             for (iter = 0; iter < MSG_LENGTH; iter++) {
 
-                if( xQueueSend( sendData.xTransmitQ, (void*) k, portMAX_DELAY) != pdPASS )
+                if( xQueueSend( sendData.transmitQ_CD, (void*) k, portMAX_DELAY) != pdPASS )
                 {
                     dbgOutputVal(SEND_SENDTOTRANSMITQ_FAIL);
                 }
@@ -119,7 +119,7 @@ void receiveFromSendQ()
     char read[MSG_LENGTH];
 
     // Read the top message of the queue
-    if (xQueueReceive(sendData.xDataToSendQ, &read, portMAX_DELAY))
+    if (xQueueReceive(sendData.sendQ_CD, &read, portMAX_DELAY))
     {
         //dbgOutputVal(SEND_RECEIVEFROMQ);
         newData = 1;
@@ -140,7 +140,7 @@ void receiveFromSendQ()
 uint8_t removeSendQueueData() {
     char readdata[MSG_LENGTH];
  
-    if (xQueueReceive(sendData.xDataToSendQ, &readdata, portMAX_DELAY))
+    if (xQueueReceive(sendData.sendQ_CD, &readdata, portMAX_DELAY))
     {
         return 0x1;
     } 
@@ -157,10 +157,10 @@ void putMsgOnSendQueue(char* data) {
     if (sendData.enqueueCount % MESSAGE_SKIP_DIV == 1)
         return;
     
-    if (sendData.xDataToSendQ != 0) {
+    if (sendData.sendQ_CD != 0) {
         
         // Check for full queue. If no spaces available, call to remove oldest data.
-        if (uxQueueSpacesAvailable( sendData.xDataToSendQ ) == 0) {
+        if (uxQueueSpacesAvailable( sendData.sendQ_CD ) == 0) {
             // If message is not removed from queue, return and signal error
             if (removeSendQueueData() == 0) {
                 dbgOutputVal(SEND_FULLQUEUE);
@@ -170,7 +170,7 @@ void putMsgOnSendQueue(char* data) {
         }
         
         // Send to queue, with at least one vacancy guaranteed for this data
-        if( xQueueSend( sendData.xDataToSendQ, (void*) data, portMAX_DELAY) != pdPASS )
+        if( xQueueSend( sendData.sendQ_CD, (void*) data, portMAX_DELAY) != pdPASS )
         {
             dbgOutputVal(MOTOR_SENDTOSENDQ_FAIL);
         }
@@ -188,15 +188,15 @@ void SEND_Initialize ( void )
     sendData.prevCount = 'a';
     
     //Create a queue capable of holding 1000 characters
-    sendData.xTransmitQ = xQueueCreate( 1000, sizeof(char) );
-    if( sendData.xTransmitQ == 0 ) {
+    sendData.transmitQ_CD = xQueueCreate( 1000, sizeof(char) );
+    if( sendData.transmitQ_CD == 0 ) {
         dbgOutputVal(SEND_QUEUE_FAIL);
         stopAll();
     }
     
     // Create a queue capable of holding 250 messages
-    sendData.xDataToSendQ = xQueueCreate(250, MSG_LENGTH+1);
-    if (sendData.xDataToSendQ == 0) {
+    sendData.sendQ_CD = xQueueCreate(250, MSG_LENGTH+1);
+    if (sendData.sendQ_CD == 0) {
         dbgOutputVal(SEND_QUEUE_FAIL);
         stopAll();
     }

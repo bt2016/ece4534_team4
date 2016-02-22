@@ -67,10 +67,10 @@ typedef struct
 {
     
     RECEIVE_STATES state;
-    QueueHandle_t xReceiveIntQ;
+    QueueHandle_t receiveIntQ_LR;
     
-    TimerHandle_t xReceiveTimer;
-    TimerHandle_t xReceiveDistTimer;
+    TimerHandle_t receiveTimer_LR;
+    TimerHandle_t receiveDistTimer_LR;
     char sendCount;
     unsigned short int goodMsg;
     unsigned short int badMsg;

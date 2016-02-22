@@ -82,10 +82,10 @@ typedef struct
     char prevCount;
 
     /* TODO: Define any additional data used by the application. */
-    QueueHandle_t xTransmitQ;
+    QueueHandle_t transmitQ_LR;
     TimerHandle_t xTimer100ms;
     
-    QueueHandle_t xDataToSendQ;
+    QueueHandle_t sendQ_LR;
 
 } SEND_DATA;
 

@@ -31,6 +31,7 @@ void motorTimerCallback(TimerHandle_t mTimer);
 void sensorTimerCallback(TimerHandle_t sTimer);
 void receiveTimerCallback(TimerHandle_t rTimer);
 void distributeCallback(TimerHandle_t dTimer);
+void actuatorTimerCallback(TimerHandle_t aTimer);
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus

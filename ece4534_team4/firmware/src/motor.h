@@ -77,8 +77,10 @@ typedef struct
     unsigned short int sendCount;
 
     /* TODO: Define any additional data used by the application. */
-    QueueHandle_t xMotorQ;
-    TimerHandle_t xMotorTimer;
+    QueueHandle_t motorQ_LR;
+    QueueHandle_t actuatorQ_LR;
+    TimerHandle_t motorTimer_LR;
+    TimerHandle_t actuatorTimer_LR;
    
 } MOTOR_DATA;
 
