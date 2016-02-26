@@ -1,0 +1,4 @@
+192.168.42.29 is listening on 10001
+192.168.42.30 is listening on 10000
+192.168.42.31 is listening on 10002
+192.168.42.32 is listening on 10003
