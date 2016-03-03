@@ -21,6 +21,8 @@
 #include <FreeRTOS.h>
 #include <timers.h>
 
+#include "sensor_public.h"
+
 /* Provide C++ Compatibility */
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +31,7 @@ extern "C" {
 void vTimerCallback(TimerHandle_t pxTimer);
 void IRArrayTimerCallback(TimerHandle_t irTimer);
 void sensorTimerCallback(TimerHandle_t sTimer);
+void servoMovementTimerCallback(TimerHandle_t sTimer);
 void receiveTimerCallback(TimerHandle_t rTimer);
 void processTimerCallback(TimerHandle_t aTimer);
 

@@ -64,24 +64,47 @@ void processSensorData(char* sensorData) {
     
 }
 
-void sendProcessedData() {
-    // Convert sensor data to message format character array
-    char data[MSG_LENGTH];
-    data[0] = MSG_START;            // Start byte
-    data[1] = TYPE_SENSORARRAY_PROCESSED;      // Type byte
-    data[2] = processData.sendCount;  // Count byte
-    // Dummy values (data bytes x6)
-    data[3] = 0x22;
-    data[4] = 0x33;
-    data[5] = 0x44;
-    data[6] = 0x55; 
-    data[7] = 0x66; 
-    data[8] = processData.prevSensorData;
-    data[9] = MSG_STOP;             // Stop byte
+void sendClearMessage(){
+    //Convert sensor data to message format character array
+    char data[4];
+    data[0] = MSG_START;
+    data[1] = 'c'; //TYPE_BROOKE_CLEAR;
+    data[2] = processData.clearCount;
+    data[3] = MSG_STOP;
+    putMsgOnSendQueue(data);  // Transfer message to Send task queue]
+    processData.clearCount++;
+}
+
+void sendDisplayMessage(){
+    //Convert sensor data to message format character array
+    char data[4];
+    data[0] = MSG_START;
+    data[1] = 'd';
+    data[2] = processData.displayCount;
+    data[3] = MSG_STOP;
+    putMsgOnSendQueue(data);  // Transfer message to Send task queue]
+    processData.displayCount++;
+}
+
+// Convert sensor data to message format character array
+void sendProcessedData(Obstacle o) {
+    //char data[MSG_LENGTH];
+    char data[6];
+    data[0] = MSG_START;                    // Start byte
+    //data[1] = TYPE_SENSORARRAY_PROCESSED; // Type byte
+    data[1] = 'a'; //TYPE_BROOKE_APPENDPOLAR;
+    data[2] = processData.appendCount;      // Count byte
+    data[3] = o.r;//data1;
+    data[4] = o.theta;//data2;
+    //data[5] = 0x22;//data3;
+    //data[6] = 0x22;//data4;
+    //data[7] = 0x22;//data5;
+    //data[8] = 0x22;//data6;
+    data[5] = MSG_STOP;             // Stop byte
           
     putMsgOnSendQueue(data);  // Transfer message to Send task queue
             
-    processData.sendCount++;
+    processData.appendCount++;
 }
 
 // Remove oldest data on full local process queue
@@ -126,10 +149,13 @@ void PROCESS_Initialize ( void )
     /* Place the App state machine in its initial state. */
     processData.state = PROCESS_STATE_INIT;
     processData.sendCount = 0;
-    processData.prevSensorData = 0;
+    processData.clearCount = 0;
+    processData.displayCount = 0;
+    processData.appendCount = 0;
     
-        //Create a queue capable of holding 1000 characters (bytes))
-    processData.processQ_SA = xQueueCreate(1000, MSG_LENGTH+1 ); 
+    //Create a queue capable of holding 1000 characters (bytes))
+    //processData.processQ_SA = xQueueCreate(1000, MSG_LENGTH+1 ); 
+    processData.processQ_SA = xQueueCreate(1000, sizeof(Obstacle) ); 
     if( processData.processQ_SA == 0 ) {
         dbgOutputVal(PROCESS_QUEUE_FAIL);
         stopAll(); //ERROR
@@ -162,23 +188,32 @@ void PROCESS_Tasks ( void )
     /* Check the application's current state. */
     switch ( processData.state )
     {
-        char qData[10];
+        Obstacle qData;
         
         /* Application's initial state. */
         case PROCESS_STATE_INIT:
         {
+            //send a message to clear coordinates.txt
+            sendClearMessage();
             processData.state = PROCESS_STATE_PROCESS;
             break;
         }
         
         case PROCESS_STATE_PROCESS:
-        {
-           // Receive from sensor queue
+        {            
+            // Receive from sensor queue
 		    if (xQueueReceive(processData.processQ_SA, &qData, portMAX_DELAY))
 			{
-                processData.prevSensorData = qData[8];
-                processSensorData(qData);
+                //immediately forward out to the pi
+                sendProcessedData(qData);
 			}
+            
+            //if we have sent an entire panorama
+            if ((processData.appendCount % 90)==0){
+                sendDisplayMessage();
+                processData.state = PROCESS_STATE_INIT;
+            }
+            
 			break;
         }
         

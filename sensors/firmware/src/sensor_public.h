@@ -22,6 +22,8 @@ extern "C" {
     
 void sendValToSensorTask(unsigned int* message);
 void sendValToSensorTaskFromISR(unsigned int* message);
+void setServoAngle(int angle);
+void startServoMovementTimer();
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus

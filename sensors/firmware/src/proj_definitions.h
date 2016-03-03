@@ -89,9 +89,10 @@ extern "C" {
 #define MOTOR_CTRL_TIMER_RATE 50  // Coordinator -> Lead Rover instruction timer rate
 #define RECEIVE_TIMER_RATE 10000    // Message received data report timer
     
-#define SA_DIST_TIMER_RATE 20
+//#define SA_DIST_TIMER_RATE 20
+#define SA_DIST_TIMER_RATE 100
 #define SA_IR_TIMER_RATE 50
-#define SA_PROC_TIMER_RATE 25
+#define SA_PROC_TIMER_RATE 210
     
     
 // DEBUG CODE - POTENTIAL VITAL ERRORS
@@ -129,6 +130,10 @@ extern "C" {
 #define SENSOR_FULLQUEUE 0xB6
 #define SENSOR_QUEUE_FAIL 0x26
     
+#define TYPE_BROOKE_DISPLAY 97
+#define TYPE_BROOKE_APPENDPOLAR 100
+#define TYPE_BROOKE_CLEAR 99
+    
 #define PROCESS_TIMERINIT_FAIL 0x67
 #define PROCESS_QUEUE_FAIL 0x27
 
@@ -146,6 +151,12 @@ extern "C" {
         char data[6];
         char stop;
     } MESSAGE;
+    
+    typedef struct
+    {
+        unsigned int r;
+        int theta;
+    } Obstacle;
 
     // *****************************************************************************
     // *****************************************************************************

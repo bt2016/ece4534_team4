@@ -65,12 +65,15 @@ extern "C" {
 #endif
 // DOM-IGNORE-END 
 
+#define SERVOANGLE_MIN 80
+#define SERVOANGLE_MAX 170
 
 typedef enum
 {
 	SENSOR_STATE_INIT=0,
-	SENSOR_STATE_READ=1
-
+    SENSOR_STATE_TAKEREADINGS=1,
+    SENSOR_STATE_FINDOBSTACLES=2,
+	SENSOR_STATE_READ=3,
 } SENSOR_STATES;
 
 typedef struct
@@ -78,15 +81,26 @@ typedef struct
     SENSOR_STATES state;
 	QueueHandle_t sensorQ_SA;
 	TimerHandle_t sensorDistTimer_SA;
+    TimerHandle_t servoMovementTimer_SA;
     unsigned int senseCount;
     unsigned short int sendCount;
     int sendToSensorQ_Err;
+    
+    int r[90]; //stores polar coordinate points
+    int servo_angle;
 
 } SENSOR_DATA;
 
 void SENSOR_Initialize ( void );
 void SENSOR_Tasks( void );
 
+//helper functions
+void sendValToSensorTask(unsigned int* message);
+uint8_t removeSensorQueueData();
+void sendValToSensorTaskFromISR(unsigned int* message);
+void setServoAngle(int angle);
+void incrementServo();
+void startServoMovementTimer();
 
 #endif /* _SENSOR_H */
 

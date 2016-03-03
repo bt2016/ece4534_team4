@@ -3,11 +3,11 @@ Test sending a message over UDP to a WiFly
 """
 
 import socket
+from globalVARS import *
 
-UDP_IP = "192.168.42.41"
-UDP_PORT = 10000
-#MESSAGE = "Embedded is so much fun! (Sarcasm)\r\n"
-MESSAGE = '~roo.'
+UDP_IP = COORDINATOR_IP
+UDP_PORT = COORDINATOR_PORT
+MESSAGE = '~{0}2ooooo{1}.'.format(TYPEC_TKN_REQUEST, chr(NUMBER_OF_TOKENS))
 
 print "UDP target IP:", UDP_IP
 print "UDP target port:", UDP_PORT

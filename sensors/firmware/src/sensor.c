@@ -74,6 +74,12 @@ void SENSOR_Initialize ( void )
 				 pdTRUE, //auto-reload when expires
 				 (void *) 29, //a unique id
 				 sensorTimerCallback ); //pointer to callback function
+	sensorData.servoMovementTimer_SA = xTimerCreate(  
+				 "ServoMovementTimer", //Just a text name
+				 ( 200 / portTICK_PERIOD_MS ), //period is 200ms
+				 pdFALSE, //do not auto-reload when expires
+				 (void *) 30, //a unique id
+				 servoMovementTimerCallback ); //pointer to callback function
 				 
     //Start the timer
     if( sensorData.sensorDistTimer_SA == NULL ) {
@@ -89,7 +95,16 @@ void SENSOR_Initialize ( void )
     PLIB_PORTS_PinDirectionInputSet(PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_0);
     PLIB_ADC_SampleAutoStartDisable(ADC_ID_1);
     PLIB_ADC_Enable(ADC_ID_1);
-					 
+	
+    //Start PWM timer
+    DRV_TMR0_Stop();
+    DRV_TMR0_Initialize();
+    DRV_TMR0_Start();
+    
+    //Initialize PWM
+    DRV_OC0_Disable();
+    DRV_OC0_Initialize();
+    DRV_OC0_Enable();
 }
 
 // Finite State Machine, runs forever.
@@ -102,10 +117,46 @@ void SENSOR_Tasks ( void )
     {
         case SENSOR_STATE_INIT:
         {
-			sensorData.state = SENSOR_STATE_READ;
+            //set the servo to zero
+            setServoAngle(SERVOANGLE_MIN);
+            
+            //start the servoMovementTimer
+            startServoMovementTimer();
+            
+            //change state
+			sensorData.state = SENSOR_STATE_TAKEREADINGS;
             break;
         }
 		
+        case SENSOR_STATE_TAKEREADINGS:
+        {
+            Obstacle o;
+            //block until you receive a value from the ADC
+            if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY)){
+                //sensorData.r[sensorData.servo_angle - SERVOANGLE_MIN] = qData; //add the value to the array
+                o.r = qData;
+                o.theta = sensorData.servo_angle - SERVOANGLE_MIN;
+                putDataOnProcessQ(&o);
+                
+                //check to see if we are finished panning
+                if (sensorData.servo_angle < SERVOANGLE_MAX){
+                    incrementServo();
+                    startServoMovementTimer();
+                }
+                else{
+                    //set the servo to zero and change state
+                    setServoAngle(SERVOANGLE_MIN);
+                    //sensorData.state = SENSOR_STATE_FINDOBSTACLES;
+                }
+            }
+            break;
+        }
+        
+        case SENSOR_STATE_FINDOBSTACLES:
+        {
+            break;
+        }
+        
 		case SENSOR_STATE_READ:
 		{
             // Receive from sensor queue
@@ -196,7 +247,40 @@ void sendValToSensorTaskFromISR(unsigned int* message)
         //stopAll(); //failed to send to queue
     }
 }
- 
+
+void setServoAngle(int angle){
+    //convert passed-in angle to a pulse time
+    //time [ms] = (0.0103*degrees) + 0.5412;
+    sensorData.servo_angle = angle;
+    double time_ms = (0.0103*(double)angle) + 0.5412;
+    int time_value = (6249*time_ms)/20;
+    
+    //restart the PWM module
+    DRV_TMR0_Stop();
+    DRV_TMR0_Initialize();
+    DRV_OC0_SetPulseWidth(time_value);
+    DRV_TMR0_Start();
+}
+
+//moves the servo ahead by one degree
+//if the servo is at its maximum position, it will move back to the minimum position
+void incrementServo(){
+    if (sensorData.servo_angle == SERVOANGLE_MAX){
+        sensorData.servo_angle = SERVOANGLE_MIN;
+        setServoAngle(SERVOANGLE_MIN);
+    }
+    else{
+        sensorData.servo_angle++;
+        setServoAngle(sensorData.servo_angle);
+    }
+}
+
+void startServoMovementTimer(){
+    if( xTimerStart( sensorData.servoMovementTimer_SA, 0 ) != pdPASS ) {
+        dbgOutputVal(SENSOR_TIMERINIT_FAIL);
+        stopAll();
+    }
+}
 
 /*******************************************************************************
  End of File

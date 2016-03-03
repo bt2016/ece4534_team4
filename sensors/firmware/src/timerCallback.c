@@ -34,8 +34,14 @@ void sensorTimerCallback(TimerHandle_t sTimer){
     distSensorTick++;
     
     // Error simulation constant - straddle message rate
-    if (distSensorTick % MESSAGE_RATE_DIV == 0)
-        PLIB_ADC_SamplingStart(0);  // Sample from sensor
+    if (distSensorTick % MESSAGE_RATE_DIV == 0){
+
+        //PLIB_ADC_SamplingStart(0);  // Sample from sensor
+    }
+}
+
+void servoMovementTimerCallback(TimerHandle_t sTimer){
+    PLIB_ADC_SamplingStart(0); //Sample from sensor
 }
 
 // Called on Sensor Timer rollover
@@ -57,8 +63,8 @@ void receiveTimerCallback(TimerHandle_t rTimer) {
 void processTimerCallback(TimerHandle_t aTimer) {
     processTick++;
     
-    if (processTick % MESSAGE_RATE_DIV == 0)
-        sendProcessedData();
+    if (processTick % MESSAGE_RATE_DIV == 0){}
+        //sendProcessedData();
 }
 
 

@@ -21,16 +21,19 @@ import random,sys
 import math
 
 def appendRectFromPolar(message):
-    #print(message)
-    r = ord(message[3])
-    theta = ord(message[4])
-    #xpos = int(r*math.cos(theta*(math.pi/180)))
-    #ypos = int(r*math.sin(theta*(math.pi/180)))
-    #print(str.format("r={0} theta={1}",r,theta))
-    #print(str.format("xpos={0} ypos={1}",xpos,ypos))
-    f = open("coordinates.txt", 'a')
-    f.write(str.format("\n{0} {1}",r,theta))
-    f.close()
+    try:
+        #print(message)
+        r = ord(message[3])
+        theta = ord(message[4])
+        #xpos = int(r*math.cos(theta*(math.pi/180)))
+        #ypos = int(r*math.sin(theta*(math.pi/180)))
+        #print(str.format("r={0} theta={1}",r,theta))
+        #print(str.format("xpos={0} ypos={1}",xpos,ypos))
+        f = open("coordinates.txt", 'a')
+        f.write(str.format("\n{0} {1}",r,theta))
+        f.close()
+    except:
+        pass
 
 def clearListOfCoordinates():
     f = open("coordinates.txt", 'w')

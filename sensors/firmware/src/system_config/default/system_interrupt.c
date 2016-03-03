@@ -105,15 +105,15 @@ void IntHandlerDrvAdc(void)
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
     
     //get the ADC value
-    unsigned int potValue = 0;
+    unsigned int runningSum = 0;
     int i = 0;
     for(i=0; i<numberSamplesPerInterrupt; i++)
-        potValue += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
-    potValue = potValue/numberSamplesPerInterrupt; //the output is a 16-bit int
+        runningSum += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
+    double averageADCVal = (double)runningSum/(double)numberSamplesPerInterrupt; //the output is a 16-bit int
     
     //convert ADC steps to distance in cm
-    //unsigned int distance = (unsigned int) (63.404-((double)potValue*0.058)); //cm
-    unsigned int distance = (unsigned int) (24.952-((double)potValue*0.0227)); //in
+    averageADCVal = (averageADCVal/(double)1024)*5; //convert ADC val to voltage
+    unsigned int distance = ((16.211*averageADCVal*averageADCVal*averageADCVal*averageADCVal) - (127.77*averageADCVal*averageADCVal*averageADCVal) + (371.33*averageADCVal*averageADCVal) - (494.66*averageADCVal) + 297.73);
     
     //send the value to the queue
     sendValToSensorTaskFromISR(&distance);

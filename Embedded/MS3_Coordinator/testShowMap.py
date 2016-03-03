@@ -7,7 +7,7 @@ from globalVARS import *
 
 UDP_IP = COORDINATOR_IP
 UDP_PORT = COORDINATOR_PORT
-MESSAGE = '~12ffffff.'
+MESSAGE = '~{0}2oooooo.'.format(TYPEC_UPDATE_MAP)
 
 print "UDP target IP:", UDP_IP
 print "UDP target port:", UDP_PORT
