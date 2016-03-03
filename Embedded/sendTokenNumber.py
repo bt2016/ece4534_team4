@@ -7,15 +7,16 @@ from globalVARS import *
 
 UDP_IP = COORDINATOR_IP
 UDP_PORT = COORDINATOR_PORT
-MESSAGE = '~12ffffff.'
+MESSAGE = '~{0}2ooooo{1}.'.format(TYPEC_TKN_REQUEST, chr(NUMBER_OF_TOKENS))
 
 print "UDP target IP:", UDP_IP
 print "UDP target port:", UDP_PORT
-print "message:", MESSAGE
+#print "message:", MESSAGE
+
 
 sock = socket.socket(socket.AF_INET, # Internet
                      socket.SOCK_DGRAM) # UDP
 sock.sendto(MESSAGE, (UDP_IP, UDP_PORT))
 
 
-print("Message successfully sent")
+print("Token update message successfully sent")

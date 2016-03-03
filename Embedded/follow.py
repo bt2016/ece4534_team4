@@ -19,6 +19,78 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     typesAndBytes = {}
     #total_count = 0
 
+    def motorData(self, rightDir, rightSpd, leftDir, leftSpd):
+
+       right = rightSpd;
+       left = leftSpd;
+
+       # Determine minimum value
+       if leftSpd >= rightSpd:
+          min = rightSpd
+       else:
+          min = leftSpd
+
+       #If moving forward on both
+       if leftDir == MOTOR_FORWARD and rightDir == MOTOR_FORWARD:
+
+          if leftSpd == rightSpd:
+             dir = "STRAIGHT AHEAD     "
+          elif leftSpd > rightSpd:
+             dir = "FORWARD, SKEW RIGHT"
+          else:
+             dir = "FORWARD, SKEW LEFT "
+
+       elif leftDir == MOTOR_FORWARD and rightDir == MOTOR_BACKWARD:
+          right = -right;
+          dir = "ROTATE RIGHT       "
+       elif leftDir == MOTOR_BACKWARD and rightDir == MOTOR_FORWARD:
+          left = -left;
+          dir = "ROTATE LEFT        "
+       elif leftDir == MOTOR_BACKWARD and rightDir == MOTOR_BACKWARD:
+          right = -right;
+          left = -left;
+          dir = "TOTAL REVERSE      "
+       elif leftDir == MOTOR_STOP and rightDir == MOTOR_STOP:
+          dir = "ROVER STOPPED      "  
+
+       if min == 0:
+          ect = "       "
+       elif min < 40:
+          ect = "(Slow) "
+       elif min < 70:
+          ect = "(Med)  "
+       else:
+          ect = "(Fast) "
+
+       ion = " --- Right: " + str(right) + " / Left: " + str(left)
+
+       return dir + ect + ion
+
+    def printIRDir(self, front, rear, left, right):
+
+       if front > 40:
+          fmes = "HIT"
+       else:
+          fmes = "---"
+
+       if rear > 40:
+          rmes = "HIT"
+       else:
+          rmes = "---"
+
+       if left > 40:
+          lmes = "HIT"
+       else:
+          lmes = "---"
+
+       if right > 40:
+          gmes = "HIT"
+       else:
+          gmes = "---"
+
+       print("<IR RX>  Front: {0}  /  Rear: {1}  /  Left: {2}  /  Right: {3}\n".format(fmes, rmes, lmes, gmes))
+
+
     def trackIncoming(self, type, num):
   
         #its in our dictionary, check it
@@ -29,8 +101,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
            if last_msg_num == 255: 
               last_msg_num = -1
 
-           if (last_msg_num + 1) != num:
-              print("Type {0} skipped message. I expected #{1} but received #{2}".format(hex(ord(type)), (last_msg_num+1), num))  
+           #if (last_msg_num + 1) != num:
+           #   print("Type {0} skipped message. I expected #{1} but received #{2}".format(hex(ord(type)), (last_msg_num+1), num))  
                        
            self.typesAndBytes[type] = num
 
@@ -89,13 +161,9 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                name = "FOLLOW"
                txrate = EXPECTED_FR_SEND
                rxrate = EXPECTED_FR_RECEIVE
-            elif BROOKELAPTOP_IP in self.request.getpeername():
-                print("Brooke has connected.")
                 
 
-
             while True:
-
                 data = self.request.recv(1) #96
 
                 if data == MESSAGE_START_BYTE:
@@ -132,101 +200,25 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                    #inter_count = total_count - prev_count
                    #prev_count = total_count
 
-                   #Print out message receive data
-                   if type == TYPE_RECEIVE_STAT:
-                      #print >>sys.stderr, " ".join(hex(ord(n)) for n in message)
-                      #print(inter_count - ord(message[8]))
-
-                      #Test accuracy of receive timer callback, calculate receive rate
-                      inter_time = time.time() - prev_time
-                      prev_time = time.time()
-
-                      if inter_time != 0 and len(message) > 8:
-                         
-                         if COORDINATOR_IP in self.request.getpeername():
-                            minuteTick = minuteTick + 1
-                            if minuteTick == 6:
-                               minuteTick = 0
-                               minuteCount = minuteCount + 1
-                               print("Runtime: {0} minutes.\n".format(minuteCount))
-
-                         goodMsg = ord(message[8]) + ord(message[7])*16
-                         badMsg = ord(message[6]) + ord(message[5])*16
-                         goodMsgTotal = goodMsgTotal + goodMsg
-                         badMsgTotal = badMsgTotal + badMsg
-                         msgTotal = msgTotal + badMsg + goodMsg
-
-                         goodrate = goodMsg/inter_time
-                         badrate = badMsg/inter_time
-                         totalrate = (goodMsg+badMsg)/inter_time
-                         pushrate = sent_messages/inter_time
-
-                         #receiverate = abs((totalrate-rxrate)/(rxrate+0.000001))
-                         if rxrate != 0:
-                            receiverate = totalrate/rxrate
-
-                         if totalrate == 0 and rxrate == 0:
-                            rxreport = "RX Rate - GOOD!"
-                         elif receiverate > 0.9 and receiverate < 1.1:
-                            rxreport = "RX Rate - GOOD!"
-                         elif receiverate > 1.1:
-                            rxreport = "RX RATE FAST - {0:.3g}x SPEED".format(receiverate)
-                         else:
-                            rxreport = "RX RATE SLOW - {0:.3g}x SPEED".format(receiverate)
-
-
-                         #sendcomp = abs((pushrate - txrate)/(txrate+0.000001))
-
-                         if txrate != 0:
-                           sendcomp = pushrate/txrate
-
-                         if pushrate == 0 and txrate == 0:
-                            txreport = "TX Rate - GOOD!"
-                         elif sendcomp > 0.9 and sendcomp < 1.1:
-                            txreport = "TX Rate - GOOD!"
-                         elif sendcomp > 1.1:
-                            txreport = "TX RATE FAST - {0:.3g}x SPEED".format(sendcomp)
-                         else:
-                            txreport = "TX RATE SLOW - {0:.3g}x SPEED".format(sendcomp)
-
-
-                         if goodMsg == 0 and badMsg != 0:
-                            errport = "BAD DATA"
-                         elif goodMsg == 0:
-                            errport = ""
-                         elif badMsg == 0:
-                            errport = "GOOD DATA"
-                         elif (badMsg*10) < goodMsg:
-                            errport = "MOSTLY GOOD DATA"
-                         else:
-                            errport = "ERRORS IN DATA"
-
-                         if badMsg+goodMsg > 0 or sent_messages > 0:
-                            print("<{0}> Messages received: {1} ({2:.3g}/s)  Sent: {3} ({4:.3g}/s)  Errors Reported: {5}".format(name, goodMsg, goodrate, sent_messages, pushrate, badMsg))
-                            print("        {0} || {1} || {2}".format(rxreport, txreport, errport))
-                            #print("        Rate/sec - Received: {0:.3g}     Sent: {1:.3g}".format(totalrate, pushrate))
-                         else:
-                            print("<{0}> received and sent 0 messages in {1:.3g}s. Expecting {2} received and {3] sent.".format(name, inter_time, txrate, rxrate))
-
-                         print("")
-
-                      message = ''
-                      sent_messages = 0
-                      continue
-
-
-
+                  
                    if COORDINATOR_IP in self.request.getpeername():
                       processCoordinatorMsg(type, message)
-
-
-                   elif BROOKELAPTOP_IP in self.request.getpeername():
-                      processBrookeMsg(type, message)
                    else:
-                      sendToCoordinator(message)
-                      if message[1] == TYPE_LR_SENSOR and message[3] == chr(88):
-                         print("Sensor reads {0} cm".format(ord(message[8])))
-                         #print(" ".join(hex(ord(n)) for n in MESSAGE))
+                      #sendToCoordinator(message)
+                      if len(message) < 9:
+                         continue
+                      elif message[1] == TYPE_FR_DIST:
+                         print("<SENSOR> reads {0:2} cm\n".format(ord(message[8])))
+                      elif message[1] == TYPE_FR_IR and len(message) > 8:
+                         self.printIRDir(ord(message[5]), ord(message[6]), ord(message[7]), ord(message[8]))
+                         #print("<IR RX>  Front: {0:3}  Rear: {1:3}  Left: {2:3}  Right: {3:3}\n".format(ord(message[5]), ord(message[6]), ord(message[7]), ord(message[8])))
+                      elif message[1] == TYPEC_MOTOR_CTRL and len(message) > 8:
+                         motorString = self.motorData(message[5], ord(message[6]), message[7], ord(message[8]))
+
+                         print("<MOTOR>  {0}\n".format(motorString))
+                      #elif message[1] != TYPE_RECEIVE_STAT:
+                      #   print(" ".join(hex(ord(n)) for n in message))
+                            
 
                    sent_messages = sent_messages + 1
                       
