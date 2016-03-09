@@ -41,7 +41,8 @@ void sensorTimerCallback(TimerHandle_t sTimer){
 }
 
 void servoMovementTimerCallback(TimerHandle_t sTimer){
-    PLIB_ADC_SamplingStart(0); //Sample from sensor
+    //PLIB_ADC_SamplingStart(0); //Sample from sensor
+    PLIB_ADC_SampleAutoStartEnable(0);
 }
 
 // Called on Sensor Timer rollover

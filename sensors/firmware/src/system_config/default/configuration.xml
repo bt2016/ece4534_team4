@@ -187,7 +187,7 @@
       <Template>
         <Name>drv_adc_static.c</Name>
         <Path>Source Files/app/system_config/default/framework/driver/adc/src</Path>
-        <Checksum>809FE72B6243BE8368D33AC8EC51AF03</Checksum>
+        <Checksum>CA1FABEC52F418B79A2CD842D25CBACD</Checksum>
       </Template>
       <Template>
         <Name>receive.c</Name>

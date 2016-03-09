@@ -64,10 +64,16 @@ void DRV_ADC_Initialize(void)
     PLIB_ADC_VoltageReferenceSelect(DRV_ADC_ID_1, ADC_REFERENCE_VDD_TO_AVSS);
 
     /* Sampling Selections */
+    /* Enable Auto Sample Mode */
+    PLIB_ADC_SampleAutoStartEnable(DRV_ADC_ID_1);
+    /* Sample Acquisition Time (Auto Sample Mode) */	
+    PLIB_ADC_SampleAcquisitionTimeSet(DRV_ADC_ID_1, 31);
+    /* Stop Conversion Sequence on First Interrupt (Auto Sample Mode) */
+    PLIB_ADC_ConversionStopSequenceEnable(DRV_ADC_ID_1);
     /* Select Sampling Mode */
     PLIB_ADC_SamplingModeSelect(DRV_ADC_ID_1, ADC_SAMPLING_MODE_MUXA);
     /* Number of Samples Per Interrupt */
-    PLIB_ADC_SamplesPerInterruptSelect(DRV_ADC_ID_1, ADC_1SAMPLE_PER_INTERRUPT);
+    PLIB_ADC_SamplesPerInterruptSelect(DRV_ADC_ID_1, ADC_10SAMPLES_PER_INTERRUPT);
 
     /* Conversion Selections */
     /* Select Trigger Source */

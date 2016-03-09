@@ -99,7 +99,7 @@ void IntHandlerDrvUsartInstance0(void)
 void IntHandlerDrvAdc(void)
 {
     //TODO: make sure this corresponds to the Harmony config!!!
-    int numberSamplesPerInterrupt = 1;
+    int numberSamplesPerInterrupt = 10;
         
     //clear the interrupt flag
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);

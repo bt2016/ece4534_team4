@@ -208,8 +208,8 @@ void PROCESS_Tasks ( void )
                 sendProcessedData(qData);
 			}
             
-            //if we have sent an entire panorama
-            if ((processData.appendCount % 90)==0){
+            //if we have sent an entire panorama, theta == 90
+            if (qData.theta == 90){
                 sendDisplayMessage();
                 processData.state = PROCESS_STATE_INIT;
             }

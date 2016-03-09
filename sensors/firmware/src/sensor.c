@@ -76,7 +76,7 @@ void SENSOR_Initialize ( void )
 				 sensorTimerCallback ); //pointer to callback function
 	sensorData.servoMovementTimer_SA = xTimerCreate(  
 				 "ServoMovementTimer", //Just a text name
-				 ( 200 / portTICK_PERIOD_MS ), //period is 200ms
+				 ( 300 / portTICK_PERIOD_MS ), //period is 300ms
 				 pdFALSE, //do not auto-reload when expires
 				 (void *) 30, //a unique id
 				 servoMovementTimerCallback ); //pointer to callback function
@@ -92,9 +92,13 @@ void SENSOR_Initialize ( void )
     }
 
     //Initialize ADC A0 = Pic32 pin 25, RB0. Manual Sample Start and TAD based Conversion Start
-    PLIB_PORTS_PinDirectionInputSet(PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_0);
-    PLIB_ADC_SampleAutoStartDisable(ADC_ID_1);
-    PLIB_ADC_Enable(ADC_ID_1);
+    //PLIB_PORTS_PinDirectionInputSet(PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_0);
+    //PLIB_ADC_SampleAutoStartDisable(ADC_ID_1);
+    //PLIB_ADC_Enable(ADC_ID_1);
+    
+    DRV_ADC_Stop();
+    DRV_ADC_Initialize();
+    DRV_ADC_Start();
 	
     //Start PWM timer
     DRV_TMR0_Stop();
@@ -138,8 +142,9 @@ void SENSOR_Tasks ( void )
                 o.theta = sensorData.servo_angle - SERVOANGLE_MIN;
                 putDataOnProcessQ(&o);
                 
+                
                 //check to see if we are finished panning
-                if (sensorData.servo_angle < SERVOANGLE_MAX){
+                if (sensorData.servo_angle < SERVOANGLE_MAX){                    
                     incrementServo();
                     startServoMovementTimer();
                 }
