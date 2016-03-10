@@ -90,6 +90,7 @@ typedef struct
     unsigned short int clearCount;
     unsigned short int displayCount;
     unsigned short int appendCount;
+    unsigned short int echoCount;
 
     QueueHandle_t processQ_SA;
 	TimerHandle_t process_Timer_SA;

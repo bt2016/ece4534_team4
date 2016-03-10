@@ -80,7 +80,7 @@ void SENSOR_Initialize ( void )
 				 pdFALSE, //do not auto-reload when expires
 				 (void *) 30, //a unique id
 				 servoMovementTimerCallback ); //pointer to callback function
-				 
+    
     //Start the timer
     if( sensorData.sensorDistTimer_SA == NULL ) {
         dbgOutputVal(SENSOR_TIMERINIT_FAIL);
@@ -134,15 +134,46 @@ void SENSOR_Tasks ( void )
 		
         case SENSOR_STATE_TAKEREADINGS:
         {
-            Obstacle o;
             //block until you receive a value from the ADC
             if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY)){
-                //sensorData.r[sensorData.servo_angle - SERVOANGLE_MIN] = qData; //add the value to the array
-                o.r = qData;
-                o.theta = sensorData.servo_angle - SERVOANGLE_MIN;
-                putDataOnProcessQ(&o);
                 
+                #ifdef SENSOR_DEBUG_ISOLATESENSOR
+                    Obstacle o;
+                    o.start_radius=0;
+                    o.end_radius=0;
+                    o.length_of_arc=0;
+                    o.midpoint_x=0;
+                    o.midpoint_y=0;
+                    o.slope=0;
+                    o.midpoint_r = qData;
+                    o.midpoint_theta = sensorData.servo_angle - SERVOANGLE_MIN;
+                    putDataOnProcessQ(&o);
+                    startServoMovementTimer();
+                    break;
+                #endif
+
+                #ifdef SENSOR_DEBUG_FULLMAP
+                    Obstacle o;
+                    o.start_radius=0;
+                    o.end_radius=0;
+                    o.length_of_arc=0;
+                    o.midpoint_x=0;
+                    o.midpoint_y=0;
+                    o.slope=0;
+                    o.midpoint_r = qData;
+                    o.midpoint_theta = sensorData.servo_angle - SERVOANGLE_MIN;
+                    putDataOnProcessQ(&o);
+                    //check to see if we are finished panning
+                    if (sensorData.servo_angle < SERVOANGLE_MAX){                    
+                        incrementServo();
+                        startServoMovementTimer();
+                    }
+                    else setServoAngle(SERVOANGLE_MIN);
+                    break;
+                #endif
                 
+                //record the data to the array
+                sensorData.r[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
                 //check to see if we are finished panning
                 if (sensorData.servo_angle < SERVOANGLE_MAX){                    
                     incrementServo();
@@ -151,11 +182,14 @@ void SENSOR_Tasks ( void )
                 else{
                     //set the servo to zero and change state
                     setServoAngle(SERVOANGLE_MIN);
-                    //sensorData.state = SENSOR_STATE_FINDOBSTACLES;
+                    sensorData.state = SENSOR_STATE_FINDOBSTACLES;
                 }
-            }
+                    
+                    
+            }//end xQueueReceive
+            
             break;
-        }
+        }//end case SENSOR_STATE_TAKEREADINGS
         
         case SENSOR_STATE_FINDOBSTACLES:
         {
@@ -282,6 +316,20 @@ void incrementServo(){
 
 void startServoMovementTimer(){
     if( xTimerStart( sensorData.servoMovementTimer_SA, 0 ) != pdPASS ) {
+        dbgOutputVal(SENSOR_TIMERINIT_FAIL);
+        stopAll();
+    }
+}
+
+void startAdcReadingTimer(){
+    if( xTimerStart( sensorData.takeAdcReadingTimer_SA, 0 ) != pdPASS ) {
+        dbgOutputVal(SENSOR_TIMERINIT_FAIL);
+        stopAll();
+    }
+}
+
+void stopAdcReadingTimer(){
+    if( xTimerStop( sensorData.takeAdcReadingTimer_SA, 0 ) != pdPASS ) {
         dbgOutputVal(SENSOR_TIMERINIT_FAIL);
         stopAll();
     }

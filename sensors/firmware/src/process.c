@@ -86,24 +86,38 @@ void sendDisplayMessage(){
     processData.displayCount++;
 }
 
+void sendEchoMessage(Obstacle o){
+    char data[10];
+    data[0] = MSG_START;             //Start byte
+    data[1] = 'e';                   //TYPE_BROOKE_ECHO
+    data[2] = processData.echoCount; //Count byte
+    data[3] = o.midpoint_r;                 //data1;
+    data[4] = o.midpoint_theta;             //data2;
+    data[5] = o.midpoint_x;                 //data3;
+    data[6] = o.midpoint_y;                 //data4;
+    data[7] = o.slope;                      //data5;
+    data[8] = o.length_of_arc;              //data6;
+    data[9] = MSG_STOP;                     // Stop byte
+    putMsgOnSendQueue(data);
+    processData.echoCount++;
+}
+
 // Convert sensor data to message format character array
 void sendProcessedData(Obstacle o) {
     //char data[MSG_LENGTH];
-    char data[6];
+    char data[10];
     data[0] = MSG_START;                    // Start byte
     //data[1] = TYPE_SENSORARRAY_PROCESSED; // Type byte
     data[1] = 'a'; //TYPE_BROOKE_APPENDPOLAR;
     data[2] = processData.appendCount;      // Count byte
-    data[3] = o.r;//data1;
-    data[4] = o.theta;//data2;
-    //data[5] = 0x22;//data3;
-    //data[6] = 0x22;//data4;
-    //data[7] = 0x22;//data5;
-    //data[8] = 0x22;//data6;
-    data[5] = MSG_STOP;             // Stop byte
-          
+    data[3] = o.midpoint_r;                 //data1;
+    data[4] = o.midpoint_theta;             //data2;
+    data[5] = o.midpoint_x;                 //data3;
+    data[6] = o.midpoint_y;                 //data4;
+    data[7] = o.slope;                      //data5;
+    data[8] = o.length_of_arc;              //data6;
+    data[9] = MSG_STOP;                     // Stop byte
     putMsgOnSendQueue(data);  // Transfer message to Send task queue
-            
     processData.appendCount++;
 }
 
@@ -152,6 +166,7 @@ void PROCESS_Initialize ( void )
     processData.clearCount = 0;
     processData.displayCount = 0;
     processData.appendCount = 0;
+    processData.echoCount = 0;
     
     //Create a queue capable of holding 1000 characters (bytes))
     //processData.processQ_SA = xQueueCreate(1000, MSG_LENGTH+1 ); 
@@ -204,15 +219,23 @@ void PROCESS_Tasks ( void )
             // Receive from sensor queue
 		    if (xQueueReceive(processData.processQ_SA, &qData, portMAX_DELAY))
 			{
-                //immediately forward out to the pi
-                sendProcessedData(qData);
+                //If we are in ISOLATESENSOR debug mode, just echo the coordinate
+                #ifdef SENSOR_DEBUG_ISOLATESENSOR
+                    sendEchoMessage(qData);
+                    break;
+                #endif
+
+                //If we are in FULLMAP debug mode, immediately forward the obstacle to the PI
+                //Display the map and reset the coordinates.txt file after we've sent a full 90 degrees
+                #ifdef SENSOR_DEBUG_FULLMAP
+                    sendProcessedData(qData);
+                    //if we have sent an entire panorama, theta == 90
+                    if (qData.midpoint_theta == 90){
+                        sendDisplayMessage();
+                        processData.state = PROCESS_STATE_INIT;
+                    }
+                #endif
 			}
-            
-            //if we have sent an entire panorama, theta == 90
-            if (qData.theta == 90){
-                sendDisplayMessage();
-                processData.state = PROCESS_STATE_INIT;
-            }
             
 			break;
         }

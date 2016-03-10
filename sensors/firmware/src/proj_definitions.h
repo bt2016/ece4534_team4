@@ -133,10 +133,13 @@ extern "C" {
 #define TYPE_BROOKE_DISPLAY 97
 #define TYPE_BROOKE_APPENDPOLAR 100
 #define TYPE_BROOKE_CLEAR 99
+#define TYPE_BROOKE_ECHO 101
     
 #define PROCESS_TIMERINIT_FAIL 0x67
 #define PROCESS_QUEUE_FAIL 0x27
 
+   
+    
     // *****************************************************************************
     // *****************************************************************************
     // Section: Data Types
@@ -154,8 +157,14 @@ extern "C" {
     
     typedef struct
     {
-        unsigned int r;
-        int theta;
+        int start_radius;  //first degree that the sensor picked up the obstacle
+        int end_radius;    //last degree that the sensor picked up the obstacle
+        int length_of_arc; //difference between start_radius and end_radius in cm
+        unsigned int midpoint_r; //midpoint of the obstacle in polar coordinates in cm
+        int midpoint_theta;      //midpoint of the obstacle in polar coordinates in degrees
+        int midpoint_x;    //midpoint of the obstacle in rectangular coordinates in cm
+        int midpoint_y;    //midpoint of the obstacle in rectangular coordinates in cm
+        double slope;      //slope of the line in polar coordinates
     } Obstacle;
 
     // *****************************************************************************

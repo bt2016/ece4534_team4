@@ -65,8 +65,19 @@ extern "C" {
 #endif
 // DOM-IGNORE-END 
 
+//Defines for moving servo
 #define SERVOANGLE_MIN 80
 #define SERVOANGLE_MAX 170
+#define SERVO_DEGREES 90
+    
+//Defines for interpreting sensor data
+#define SERVO_MAXRANGE_CM 100
+#define LINE_MINDELTA_CM  20
+#define LINE_MINLENGTH_CM 4
+    
+//Defines for debugging
+//#define SENSOR_DEBUG_ISOLATESENSOR
+#define SENSOR_DEBUG_FULLMAP
 
 typedef enum
 {
@@ -82,11 +93,12 @@ typedef struct
 	QueueHandle_t sensorQ_SA;
 	TimerHandle_t sensorDistTimer_SA;
     TimerHandle_t servoMovementTimer_SA;
+    TimerHandle_t takeAdcReadingTimer_SA;
     unsigned int senseCount;
     unsigned short int sendCount;
     int sendToSensorQ_Err;
     
-    int r[90]; //stores polar coordinate points
+    int r[90]; //stores polar coordinate points where the index is the angle, and the value is the radius
     int servo_angle;
 
 } SENSOR_DATA;
