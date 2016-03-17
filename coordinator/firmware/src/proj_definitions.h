@@ -41,9 +41,18 @@ extern "C" {
     
 // MESSAGE TYPES
 // Coordinator
+#define TRACKED_OBJECT_AMOUNT 7 //can track 7 objects, not including tokens
+    
 #define TYPEC_LR_SENSOR_TO_FR 0x8F  //143 - Token found message to send ot Follower Rover
 #define TYPEC_LR_HANDSHAKE 0x4f     //79  - Confirm 'Token found' message receive to Lead Rover
 #define TYPEC_MOTOR_CONTROL 0x5E   //94 - Rover motor control
+#define TYPEC_TOKEN_NUMBER 0x5D //93 - RPI communicating number of tokens
+#define TYPEC_ACK_TOKEN 0x50 //80 - Coordinator acknoledgment 
+#define TYPEC_CLEAR_MAP 0x51 //81 - Tell RPI or Coordinator to clear its map cache
+#define TYPEC_UPDATE_MAP 0x52 //82 - Tell RPI to display the map
+#define TYPEC_MAP_DATA 0x53 //83 - Tell the RPI or coordinator about a map object
+//#define TYPEC_UPDATE_COORD_LIST 0x54 //84 - Updates the coordinate list on the RPI    
+    
 // Lead Rover
 #define TYPE_LR_SENSOR 0xF7     //247 - Lead Rover line sensor reading
 #define TYPE_LR_ENCODER 0x7F    //127 - Lead Rover encoder report data
@@ -122,6 +131,8 @@ extern "C" {
 #define SENSOR_FULLQUEUE 0xB6
 #define SENSOR_QUEUE_FAIL 0x26
 
+#define PROCESS_ENTERED_DEFAULT 0xA1
+    
     // *****************************************************************************
     // *****************************************************************************
     // Section: Data Types

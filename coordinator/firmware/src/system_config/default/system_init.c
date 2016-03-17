@@ -193,6 +193,7 @@ void SYS_Initialize ( void* data )
     /* Initialize the Application */
     RECEIVE_Initialize();
     SEND_Initialize();
+    PROCESS_Initialize();
 }
 
 

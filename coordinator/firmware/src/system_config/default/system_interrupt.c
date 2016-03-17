@@ -64,6 +64,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <sys/attribs.h>
 #include "receive.h"
 #include "send.h"
+#include "process.h"
 #include "system_definitions.h"
 
 // *****************************************************************************

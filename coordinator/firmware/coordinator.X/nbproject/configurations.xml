@@ -33,6 +33,8 @@
         <itemPath>../src/sender.h</itemPath>
         <itemPath>../src/proj_definitions.h</itemPath>
         <itemPath>../src/send_public.h</itemPath>
+        <itemPath>../src/process.h</itemPath>
+        <itemPath>../src/process_public.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f1" displayName="system" projectFiles="true">
@@ -123,6 +125,7 @@
         <itemPath>../src/receive.c</itemPath>
         <itemPath>../src/send.c</itemPath>
         <itemPath>../src/sender.c</itemPath>
+        <itemPath>../src/process.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f1" displayName="osal" projectFiles="true">

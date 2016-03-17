@@ -54,7 +54,6 @@ void clearBuffer(){
     
 }
 
-
 void receiveSendValFromISR(char* data){
     
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -237,7 +236,7 @@ void RECEIVE_Tasks ( void )
 
         if(qData == messageBuffer.start){
             
-            LATASET = 1 << 3;
+            
             clearBuffer();
             messageBuffer.buffer[0] = qData; // ~ 
             messageBuffer.nextByteAt = 1;  
@@ -255,15 +254,18 @@ void RECEIVE_Tasks ( void )
                 //Do something with it.
                 if(qData == messageBuffer.stop){                
 
-                    //Turn a light on
-                    LATACLR = 1 << 3;       
+                  
 
                     receiveData.goodMsg++;
                     
+                    //Place a message on the Q to be processed in process Q
+                    putMsgOnProcessQueue(messageBuffer.buffer);                    
+                    
                     //Received full message. Send response to send queue
-                    messageBuffer.buffer[MSG_LENGTH-1] = qData;
+                    messageBuffer.buffer[MSG_LENGTH-1] = qData; //WHY IS THIS HERE?
                     
                     // Respond according to incoming message type
+                    /*
                     switch(messageBuffer.buffer[1]) {
                         // Send message to Follower if LR has found a token
                         case (char)TYPE_LR_SENSOR:
@@ -271,7 +273,7 @@ void RECEIVE_Tasks ( void )
                             break;
                         // Insert call to function with sensor algorithms
                         // Results sent to Lead Rover motor control
-                        case (char)TYPE_SENSOR_DIST:
+                        case (char)TYPE_SENSOR_DIST:                      
                         case (char)TYPE_SENSOR_IR_REC:
                             processSensorData(messageBuffer.buffer);
                             break;
@@ -279,6 +281,7 @@ void RECEIVE_Tasks ( void )
                             break;
                             
                     }
+                    */
                             
                     //Clear the message
                     clearBuffer();               

@@ -149,6 +149,10 @@
         <Path>Header Files/app</Path>
       </Template>
       <Template>
+        <Name>process.h</Name>
+        <Path>Header Files/app</Path>
+      </Template>
+      <Template>
         <Name>sys_ports_static.c</Name>
         <Path>Source Files/app/system_config/default/framework/system/ports/src</Path>
         <Checksum>EA425DBB02818CEF28D6D454B7F2C73B</Checksum>
@@ -156,7 +160,11 @@
       <Template>
         <Name>system_init.c</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>31891AE5F0E85C0F5D34DAAEF6BA070C</Checksum>
+        <Checksum>10D6A88A076142650D9030770357390D</Checksum>
+      </Template>
+      <Template>
+        <Name>main.c</Name>
+        <Path>Source Files/app</Path>
       </Template>
       <Template>
         <Name>system_interrupt_a.S</Name>
@@ -164,13 +172,13 @@
         <Checksum>2AADE7885E66E00DBB7FE911439FFA49</Checksum>
       </Template>
       <Template>
-        <Name>main.c</Name>
+        <Name>process.c</Name>
         <Path>Source Files/app</Path>
       </Template>
       <Template>
         <Name>system_definitions.h</Name>
         <Path>Header Files/app/system_config/default</Path>
-        <Checksum>C5675A0280DD3D80878D6F67AFA0CD43</Checksum>
+        <Checksum>7FCB0F8E02E79F476D8578BA09992B28</Checksum>
       </Template>
       <Template>
         <Name>system_exceptions.c</Name>
@@ -213,7 +221,7 @@
       <Template>
         <Name>system_tasks.c</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>09872688375B538C9D3DDA02F51B2766</Checksum>
+        <Checksum>57BDA2A9A65F71062A34389511B5BC73</Checksum>
       </Template>
       <Template>
         <Name>system_config.h</Name>
@@ -228,7 +236,7 @@
       <Template>
         <Name>system_interrupt.c</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>95587E610A416DB179A0688A939B6572</Checksum>
+        <Checksum>E58B8AE7313EAC15BC5017AAFBD85DA7</Checksum>
       </Template>
       <Template>
         <Name>rtos_hooks.c</Name>
