@@ -68,7 +68,7 @@ void sendClearMessage(){
     //Convert sensor data to message format character array
     char data[4];
     data[0] = MSG_START;
-    data[1] = 'c'; //TYPE_BROOKE_CLEAR;
+    data[1] = TYPE_SENSOR_CLEARALL;
     data[2] = processData.clearCount;
     data[3] = MSG_STOP;
     putMsgOnSendQueue(data);  // Transfer message to Send task queue]
@@ -79,17 +79,17 @@ void sendDisplayMessage(){
     //Convert sensor data to message format character array
     char data[4];
     data[0] = MSG_START;
-    data[1] = 'd';
+    data[1] = TYPE_SENSOR_DISPLAYFULLMAP;
     data[2] = processData.displayCount;
     data[3] = MSG_STOP;
-    putMsgOnSendQueue(data);  // Transfer message to Send task queue]
+    putMsgOnSendQueue(data);  // Transfer message to Send task queue
     processData.displayCount++;
 }
 
 void sendEchoMessage(Obstacle o){
     char data[10];
     data[0] = MSG_START;             //Start byte
-    data[1] = 'e';                   //TYPE_BROOKE_ECHO
+    data[1] = TYPE_SENSOR_ECHO;
     data[2] = processData.echoCount; //Count byte
     data[3] = o.midpoint_r;                 //data1;
     data[4] = o.midpoint_theta;             //data2;
@@ -119,6 +119,53 @@ void sendProcessedData(Obstacle o) {
     data[9] = MSG_STOP;                     // Stop byte
     putMsgOnSendQueue(data);  // Transfer message to Send task queue
     processData.appendCount++;
+}
+
+void sendMapData(Obstacle o){
+    char data[10];
+    data[0] = MSG_START;                    // Start byte
+    data[1] = TYPE_SENSOR_APPENDMAP;
+    data[2] = processData.mapCount;      // Count byte
+    data[3] = o.midpoint_r;                 //data1;
+    data[4] = o.midpoint_theta;             //data2;
+    data[5] = o.midpoint_x;                 //data3;
+    data[6] = o.midpoint_y;                 //data4;
+    data[7] = o.slope;                      //data5;
+    data[8] = o.length_of_arc;              //data6;
+    data[9] = MSG_STOP;                     // Stop byte
+    putMsgOnSendQueue(data);  // Transfer message to Send task queue
+    processData.mapCount++;
+}
+
+void sendLinesData(Obstacle o){
+    char data[10];
+    data[0] = MSG_START;                    // Start byte
+    data[1] = TYPE_SENSOR_APPENDLINES;
+    data[2] = processData.linesCount;      // Count byte
+    data[3] = o.midpoint_r;                 //data1;
+    data[4] = o.midpoint_theta;             //data2;
+    data[5] = o.midpoint_x;                 //data3;
+    data[6] = o.midpoint_y;                 //data4;
+    data[7] = o.slope;                      //data5;
+    data[8] = o.length_of_arc;              //data6;
+    data[9] = MSG_STOP;                     // Stop byte
+    putMsgOnSendQueue(data);  // Transfer message to Send task queue
+    processData.linesCount++;
+}
+void sendTargetsData(Obstacle o){
+    char data[10];
+    data[0] = MSG_START;                    // Start byte
+    data[1] = TYPE_SENSOR_APPENDTARGETS;
+    data[2] = processData.targetsCount;      // Count byte
+    data[3] = o.midpoint_r;                 //data1;
+    data[4] = o.midpoint_theta;             //data2;
+    data[5] = o.midpoint_x;                 //data3;
+    data[6] = o.midpoint_y;                 //data4;
+    data[7] = o.slope;                      //data5;
+    data[8] = o.length_of_arc;              //data6;
+    data[9] = MSG_STOP;                     // Stop byte
+    putMsgOnSendQueue(data);  // Transfer message to Send task queue
+    processData.targetsCount++;
 }
 
 // Remove oldest data on full local process queue
@@ -162,11 +209,13 @@ void PROCESS_Initialize ( void )
 {
     /* Place the App state machine in its initial state. */
     processData.state = PROCESS_STATE_INIT;
-    processData.sendCount = 0;
     processData.clearCount = 0;
     processData.displayCount = 0;
     processData.appendCount = 0;
     processData.echoCount = 0;
+    processData.mapCount = 0;
+    processData.linesCount = 0;
+    processData.targetsCount = 0;
     
     //Create a queue capable of holding 1000 characters (bytes))
     //processData.processQ_SA = xQueueCreate(1000, MSG_LENGTH+1 ); 
@@ -208,7 +257,7 @@ void PROCESS_Tasks ( void )
         /* Application's initial state. */
         case PROCESS_STATE_INIT:
         {
-            //send a message to clear coordinates.txt
+            //send messages to clear all text files
             sendClearMessage();
             processData.state = PROCESS_STATE_PROCESS;
             break;
@@ -225,16 +274,16 @@ void PROCESS_Tasks ( void )
                     break;
                 #endif
 
-                //If we are in FULLMAP debug mode, immediately forward the obstacle to the PI
-                //Display the map and reset the coordinates.txt file after we've sent a full 90 degrees
                 #ifdef SENSOR_DEBUG_FULLMAP
-                    sendProcessedData(qData);
-                    //if we have sent an entire panorama, theta == 90
+                    sendMapData(qData);
                     if (qData.midpoint_theta == 90){
                         sendDisplayMessage();
                         processData.state = PROCESS_STATE_INIT;
                     }
+                    break;
                 #endif
+
+                sendEchoMessage(qData);
 			}
             
 			break;

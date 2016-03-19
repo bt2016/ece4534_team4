@@ -229,17 +229,17 @@
       <Template>
         <Name>drv_oc_static.c</Name>
         <Path>Source Files/app/system_config/default/framework/driver/oc/src</Path>
-        <Checksum>8429C25443505D7AE04485A913E117C3</Checksum>
+        <Checksum>FF0BE30887B24FF84DE89D439FC63D4A</Checksum>
       </Template>
       <Template>
         <Name>system_init.c</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>DCC11A8FF76D928DA1264ACD706D4592</Checksum>
+        <Checksum>C3C825EF19A55D498B7611BE141AA266</Checksum>
       </Template>
       <Template>
         <Name>drv_oc_static.h</Name>
         <Path>Header Files/app/system_config/default/framework/driver/oc</Path>
-        <Checksum>3825C9EFDE04EA1FE6DB72CF2BB657F6</Checksum>
+        <Checksum>F15E812FBB3012DBF928EEC403072B71</Checksum>
       </Template>
       <Template>
         <Name>main.c</Name>

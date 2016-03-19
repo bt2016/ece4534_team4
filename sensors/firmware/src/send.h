@@ -80,6 +80,9 @@ typedef struct
     int enqueueCount;
     char prevType;
     char prevCount;
+    
+
+    
 
     /* TODO: Define any additional data used by the application. */
     QueueHandle_t transmitQ_SA;

@@ -72,11 +72,11 @@ extern "C" {
     
 //Defines for interpreting sensor data
 #define SERVO_MAXRANGE_CM 100
-#define LINE_MINDELTA_CM  20
+#define LINE_MINDELTA_CM  10
 #define LINE_MINLENGTH_CM 4
     
 //Defines for debugging
-//#define SENSOR_DEBUG_ISOLATESENSOR
+//#define SENSOR_DEBUG_ISOLATESENSOR 60
 #define SENSOR_DEBUG_FULLMAP
 
 typedef enum
@@ -98,7 +98,7 @@ typedef struct
     unsigned short int sendCount;
     int sendToSensorQ_Err;
     
-    int r[90]; //stores polar coordinate points where the index is the angle, and the value is the radius
+    int r[SERVO_DEGREES+1]; //stores polar coordinate points where the index is the angle, and the value is the radius
     int servo_angle;
 
 } SENSOR_DATA;
@@ -113,6 +113,7 @@ void sendValToSensorTaskFromISR(unsigned int* message);
 void setServoAngle(int angle);
 void incrementServo();
 void startServoMovementTimer();
+int abs(int input);
 
 #endif /* _SENSOR_H */
 

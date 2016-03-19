@@ -135,9 +135,24 @@ extern "C" {
 #define TYPE_BROOKE_CLEAR 99
 #define TYPE_BROOKE_ECHO 101
     
+#define TYPE_SENSOR_APPENDMAP 109
+#define TYPE_SENSOR_APPENDLINES 108
+#define TYPE_SENSOR_APPENDTARGETS 116
+#define TYPE_SENSOR_CLEARMAP 77
+#define TYPE_SENSOR_CLEARLINES 76
+#define TYPE_SENSOR_CLEARTARGETS 84
+#define TYPE_SENSOR_CLEARALL 67
+#define TYPE_SENSOR_DISPLAYFULLMAP 100
+#define TYPE_SENSOR_DISPLAYTARGETS 68
+#define TYPE_SENSOR_ECHO 101
+    
 #define PROCESS_TIMERINIT_FAIL 0x67
 #define PROCESS_QUEUE_FAIL 0x27
 
+#define OBSTACLE_TYPE_SERVOA 0
+#define OBSTACLE_TYPE_SERVOB 1
+#define OBSTACLE_TYPE_SERVOC 2
+#define OBSTACLE_TYPE_SERVOD 3
    
     
     // *****************************************************************************
@@ -157,6 +172,7 @@ extern "C" {
     
     typedef struct
     {
+        int type;          //identifies which servo found the obstacle
         int start_radius;  //first degree that the sensor picked up the obstacle
         int end_radius;    //last degree that the sensor picked up the obstacle
         int length_of_arc; //difference between start_radius and end_radius in cm

@@ -195,6 +195,15 @@ void SYS_Initialize ( void* data )
     /*Initialize OC0 */
     DRV_OC0_Initialize();
 
+    /*Initialize OC1 */
+    DRV_OC1_Initialize();
+
+    /*Initialize OC2 */
+    DRV_OC2_Initialize();
+
+    /*Initialize OC3 */
+    DRV_OC3_Initialize();
+
     /* Initialize System Services */
     SYS_INT_Initialize();  
 

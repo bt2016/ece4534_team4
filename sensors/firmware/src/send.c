@@ -187,6 +187,8 @@ void SEND_Initialize ( void )
     sendData.prevType = 'a';
     sendData.prevCount = 'a';
     
+
+    
     //Create a queue capable of holding 1000 characters
     sendData.transmitQ_SA = xQueueCreate( 1000, sizeof(char) );
     if( sendData.transmitQ_SA == 0 ) {
@@ -301,6 +303,8 @@ char* addCountToMsg(char count, char* message) {
            cur++;
        }
 }
+
+
 
 /*
 // PLACEHOLDER - RECEIVE FROM TRANSMIT QUEUE

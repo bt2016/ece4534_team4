@@ -76,7 +76,7 @@ void SENSOR_Initialize ( void )
 				 sensorTimerCallback ); //pointer to callback function
 	sensorData.servoMovementTimer_SA = xTimerCreate(  
 				 "ServoMovementTimer", //Just a text name
-				 ( 300 / portTICK_PERIOD_MS ), //period is 300ms
+				 ( 100 / portTICK_PERIOD_MS ), //period is 300ms
 				 pdFALSE, //do not auto-reload when expires
 				 (void *) 30, //a unique id
 				 servoMovementTimerCallback ); //pointer to callback function
@@ -100,7 +100,7 @@ void SENSOR_Initialize ( void )
     DRV_ADC_Initialize();
     DRV_ADC_Start();
 	
-    //Start PWM timer
+    //Start PWM timer. All of the servos use this same timer
     DRV_TMR0_Stop();
     DRV_TMR0_Initialize();
     DRV_TMR0_Start();
@@ -109,26 +109,31 @@ void SENSOR_Initialize ( void )
     DRV_OC0_Disable();
     DRV_OC0_Initialize();
     DRV_OC0_Enable();
+    DRV_OC1_Disable();
+    DRV_OC1_Initialize();
+    DRV_OC1_Enable();
+    DRV_OC2_Disable();
+    DRV_OC2_Initialize();
+    DRV_OC2_Enable();
+    DRV_OC3_Disable();
+    DRV_OC3_Initialize();
+    DRV_OC3_Enable();
 }
 
 // Finite State Machine, runs forever.
 void SENSOR_Tasks ( void )
 {
-    unsigned int qData;
+    unsigned int qData;    //container for data coming into the Sensor Queue
     char data[MSG_LENGTH];
+    int i=0, j=0;          //local iterators
     
 	switch ( sensorData.state )
     {
         case SENSOR_STATE_INIT:
         {
-            //set the servo to zero
-            setServoAngle(SERVOANGLE_MIN);
-            
-            //start the servoMovementTimer
-            startServoMovementTimer();
-            
-            //change state
-			sensorData.state = SENSOR_STATE_TAKEREADINGS;
+            setServoAngle(SERVOANGLE_MIN); //set the servo to zero
+            startServoMovementTimer(); //start the servoMovementTimer
+			sensorData.state = SENSOR_STATE_TAKEREADINGS; //change state
             break;
         }
 		
@@ -137,6 +142,7 @@ void SENSOR_Tasks ( void )
             //block until you receive a value from the ADC
             if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY)){
                 
+                //output the point immediately to the process task to be forwarded out to the pi
                 #ifdef SENSOR_DEBUG_ISOLATESENSOR
                     Obstacle o;
                     o.start_radius=0;
@@ -148,10 +154,12 @@ void SENSOR_Tasks ( void )
                     o.midpoint_r = qData;
                     o.midpoint_theta = sensorData.servo_angle - SERVOANGLE_MIN;
                     putDataOnProcessQ(&o);
+                    setServoAngle(SENSOR_DEBUG_ISOLATESENSOR+SERVOANGLE_MIN);
                     startServoMovementTimer();
                     break;
                 #endif
 
+                
                 #ifdef SENSOR_DEBUG_FULLMAP
                     Obstacle o;
                     o.start_radius=0;
@@ -163,6 +171,7 @@ void SENSOR_Tasks ( void )
                     o.midpoint_r = qData;
                     o.midpoint_theta = sensorData.servo_angle - SERVOANGLE_MIN;
                     putDataOnProcessQ(&o);
+
                     //check to see if we are finished panning
                     if (sensorData.servo_angle < SERVOANGLE_MAX){                    
                         incrementServo();
@@ -172,6 +181,7 @@ void SENSOR_Tasks ( void )
                     break;
                 #endif
                 
+
                 //record the data to the array
                 sensorData.r[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
                 //check to see if we are finished panning
@@ -180,19 +190,72 @@ void SENSOR_Tasks ( void )
                     startServoMovementTimer();
                 }
                 else{
-                    //set the servo to zero and change state
-                    setServoAngle(SERVOANGLE_MIN);
-                    sensorData.state = SENSOR_STATE_FINDOBSTACLES;
+                    setServoAngle(SERVOANGLE_MIN); //set the servo to zero
+                    sensorData.state = SENSOR_STATE_FINDOBSTACLES; //change state
                 }
-                    
-                    
             }//end xQueueReceive
             
             break;
         }//end case SENSOR_STATE_TAKEREADINGS
         
+
+        //sensorData.r[91] contains r,theta values that the sensor recorded
+        //want to iterate through this array and find the lines and measure them
+        //once we find the obstacle, we will immediately forward it to the pi
         case SENSOR_STATE_FINDOBSTACLES:
         {
+            int length = 0;
+            int startofline = 0;
+            int endofline = 0;
+            int middleofline = 0;
+            
+            //remove data points greater than SERVO_MAXRANGE_CM away
+            for (i=0; i<SERVO_DEGREES; i++){
+                if (sensorData.r[i] > SERVO_MAXRANGE_CM) sensorData.r[i] = 0;
+            }
+            
+            i=0;
+            while (i<SERVO_DEGREES-1){
+                //if consecutive points exist, measure how long the line is
+                if (abs(sensorData.r[i]-sensorData.r[i+1]) < LINE_MINDELTA_CM){
+                    startofline = i;
+                    middleofline = i;
+                    endofline = i+1;
+                    while (abs(sensorData.r[middleofline]-sensorData.r[endofline]) < LINE_MINDELTA_CM){
+                        middleofline++;
+                        endofline++;
+                        if (endofline == SERVO_DEGREES) break;
+                    }
+                    length = middleofline - startofline;
+
+                    //found a line of adequate length!
+                    if (length > LINE_MINLENGTH_CM){
+                        Obstacle o;
+                        o.start_radius = startofline;
+                        o.end_radius = middleofline;
+                        o.length_of_arc = length;
+                        o.midpoint_theta = (startofline + middleofline)/2;
+                        o.midpoint_r = (sensorData.r[startofline] + sensorData.r[middleofline])/2;
+                        //o.midpoint_x = o.midpoint_r*cos(o.midpoint_theta*(3.14/180.0));
+                        //o.midpoint_y = o.midpoint_r*sin(o.midpoint_theta*(3.14/180.0));
+                        o.midpoint_x=0;
+                        o.midpoint_y=0;
+                        o.slope = (sensorData.r[middleofline]-sensorData.r[startofline])/(middleofline-startofline);
+
+                        //don't add trivial lines where r=0 constantly
+                        if (o.midpoint_r != 0) putDataOnProcessQ(&o);
+                        
+                        i = endofline;
+                    }
+
+                    //found a line but it wasn't long enough. skip to the end of the line
+                    else i = endofline;
+                }
+                //else just ignore that point and move on
+                else i++;
+            }
+                    
+            sensorData.state = SENSOR_STATE_INIT;
             break;
         }
         
@@ -298,6 +361,9 @@ void setServoAngle(int angle){
     DRV_TMR0_Stop();
     DRV_TMR0_Initialize();
     DRV_OC0_SetPulseWidth(time_value);
+    DRV_OC1_SetPulseWidth(time_value);
+    DRV_OC2_SetPulseWidth(time_value);
+    DRV_OC3_SetPulseWidth(time_value);
     DRV_TMR0_Start();
 }
 
@@ -333,6 +399,11 @@ void stopAdcReadingTimer(){
         dbgOutputVal(SENSOR_TIMERINIT_FAIL);
         stopAll();
     }
+}
+
+int abs(int input){
+    if (input<0) return (input*(-1));
+    else return input;
 }
 
 /*******************************************************************************

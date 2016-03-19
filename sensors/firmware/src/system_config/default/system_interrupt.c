@@ -119,11 +119,14 @@ void IntHandlerDrvAdc(void)
     
     //convert ADC steps to distance in cm
     double ADCVoltage = (ADCVal/(double)1024)*3.3; //convert ADC val to voltage
-    unsigned int distance = ((16.211*ADCVoltage*ADCVoltage*ADCVoltage*ADCVoltage) - (127.77*ADCVoltage*ADCVoltage*ADCVoltage) + (371.33*ADCVoltage*ADCVoltage) - (494.66*ADCVoltage) + 297.73);
-    if (ADCVoltage < 0.5) distance = 0;
+    double distance = ((16.211*ADCVoltage*ADCVoltage*ADCVoltage*ADCVoltage) - (127.77*ADCVoltage*ADCVoltage*ADCVoltage) + (371.33*ADCVoltage*ADCVoltage) - (494.66*ADCVoltage) + 297.73);
+    //distance = distance*10; //distance has units of 0.1cm (so 645cm = 64.5cm)
+    //if (ADCVoltage < 0.5) distance = 0;
+    if (distance >90) distance = 0;
+    unsigned int retval = (unsigned int)(distance+0.5); //gives more accurate rounding when casting to unsigned int
     
     //send the value to the queue
-    sendValToSensorTaskFromISR(&distance);
+    sendValToSensorTaskFromISR(&retval);
 }
  
  
