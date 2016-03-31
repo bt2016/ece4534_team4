@@ -55,10 +55,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 #include "receive.h"
-#include "process.h"
+#include "send.h"
 #include "motor.h"
 #include "sensor.h"
-#include "send.h"
 
 
 // *****************************************************************************
@@ -69,10 +68,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  
 static void _SYS_Tasks ( void );
 static void _RECEIVE_Tasks(void);
-static void _PROCESS_Tasks(void);
+static void _SEND_Tasks(void);
 static void _MOTOR_Tasks(void);
 static void _SENSOR_Tasks(void);
-static void _SEND_Tasks(void);
 
 
 // *****************************************************************************
@@ -101,9 +99,9 @@ void SYS_Tasks ( void )
                 "RECEIVE Tasks",
                 1024, NULL, 1, NULL);
 
-    /* Create OS Thread for PROCESS Tasks. */
-    xTaskCreate((TaskFunction_t) _PROCESS_Tasks,
-                "PROCESS Tasks",
+    /* Create OS Thread for SEND Tasks. */
+    xTaskCreate((TaskFunction_t) _SEND_Tasks,
+                "SEND Tasks",
                 1024, NULL, 1, NULL);
 
     /* Create OS Thread for MOTOR Tasks. */
@@ -114,11 +112,6 @@ void SYS_Tasks ( void )
     /* Create OS Thread for SENSOR Tasks. */
     xTaskCreate((TaskFunction_t) _SENSOR_Tasks,
                 "SENSOR Tasks",
-                1024, NULL, 1, NULL);
-
-    /* Create OS Thread for SEND Tasks. */
-    xTaskCreate((TaskFunction_t) _SEND_Tasks,
-                "SEND Tasks",
                 1024, NULL, 1, NULL);
 
     /**************
@@ -171,17 +164,17 @@ static void _RECEIVE_Tasks(void)
 
 /*******************************************************************************
   Function:
-    void _PROCESS_Tasks ( void )
+    void _SEND_Tasks ( void )
 
   Summary:
-    Maintains state machine of PROCESS.
+    Maintains state machine of SEND.
 */
 
-static void _PROCESS_Tasks(void)
+static void _SEND_Tasks(void)
 {
     while(1)
     {
-        PROCESS_Tasks();
+        SEND_Tasks();
     }
 }
 
@@ -216,24 +209,6 @@ static void _SENSOR_Tasks(void)
     while(1)
     {
         SENSOR_Tasks();
-    }
-}
-
-
-/*******************************************************************************
-  Function:
-    void _SEND_Tasks ( void )
-
-  Summary:
-    Maintains state machine of SEND.
-*/
-
-static void _SEND_Tasks(void)
-{
-    while(1)
-    {
-        SEND_Tasks();
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
 

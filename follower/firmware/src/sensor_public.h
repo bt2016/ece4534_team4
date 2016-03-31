@@ -21,7 +21,8 @@ extern "C" {
 #endif
     
 void sendValToSensorTask(unsigned int* message);
-void sendValToSensorTaskFromISR(unsigned int* message);
+void sendValToSensorTaskFromISR(char* message);
+void setSendIRData(char send);
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus

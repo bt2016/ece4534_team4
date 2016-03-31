@@ -48,53 +48,76 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "sensor.h"
 #include "sender.h"
+#include "debug.h"
 
 SENSOR_DATA sensorData;
+
+// Return enumeration for the best signal from IR directional data
+unsigned int bestSignal(unsigned int ft, unsigned int rr, unsigned int lt, unsigned int rt) {
+
+    // NONE = 4;
+    // LEFT = 3;
+    // RIGHT = 2;
+    // REAR = 1;
+    // FRONT = 0;
+    
+    if (ft < 10 && rr < 10 && lt < 10 && rt < 10) return 4; // NONE
+    
+    unsigned int max = 0;
+    unsigned int front = ft; 
+    unsigned int rear = rr;  
+    unsigned int left = lt;  
+    unsigned int right = rt; 
+    
+    if (left > right) max = 3;
+    else if (right > rear) max = 2;
+    else if (rear > front) max = 1;
+    
+    if (max == 3) {
+        if (left > rear) {
+            if (left > front) {}
+            else max = 0;
+        }
+        else if (rear > front) max = 1;
+        else max = 0;
+    }
+    else if (max == 2) {
+        if (right > front) {}
+        else max = 0;
+    }
+    
+    return max;
+}
 
 //runs once
 void SENSOR_Initialize ( void )
 {
+    // Initialize digital input pins A2-A5 (RB2-5)
+    ODCBCLR = (0x3D);
+    TRISBSET = (0x3D);
+    LATBCLR = (0x3D);
+   
+    // Initialize sequence bytes
     sensorData.sendCount = 0;
-    sensorData.senseCount = 0;
-    sensorData.IRSendCount = 0;
-    sensorData.distSendCount = 0;
-    
+
 	//Initialize task variables
     sensorData.state = SENSOR_STATE_INIT;
 	
 	//Create a queue capable of holding 25 unsigned long numbers
-    sensorData.sensorQ_FR = xQueueCreate( 2500, sizeof( unsigned int ) ); 
+    sensorData.sensorQ_FR = xQueueCreate( 500, MSG_LENGTH ); 
     if( sensorData.sensorQ_FR == 0 ) {
         dbgOutputVal(SENSOR_QUEUE_FAIL);
         stopAll();
     }
 	
-	//Create a timer with rollover rate 100ms
-	sensorData.sensor_IR_Timer_FR = xTimerCreate(  
-				 "SensorTimer", //Just a text name
-				 ( FR_IR_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
-				 pdTRUE, //auto-reload when expires
-				 (void *) 29, //a unique id
-				 sensorIRTimerCallback ); //pointer to callback function
-				 
     //Create a timer with rollover rate 100ms
 	sensorData.sensor_Dist_Timer_FR = xTimerCreate(  
 				 "SensorTimer", //Just a text name
 				 ( FR_DIST_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
 				 pdTRUE, //auto-reload when expires
-				 (void *) 29, //a unique id
+				 (void *) 14, //a unique id
 				 sensorDistTimerCallback ); //pointer to callback function
-    
-    //Start the timer
-    if( sensorData.sensor_IR_Timer_FR == NULL ) {
-        dbgOutputVal(SENSOR_TIMERINIT_FAIL);
-        stopAll();
-    }
-    else if( xTimerStart( sensorData.sensor_IR_Timer_FR, 0 ) != pdPASS ) {
-        dbgOutputVal(SENSOR_TIMERINIT_FAIL);
-        stopAll();
-    }
-    
+   
     //Start the timer
     if( sensorData.sensor_Dist_Timer_FR == NULL ) {
         dbgOutputVal(SENSOR_TIMERINIT_FAIL);
@@ -105,51 +128,61 @@ void SENSOR_Initialize ( void )
         stopAll();
     }
 
-    //Initialize ADC A0 = Pic32 pin 25, RB0. Manual Sample Start and TAD based Conversion Start
-    PLIB_PORTS_PinDirectionInputSet(PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_0);
-    PLIB_ADC_SampleAutoStartDisable(ADC_ID_1);
-    PLIB_ADC_Enable(ADC_ID_1);
-					 
+    PLIB_ADC_MuxAInputScanEnable(ADC_ID_1);
+    DRV_ADC_Open();
+    DRV_ADC_Start();
 }
 
+void setSendIRData(char send) {
+    sensorData.sendIRData = send;
+}
 // Finite State Machine, runs forever.
 void SENSOR_Tasks ( void )
 {
-    unsigned int qData;
-    char data[MSG_LENGTH];
+    char qData[MSG_LENGTH];
+    //char data[MSG_LENGTH];
     
 	switch ( sensorData.state )
     {
         case SENSOR_STATE_INIT:
         {
-			sensorData.state = SENSOR_STATE_READ;
+            sensorData.state = SENSOR_STATE_READ;
             break;
         }
 		
 		case SENSOR_STATE_READ:
 		{
-            // Receive from sensor queue
+            // Receive from IR distance sensor queue
 		    if (xQueueReceive(sensorData.sensorQ_FR, &qData, portMAX_DELAY))
 			{
-                if (!CUT_SENSOR) {
+                if (CUT_IR_DIST == 0) { 
                     
+                    // Front, Rear, Left, Right
+                    char best = bestSignal(qData[4], qData[5], qData[7], qData[6]);
+        
                     // Convert sensor data to message format character array
-                    //qData = 0x55565758;
-                    char data[10];
+                    char data[MSG_LENGTH];
                     data[0] = MSG_START;
-                    data[1] = TYPE_FR_DIST;
+                    data[1] = TYPE_ADC;
                     data[2] = sensorData.sendCount;
-                    data[3] = 0x20;
-                    data[4] = 0x20;
-                    data[5] = 0x20;
-                    data[6] = 0x20;
-                    data[7] = 0x20;
-                    data[8] = (qData & 0xFF);
+                    data[3] = best;
+                    data[4] = qData[4];  // Front
+                    data[5] = qData[5];  // Rear
+                    data[6] = qData[6];  // Right
+                    data[7] = qData[7];  // Left
+                    data[8] = qData[8];  // Dist
                     data[9] = MSG_STOP;
-
-                    // Error simulation constant - skip count byte in messages
-                    putDataOnProcessQ(data); // Transfer message to Send task queue
-
+                    
+                    //dbgOutputVal(qData);  // Used for debug
+                    
+                    //putDataOnProcessQ(data);  // TYPEA
+                    putDataOnMotorProcessQ(data); // Transfer message to Send task queue
+                    
+                    // Send to UART at specified interval
+                    if ((sensorData.sendIRData == 0x1) && (sensorData.sendCount % DIST_MOD == 0))
+                       putMsgOnSendQueue(data);
+                    
+                    // Increment sequence byte for this type. 
                     sensorData.sendCount++;
                 }
 
@@ -166,30 +199,53 @@ void SENSOR_Tasks ( void )
     }//end switch
 }//end SENSOR_Tasks()
 
+/*
+ * // LEGACY CODE - USED FOR Tri-state 38kHz demodulated IR receivers
 // Read direction IR receivers and give data to the Process thread
 void readIRReceiverData(){
-    // If disable bool set, do not give message to Process queue
-    if (CUT_SENSOR) return;
-                
-    // Convert sensor data to message format character array
+   
+    if (CUT_IR_DIR == 0x1) return;
+             
+    unsigned int max = 128;
+    unsigned int front = max;
+    unsigned int rear = max;
+    unsigned int left = max;
+    unsigned int right = max;
+    unsigned int i;
+    
+    // Check I/O pins <max> number times. Decrement value if high
+    for (i = 0; i < max; i++) {
+        if (PORTB & 0x10) // 8  
+            right--;
+        if (PORTB & 0x4) // 20
+            front--;
+        if (PORTB & 0x8) // 4
+            rear--;
+        if (PORTB & 0x20) // 10
+            left--;
+    }
+     
+    char best = bestSignal(front, rear, left, right);
+    
+    // Create IR direction message with response data for all four receivers
     char data[MSG_LENGTH];
     data[0] = MSG_START;            // Start byte
     data[1] = TYPE_FR_IR;           // Type byte
     data[2] = sensorData.IRSendCount;  // Count byte
-    // Dummy values (data bytes x6)
-    data[3] = 0x22;
-    data[4] = 0x33;
-    data[5] = 0x44;
-    data[6] = 0x55; 
-    data[7] = 0x66; 
-    data[8] = 0x77;
+    data[3] = best & 0xF;
+    data[4] = 0x33;  // Dummy
+    data[5] = front & 0xFF; // ^ 0xFF;
+    data[6] = rear & 0xFF; //^ 0xFF;
+    data[7] = left & 0xFF; //^ 0xFF;
+    data[8] = right & 0xFF; //^ 0xFF;
     data[9] = MSG_STOP;             // Stop byte
           
-    putDataOnProcessQ(data);  // Transfer message to Send task queue
+    //TYPEA
+    putDataOnMotorProcessQ(data);  // Transfer message to Send task queue
             
-    sensorData.IRSendCount++;
+    sensorData.IRSendCount++;   // Increment sequence byte
 }
-
+*/
 
 void sendValToSensorTask(unsigned int* message)
 {
@@ -216,8 +272,9 @@ uint8_t removeSensorQueueData() {
     return 0x0;
 }
 
+
 // Place data read from Sensor onto local queue
-void sendValToSensorTaskFromISR(unsigned int* message)
+void sendValToSensorTaskFromISR(char* data)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     
@@ -233,7 +290,7 @@ void sendValToSensorTaskFromISR(unsigned int* message)
     
     // Send to queue, with at least one vacancy guaranteed for this data
     if (xQueueSendFromISR( sensorData.sensorQ_FR,
-                            (void*) message,
+                            (void*) data,
                             &xHigherPriorityTaskWoken) != pdPASS)//errQUEUE_FULL)
     {
         dbgOutputVal(SENSOR_SENDTOSENSORQ_FAIL);

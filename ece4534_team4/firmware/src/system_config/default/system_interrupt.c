@@ -73,6 +73,20 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: System Interrupt Vector Functions
 // *****************************************************************************
 // *****************************************************************************
+void IntHandlerDrvOCInstance0(void)
+
+{
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_OUTPUT_COMPARE_1);
+
+}
+
+void IntHandlerDrvTmrInstance0(void)
+
+{
+
+    PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_2);
+
+}
 
 void IntHandlerDrvUsartInstance0(void)
 {

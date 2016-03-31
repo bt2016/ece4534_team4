@@ -57,12 +57,30 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "timers.h"       //FreeRTOS file
 #include "debug.h"        //Created by me
 #include "timerCallback.h"//Created by me
+#include "proj_definitions.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
 extern "C" {
 #endif
 // DOM-IGNORE-END 
+
+#define MAXPID 3392
+#define MAXNEG -3392
+    
+#define PREV_NEITHER 0x0
+#define PREV_RIGHT 0x1
+#define PREV_LEFT 0x2
+    
+typedef enum {
+    SEARCH = 0,
+    FOLLOW,
+    ACQUIRE_LOCATION,
+    ACQUIRE_TOKEN_LOC,
+    TOKEN_LOCK,
+    POINT_LOCK,
+    DISABLE
+} ROV_STATE;
 
 typedef enum
 {
@@ -72,15 +90,106 @@ typedef enum
 
 typedef struct
 {
+  int pidIntegral;
+  int pidPrevError;
+  
+  uint8_t frontDist[DIST_HISTORY];
+  
+  int prevDir;
+  int prevFrontSignal;
+
+  unsigned int leftSignal;
+  unsigned int rightSignal;
+  unsigned int frontSignal;
+  unsigned int rearSignal;
+  unsigned int bestSignal;
+    
+} LEAD_POS;
+
+
+typedef struct
+{
+    unsigned short int motorSendCount;
+    unsigned short int IRsendCount;
+    
     /* The application's current state */
     MOTOR_STATES state;
     unsigned short int sendCount;
+    char motorEnable;
+    
+    int leftSpd;
+    int rightSpd;
+    int leftIdeal;
+    int rightIdeal;
+    char leftDir;
+    char rightDir;
 
     /* TODO: Define any additional data used by the application. */
     QueueHandle_t MotorQ_FR;
     QueueHandle_t actuatorQ_FR;
     TimerHandle_t MotorTimer_FR;
     TimerHandle_t actuatorTimer_FR;
+    
+    QueueHandle_t leftEncoderQ;
+    QueueHandle_t rightEncoderQ;
+    
+    //TYPEA
+    QueueHandle_t processQ_FR;
+    
+    char prevType;
+    char prevCount;
+    int keep_blinking;
+    
+    int rpid_Integral;
+    int rpid_PrevError;
+    
+    int lpid_Integral;
+    int lpid_PrevError;
+    
+    int lpid_KP;
+    int lpid_KI;
+    int lpid_KD;
+    
+    int rpid_KP;
+    int rpid_KI;
+    int rpid_KD;
+    
+    int pidRightSpd;
+    int pidLeftSpd;
+    int pidPrevRight;
+    int pidPrevLeft;
+    
+    int ticksToToken;
+    int ticksToTokenLock;
+    char tokenQueue;
+    int ticksToTarget;
+    ROV_STATE rovState;
+    
+    int curEncoder;
+    int prevEncoder;
+    
+    
+    char prevTokenSequence;
+    char prevTokenHigh;
+    char prevTokenLow;
+    int tokenCountdown;
+
+    int ledState;
+    int ledRolls;
+    
+    uint8_t tokenFindCount;
+    uint8_t firstFollow;
+    
+    char roundedTurn;
+    char stopOnToken;
+    
+    int timeSinceVanish;
+    int timeToToken;
+    
+    char sendIRData;
+    char sendTargetData;
+    char sendPID;
+    char sendEncoder;
    
 } MOTOR_DATA;
 

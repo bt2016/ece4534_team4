@@ -71,6 +71,10 @@
         <Path>Header Files/FreeRTOS</Path>
       </File>
       <File>
+        <Name>driver.h</Name>
+        <Path>Header Files/framework/driver</Path>
+      </File>
+      <File>
         <Name>sys_common.h</Name>
         <Path>Header Files/framework/system/common</Path>
       </File>
@@ -156,7 +160,12 @@
       <Template>
         <Name>system_interrupt_a.S</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>2AADE7885E66E00DBB7FE911439FFA49</Checksum>
+        <Checksum>FEE0E7452BFF8BF39AB53FA5B6AD765F</Checksum>
+      </Template>
+      <Template>
+        <Name>drv_tmr_static.h</Name>
+        <Path>Header Files/app/system_config/default/framework/driver/tmr</Path>
+        <Checksum>1EEAFE0A143AFA7C44B680539F52062B</Checksum>
       </Template>
       <Template>
         <Name>drv_adc_static.h</Name>
@@ -194,7 +203,7 @@
       <Template>
         <Name>system_interrupt.c</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>FC4B1B16DE62444A8A6C705528B25517</Checksum>
+        <Checksum>A4A1DDCA6ABCD1C1998396ED2577CFF3</Checksum>
       </Template>
       <Template>
         <Name>send.c</Name>
@@ -206,9 +215,19 @@
         <Checksum>1B968DA82B5DD869A6119C3B7628D753</Checksum>
       </Template>
       <Template>
+        <Name>drv_oc_static.c</Name>
+        <Path>Source Files/app/system_config/default/framework/driver/oc/src</Path>
+        <Checksum>DFA415A1009A6BA7EC24C50E78D5B8E7</Checksum>
+      </Template>
+      <Template>
         <Name>system_init.c</Name>
         <Path>Source Files/app/system_config/default</Path>
-        <Checksum>B26039FBA45B5AA3501D2CA744CF2997</Checksum>
+        <Checksum>22BD618D831D084F061D35551BEA22E2</Checksum>
+      </Template>
+      <Template>
+        <Name>drv_oc_static.h</Name>
+        <Path>Header Files/app/system_config/default/framework/driver/oc</Path>
+        <Checksum>3825C9EFDE04EA1FE6DB72CF2BB657F6</Checksum>
       </Template>
       <Template>
         <Name>main.c</Name>
@@ -221,7 +240,7 @@
       <Template>
         <Name>system_definitions.h</Name>
         <Path>Header Files/app/system_config/default</Path>
-        <Checksum>19E109C842EFF3E16D59435C062D20AE</Checksum>
+        <Checksum>61751F1D444BA200ABFAF2B399A3C6DA</Checksum>
       </Template>
       <Template>
         <Name>system_exceptions.c</Name>
@@ -253,7 +272,12 @@
       <Template>
         <Name>system_config.h</Name>
         <Path>Header Files/app/system_config/default</Path>
-        <Checksum>DC713CFA7EE4560F954E48DF04D0B7AE</Checksum>
+        <Checksum>CCA5C4167BB45EF72162C867B28C6B32</Checksum>
+      </Template>
+      <Template>
+        <Name>drv_tmr_static.c</Name>
+        <Path>Source Files/app/system_config/default/framework/driver/tmr/src</Path>
+        <Checksum>BE3078565BC9DC1DA0EBC16FA977B5AB</Checksum>
       </Template>
       <Template>
         <Name>rtos_hooks.c</Name>
