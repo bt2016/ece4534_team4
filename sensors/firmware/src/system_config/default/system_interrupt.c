@@ -97,38 +97,44 @@ void IntHandlerDrvUsartInstance0(void)
 }
  
 void IntHandlerDrvAdc(void)
-{
-    //TODO: make sure this corresponds to the Harmony config!!!
-    int numberSamplesPerInterrupt = 1;
-        
+{ 
     //clear the interrupt flag
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
     
-    //get the ADC value
+    unsigned int ADCVal; //raw output from the adc (0-1023)
+    double ADCVoltage;   //calculated voltage on the adc pin
+    double distance;     //converting voltage to distance based on datasheet specs
+    unsigned int retval; //rounded value to put o the queue
+    int i; //iterator
+    
+    for (i=0; i<8; i++){
+        ADCVal = PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
+        ADCVoltage = (ADCVal/(double)1024)*3.3;
+        distance = ((16.211*ADCVoltage*ADCVoltage*ADCVoltage*ADCVoltage) - (127.77*ADCVoltage*ADCVoltage*ADCVoltage) + (371.33*ADCVoltage*ADCVoltage) - (494.66*ADCVoltage) + 297.73);
+        if (distance > SERVO_MAXRANGE_CM) distance = 0;
+        retval = (unsigned int)(distance+0.5);
+        sendValToSensorTaskFromISR(&retval);
+    }
+    
+        
     /*
-    unsigned int runningSum = 0;
-    int i = 0;
-    for(i=0; i<numberSamplesPerInterrupt; i++)
-        runningSum += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
-    double averageADCVal = (double)runningSum/(double)numberSamplesPerInterrupt; //the output is a 16-bit int
-     * */
-    
+    //get the ADC value   
     unsigned int ADCVal = PLIB_ADC_ResultGetByIndex(ADC_ID_1, 0);
-    
-    unsigned int testVal = 1023;
     
     //convert ADC steps to distance in cm
     double ADCVoltage = (ADCVal/(double)1024)*3.3; //convert ADC val to voltage
     double distance = ((16.211*ADCVoltage*ADCVoltage*ADCVoltage*ADCVoltage) - (127.77*ADCVoltage*ADCVoltage*ADCVoltage) + (371.33*ADCVoltage*ADCVoltage) - (494.66*ADCVoltage) + 297.73);
-    //distance = distance*10; //distance has units of 0.1cm (so 645cm = 64.5cm)
-    //if (ADCVoltage < 0.5) distance = 0;
+    
+    //define maximum sensor distance
     if (distance >90) distance = 0;
-    unsigned int retval = (unsigned int)(distance+0.5); //gives more accurate rounding when casting to unsigned int
+    
+    //ensure accurate rounding when casting to unsigned int
+    unsigned int retval = (unsigned int)(distance+0.5);
     
     //send the value to the queue
     sendValToSensorTaskFromISR(&retval);
+     * */
 }
- 
  
 /*
      if (PLIB_USART_TransmitterIsEmpty(USART_ID_1)) {

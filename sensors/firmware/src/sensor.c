@@ -91,15 +91,12 @@ void SENSOR_Initialize ( void )
         stopAll();
     }
 
-    //Initialize ADC A0 = Pic32 pin 25, RB0. Manual Sample Start and TAD based Conversion Start
-    //PLIB_PORTS_PinDirectionInputSet(PORTS_ID_0, PORT_CHANNEL_B, PORTS_BIT_POS_0);
-    //PLIB_ADC_SampleAutoStartDisable(ADC_ID_1);
-    //PLIB_ADC_Enable(ADC_ID_1);
-    
+    //Initialize ADC Channel Scan for A0-A3
+    //Manual Sample Start and TAD based Conversion Start
     DRV_ADC_Stop();
     DRV_ADC_Initialize();
-    DRV_ADC_Start();
-	
+    DRV_ADC_Open();
+    
     //Start PWM timer. All of the servos use this same timer
     DRV_TMR0_Stop();
     DRV_TMR0_Initialize();
@@ -131,7 +128,12 @@ void SENSOR_Tasks ( void )
     {
         case SENSOR_STATE_INIT:
         {
-            setServoAngle(SERVOANGLE_MIN); //set the servo to zero
+            #ifdef SENSOR_DEBUG_ISOLATESENSOR
+                setServoAngle(SENSOR_DEBUG_ISOLATESENSOR + SERVOANGLE_MIN);
+            #else
+                setServoAngle(SERVOANGLE_MIN); //set the servo to zero degrees
+            #endif
+
             startServoMovementTimer(); //start the servoMovementTimer
 			sensorData.state = SENSOR_STATE_TAKEREADINGS; //change state
             break;
@@ -140,121 +142,121 @@ void SENSOR_Tasks ( void )
         case SENSOR_STATE_TAKEREADINGS:
         {
             //block until you receive a value from the ADC
-            if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY)){
-                
-                //output the point immediately to the process task to be forwarded out to the pi
-                #ifdef SENSOR_DEBUG_ISOLATESENSOR
-                    Obstacle o;
-                    o.start_radius=0;
-                    o.end_radius=0;
-                    o.length_of_arc=0;
-                    o.midpoint_x=0;
-                    o.midpoint_y=0;
-                    o.slope=0;
-                    o.midpoint_r = qData;
-                    o.midpoint_theta = sensorData.servo_angle - SERVOANGLE_MIN;
-                    putDataOnProcessQ(&o);
-                    setServoAngle(SENSOR_DEBUG_ISOLATESENSOR+SERVOANGLE_MIN);
-                    startServoMovementTimer();
-                    break;
-                #endif
+            if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY))
+                sensorData.ra[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
+            if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY))
+                sensorData.rb[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
+            if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY))
+                sensorData.rc[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
+            if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY))
+                sensorData.rd[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
+            if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY))
+                sensorData.ralr[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
+            if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY))
+                sensorData.rblr[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
+            if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY))
+                sensorData.rclr[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
+            if (xQueueReceive(sensorData.sensorQ_SA, &qData, portMAX_DELAY))
+                sensorData.rdlr[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
 
-                
-                #ifdef SENSOR_DEBUG_FULLMAP
-                    Obstacle o;
-                    o.start_radius=0;
-                    o.end_radius=0;
-                    o.length_of_arc=0;
-                    o.midpoint_x=0;
-                    o.midpoint_y=0;
-                    o.slope=0;
-                    o.midpoint_r = qData;
-                    o.midpoint_theta = sensorData.servo_angle - SERVOANGLE_MIN;
-                    putDataOnProcessQ(&o);
+            //create and send objects with the values received above to Process Task
+            #ifdef SENSOR_DEBUG_ISOLATESENSOR
+                Obstacle o;
+//                o.start_theta = 1;
+//                o.end_theta = 1;
+//                o.length_of_arc = 1;
+                o.midpoint_x = 1;
+                o.midpoint_y = 1;
+//                o.slope = 1;
+                o.midpoint_theta = sensorData.servo_angle - SERVOANGLE_MIN;
 
-                    //check to see if we are finished panning
-                    if (sensorData.servo_angle < SERVOANGLE_MAX){                    
-                        incrementServo();
-                        startServoMovementTimer();
-                    }
-                    else setServoAngle(SERVOANGLE_MIN);
-                    break;
-                #endif
+                o.type = OBSTACLE_TYPE_SERVOA;
+                o.midpoint_r = sensorData.ra[sensorData.servo_angle - SERVOANGLE_MIN];
+                putDataOnProcessQ(&o);
+                o.type = OBSTACLE_TYPE_SERVOB;
+                o.midpoint_r = sensorData.rb[sensorData.servo_angle - SERVOANGLE_MIN];
+                putDataOnProcessQ(&o);
+                o.type = OBSTACLE_TYPE_SERVOC;
+                o.midpoint_r = sensorData.rc[sensorData.servo_angle - SERVOANGLE_MIN];
+                putDataOnProcessQ(&o);
+                o.type = OBSTACLE_TYPE_SERVOD;
+                o.midpoint_r = sensorData.rd[sensorData.servo_angle - SERVOANGLE_MIN];
+                putDataOnProcessQ(&o);
                 
+                o.type = OBSTACLE_TYPE_SERVOA_LR;
+                o.midpoint_r = sensorData.ralr[sensorData.servo_angle - SERVOANGLE_MIN];
+                putDataOnProcessQ(&o);
+                o.type = OBSTACLE_TYPE_SERVOB_LR;
+                o.midpoint_r = sensorData.rblr[sensorData.servo_angle - SERVOANGLE_MIN];
+                putDataOnProcessQ(&o);
+                o.type = OBSTACLE_TYPE_SERVOC_LR;
+                o.midpoint_r = sensorData.rclr[sensorData.servo_angle - SERVOANGLE_MIN];
+                putDataOnProcessQ(&o);
+                o.type = OBSTACLE_TYPE_SERVOD_LR;
+                o.midpoint_r = sensorData.rdlr[sensorData.servo_angle - SERVOANGLE_MIN];
+                putDataOnProcessQ(&o);
+                
+                setServoAngle(SENSOR_DEBUG_ISOLATESENSOR + SERVOANGLE_MIN);
+                startServoMovementTimer();
+                break;
+            #endif
 
-                //record the data to the array
-                sensorData.r[sensorData.servo_angle - SERVOANGLE_MIN] = qData;
-                //check to see if we are finished panning
-                if (sensorData.servo_angle < SERVOANGLE_MAX){                    
-                    incrementServo();
-                    startServoMovementTimer();
-                }
-                else{
-                    setServoAngle(SERVOANGLE_MIN); //set the servo to zero
-                    sensorData.state = SENSOR_STATE_FINDOBSTACLES; //change state
-                }
-            }//end xQueueReceive
             
+            //check to see if we are finished panning
+            if (sensorData.servo_angle < SERVOANGLE_MAX){                    
+                incrementServo();
+                startServoMovementTimer();
+            }
+            else{
+                setServoAngle(SERVOANGLE_MIN); //set the servo to zero degrees
+                sensorData.state = SENSOR_STATE_FINDOBSTACLES; //change state
+            }
             break;
         }//end case SENSOR_STATE_TAKEREADINGS
-        
-
-        //sensorData.r[91] contains r,theta values that the sensor recorded
-        //want to iterate through this array and find the lines and measure them
-        //once we find the obstacle, we will immediately forward it to the pi
+            
         case SENSOR_STATE_FINDOBSTACLES:
         {
-            int length = 0;
-            int startofline = 0;
-            int endofline = 0;
-            int middleofline = 0;
-            
-            //remove data points greater than SERVO_MAXRANGE_CM away
-            for (i=0; i<SERVO_DEGREES; i++){
-                if (sensorData.r[i] > SERVO_MAXRANGE_CM) sensorData.r[i] = 0;
-            }
-            
-            i=0;
-            while (i<SERVO_DEGREES-1){
-                //if consecutive points exist, measure how long the line is
-                if (abs(sensorData.r[i]-sensorData.r[i+1]) < LINE_MINDELTA_CM){
-                    startofline = i;
-                    middleofline = i;
-                    endofline = i+1;
-                    while (abs(sensorData.r[middleofline]-sensorData.r[endofline]) < LINE_MINDELTA_CM){
-                        middleofline++;
-                        endofline++;
-                        if (endofline == SERVO_DEGREES) break;
-                    }
-                    length = middleofline - startofline;
-
-                    //found a line of adequate length!
-                    if (length > LINE_MINLENGTH_CM){
-                        Obstacle o;
-                        o.start_radius = startofline;
-                        o.end_radius = middleofline;
-                        o.length_of_arc = length;
-                        o.midpoint_theta = (startofline + middleofline)/2;
-                        o.midpoint_r = (sensorData.r[startofline] + sensorData.r[middleofline])/2;
-                        //o.midpoint_x = o.midpoint_r*cos(o.midpoint_theta*(3.14/180.0));
-                        //o.midpoint_y = o.midpoint_r*sin(o.midpoint_theta*(3.14/180.0));
-                        o.midpoint_x=0;
-                        o.midpoint_y=0;
-                        o.slope = (sensorData.r[middleofline]-sensorData.r[startofline])/(middleofline-startofline);
-
-                        //don't add trivial lines where r=0 constantly
-                        if (o.midpoint_r != 0) putDataOnProcessQ(&o);
-                        
-                        i = endofline;
-                    }
-
-                    //found a line but it wasn't long enough. skip to the end of the line
-                    else i = endofline;
-                }
-                //else just ignore that point and move on
-                else i++;
-            }
+            //if we are in SENSOR_DEBUG_SINGLEMAP mode, then also send the full array
+            //from the sensor that was specified in the #define
+            #ifdef SENSOR_DEBUG_SINGLEMAP
+                int* SINGLEMAP_array;
+                Obstacle o;
+                o.type = OBSTACLE_TYPE_MAP;
+                //o.start_theta = 0;
+                //o.end_theta = 0;
+                //o.length_of_arc = 0;
+                o.midpoint_x = 0;
+                o.midpoint_y = 0;
+                //o.slope = 0;
+                
+                if (SENSOR_DEBUG_SINGLEMAP == OBSTACLE_TYPE_SERVOA)      SINGLEMAP_array = sensorData.ra;
+                else if (SENSOR_DEBUG_SINGLEMAP == OBSTACLE_TYPE_SERVOB) SINGLEMAP_array = sensorData.rb;
+                else if (SENSOR_DEBUG_SINGLEMAP == OBSTACLE_TYPE_SERVOC) SINGLEMAP_array = sensorData.rc;
+                else if (SENSOR_DEBUG_SINGLEMAP == OBSTACLE_TYPE_SERVOD) SINGLEMAP_array = sensorData.rd;
+                else if (SENSOR_DEBUG_SINGLEMAP == OBSTACLE_TYPE_SERVOA_LR) SINGLEMAP_array = sensorData.ralr;
+                else if (SENSOR_DEBUG_SINGLEMAP == OBSTACLE_TYPE_SERVOB_LR) SINGLEMAP_array = sensorData.rblr;
+                else if (SENSOR_DEBUG_SINGLEMAP == OBSTACLE_TYPE_SERVOC_LR) SINGLEMAP_array = sensorData.rclr;
+                else if (SENSOR_DEBUG_SINGLEMAP == OBSTACLE_TYPE_SERVOD_LR) SINGLEMAP_array = sensorData.rdlr;
                     
+                findObstacles(SINGLEMAP_array, OBSTACLE_TYPE_SERVOA);
+                for (i=0; i<SERVO_DEGREES; i++){
+                    o.midpoint_theta = i;
+                    o.midpoint_r = SINGLEMAP_array[i];
+                    putDataOnProcessQ(&o);
+                }
+            #else
+                //find and send obstacles from all raw data arrays ra, rb, rc, and rd
+                findObstacles(sensorData.ra, OBSTACLE_TYPE_SERVOA);
+                findObstacles(sensorData.rb, OBSTACLE_TYPE_SERVOB);
+                findObstacles(sensorData.rc, OBSTACLE_TYPE_SERVOC);
+                findObstacles(sensorData.rd, OBSTACLE_TYPE_SERVOD);
+                findObstacles(sensorData.ralr, OBSTACLE_TYPE_SERVOA_LR);
+                findObstacles(sensorData.rblr, OBSTACLE_TYPE_SERVOB_LR);
+                findObstacles(sensorData.rclr, OBSTACLE_TYPE_SERVOC_LR);
+                findObstacles(sensorData.rdlr, OBSTACLE_TYPE_SERVOD_LR);
+                
+            #endif
+          
             sensorData.state = SENSOR_STATE_INIT;
             break;
         }
@@ -299,6 +301,81 @@ void SENSOR_Tasks ( void )
     }//end switch
 }//end SENSOR_Tasks()
 
+
+//parses through an array from the sensor and finds obstacles
+//immediately forwards these obstacles to the Process Task
+int findObstacles(int* r, int sender){
+    int length = 0;
+    int startofline = 0;
+    int endofline = 0;
+    int middleofline = 0;
+    int i=0;
+    int runningsum = 0;
+
+    while (i<SERVO_DEGREES-1){
+        //if consecutive points exist, measure how long the line is
+        if (abs(r[i]-r[i+1]) < LINE_MINDELTA_CM){
+            startofline = i;
+            middleofline = i;
+            endofline = i+1;
+            while (abs(r[middleofline]-r[endofline]) < LINE_MINDELTA_CM){
+                middleofline++;
+                endofline++;
+                if (endofline == SERVO_DEGREES) break;
+            }
+            length = middleofline - startofline;
+            
+            //found a line of adequate length!
+            if (length > LINE_MINLENGTH_CM){
+                Obstacle o;
+                o.type = sender;
+                o.midpoint_theta = (startofline + middleofline)/2;
+                o.midpoint_r = (r[startofline] + r[middleofline])/2;
+                
+                //the distance is the weighted average of all the points in the line
+                //for (i=startofline; i<middleofline; i++) runningsum += r[i];
+                //o.midpoint_r = runningsum/length;
+                    
+
+                //account for each sensor panning through a different quadrant
+                if ((sender == OBSTACLE_TYPE_SERVOA) || (sender == OBSTACLE_TYPE_SERVOA_LR)){
+                    o.midpoint_x = (int)(((double)o.midpoint_r*mycos(o.midpoint_theta))+0.5);
+                    o.midpoint_y = (int)(((double)o.midpoint_r*mysin(o.midpoint_theta))+0.5);
+                }
+                else if ((sender == OBSTACLE_TYPE_SERVOB) || (sender == OBSTACLE_TYPE_SERVOB_LR)){
+                    o.midpoint_theta += 90;
+                    o.midpoint_x = (int)(((double)o.midpoint_r*mycos(o.midpoint_theta))+0.5);
+                    o.midpoint_y = (int)(((double)o.midpoint_r*mysin(o.midpoint_theta))+0.5);
+                    o.midpoint_x += 90;
+                    o.midpoint_y += 0;
+                }
+                else if ((sender == OBSTACLE_TYPE_SERVOC) || (sender == OBSTACLE_TYPE_SERVOC_LR)){
+                    o.midpoint_theta += 180;
+                    o.midpoint_x = (int)(((double)o.midpoint_r*mycos(o.midpoint_theta))+0.5);
+                    o.midpoint_y = (int)(((double)o.midpoint_r*mysin(o.midpoint_theta))+0.5);
+                    o.midpoint_x += 90;
+                    o.midpoint_y += 90;
+                }
+                else if ((sender == OBSTACLE_TYPE_SERVOD) || (sender == OBSTACLE_TYPE_SERVOD_LR)){
+                    o.midpoint_theta += 270;
+                    o.midpoint_x = (int)(((double)o.midpoint_r*mycos(o.midpoint_theta))+0.5);
+                    o.midpoint_y = (int)(((double)o.midpoint_r*mysin(o.midpoint_theta))+0.5);
+                    o.midpoint_x += 0;
+                    o.midpoint_y += 90;
+                }
+                
+                //send to Process Task unless it is a trivial line where r=0 constantly
+                if (o.midpoint_r != 0) putDataOnProcessQ(&o);
+                i=endofline;
+            }
+
+            //found a line but it wasn't long enough. skip to the end of the line
+            else i = endofline;
+        }
+        //else just ignore that point and move on
+        else i++;
+    }
+}//end findObstacles()
 
 void sendValToSensorTask(unsigned int* message)
 {
@@ -350,6 +427,7 @@ void sendValToSensorTaskFromISR(unsigned int* message)
     }
 }
 
+//moves all servos to the specified angle, given in servo PWM ticks
 void setServoAngle(int angle){
     //convert passed-in angle to a pulse time
     //time [ms] = (0.0103*degrees) + 0.5412;

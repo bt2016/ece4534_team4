@@ -182,12 +182,12 @@
       <Template>
         <Name>drv_adc_static.h</Name>
         <Path>Header Files/app/system_config/default/framework/driver/adc</Path>
-        <Checksum>DA228C4429B405DC81984D73AB97988D</Checksum>
+        <Checksum>5CA30E2677673D32D7D56C86B7BDF3D3</Checksum>
       </Template>
       <Template>
         <Name>drv_adc_static.c</Name>
         <Path>Source Files/app/system_config/default/framework/driver/adc/src</Path>
-        <Checksum>809FE72B6243BE8368D33AC8EC51AF03</Checksum>
+        <Checksum>7EE40E01A5D7054D45BAD5D42E923A11</Checksum>
       </Template>
       <Template>
         <Name>receive.c</Name>

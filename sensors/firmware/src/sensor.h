@@ -58,26 +58,14 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "sensor_public.h"//Created by me
 #include "debug.h"        //Created by me
 #include "timerCallback.h"//Created by me
+#include "proj_definitions.h"
+#include "trigfunctions.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
 extern "C" {
 #endif
 // DOM-IGNORE-END 
-
-//Defines for moving servo
-#define SERVOANGLE_MIN 80
-#define SERVOANGLE_MAX 170
-#define SERVO_DEGREES 90
-    
-//Defines for interpreting sensor data
-#define SERVO_MAXRANGE_CM 100
-#define LINE_MINDELTA_CM  10
-#define LINE_MINLENGTH_CM 4
-    
-//Defines for debugging
-//#define SENSOR_DEBUG_ISOLATESENSOR 60
-#define SENSOR_DEBUG_FULLMAP
 
 typedef enum
 {
@@ -98,8 +86,15 @@ typedef struct
     unsigned short int sendCount;
     int sendToSensorQ_Err;
     
-    int r[SERVO_DEGREES+1]; //stores polar coordinate points where the index is the angle, and the value is the radius
-    int servo_angle;
+    int ra[SERVO_DEGREES+1]; //stores polar coordinate points where the index is the angle, and the value is the radius
+    int rb[SERVO_DEGREES+1]; //stores polar coordinate points where the index is the angle, and the value is the radius
+    int rc[SERVO_DEGREES+1]; //stores polar coordinate points where the index is the angle, and the value is the radius
+    int rd[SERVO_DEGREES+1]; //stores polar coordinate points where the index is the angle, and the value is the radius
+    int ralr[SERVO_DEGREES+1]; //stores polar coordinate points where the index is the angle, and the value is the radius
+    int rblr[SERVO_DEGREES+1]; //stores polar coordinate points where the index is the angle, and the value is the radius
+    int rclr[SERVO_DEGREES+1]; //stores polar coordinate points where the index is the angle, and the value is the radius
+    int rdlr[SERVO_DEGREES+1]; //stores polar coordinate points where the index is the angle, and the value is the radius
+    int servo_angle; //this is the current location of the servos in units of servo PWM ticks
 
 } SENSOR_DATA;
 

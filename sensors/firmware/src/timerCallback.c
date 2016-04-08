@@ -16,6 +16,7 @@
  */
 
 #include "timerCallback.h"
+#include "process_public.h"
 #include "proj_definitions.h"
 
 unsigned int sendms = 0;
@@ -41,8 +42,7 @@ void sensorTimerCallback(TimerHandle_t sTimer){
 }
 
 void servoMovementTimerCallback(TimerHandle_t sTimer){
-    PLIB_ADC_SamplingStart(0); //Sample from sensor
-    //PLIB_ADC_SampleAutoStartEnable(0);
+    DRV_ADC_Start(); //Sample from sensor
 }
 
 // Called on Sensor Timer rollover
@@ -63,9 +63,10 @@ void receiveTimerCallback(TimerHandle_t rTimer) {
 
 void processTimerCallback(TimerHandle_t aTimer) {
     processTick++;
-    
     if (processTick % MESSAGE_RATE_DIV == 0){}
         //sendProcessedData();
+    sendRequestForUpdateToProcessTask();
+    
 }
 
 

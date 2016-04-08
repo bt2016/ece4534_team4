@@ -61,6 +61,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <timers.h>
 #include <queue.h>
 
+#include "proj_definitions.h"
+
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
 
@@ -73,12 +75,10 @@ extern "C" {
 
 typedef enum
 {
-	/* Application's state machine's initial state. */
+	/* Define states used by the application state machine. */
 	PROCESS_STATE_INIT=0,
-    PROCESS_STATE_PROCESS
-
-	/* TODO: Define states used by the application state machine. */
-
+    PROCESS_STATE_GATHERDATA=1,
+    PROCESS_STATE_PROCESS=2
 } PROCESS_STATES;
 
 
@@ -86,8 +86,12 @@ typedef struct
 {
     /* The application's current state */
     PROCESS_STATES state;
+    
+    /* Define any additional data used by the application. */
     unsigned short int clearCount;
     unsigned short int displayCount;
+    unsigned short int displayFieldCount;
+    unsigned short int displayAveragesCount;
     unsigned short int appendCount;
     unsigned short int echoCount;
     unsigned short int mapCount;
@@ -96,8 +100,22 @@ typedef struct
     QueueHandle_t processQ_SA;
 	TimerHandle_t process_Timer_SA;
     
-    /* TODO: Define any additional data used by the application. */
-
+    Obstacle map[SERVO_DEGREES+1];
+    Obstacle obstacles_from_sensors[50]; //raw lines data from sensors
+    Obstacle processed_obstacles[50];    //targets data for this iteration
+    Obstacle averaged_obstacles[50];     //average targets data for lifetime of the program
+    
+    Obstacle lr_obstacles_from_sensors[50]; //raw lines data from lr sensors
+    Obstacle lr_processed_obstacles[50]; //targets data from lr sensors
+    
+    int map_index;
+    int obstacles_from_sensors_index;
+    int processed_obstacles_index;
+    int averaged_obstacles_index;
+    int lr_obstacles_from_sensors_index;
+    int lr_processed_obstacles_index;
+    
+    int iterations;
 
 } PROCESS_DATA;
 

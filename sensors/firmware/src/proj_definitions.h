@@ -37,6 +37,7 @@ extern "C" {
 // Message format. Constant through system. 
 #define MSG_START 0x7E   // '~'  126
 #define MSG_STOP 0x2E    // '.'  46
+//#define MSG_STOP 125
 #define MSG_LENGTH 10    // START - TYPE - COUNT - DATA x6 - STOP
     
 // MESSAGE TYPES
@@ -92,7 +93,7 @@ extern "C" {
 //#define SA_DIST_TIMER_RATE 20
 #define SA_DIST_TIMER_RATE 100
 #define SA_IR_TIMER_RATE 50
-#define SA_PROC_TIMER_RATE 210
+#define SA_PROC_TIMER_RATE 5000
     
     
 // DEBUG CODE - POTENTIAL VITAL ERRORS
@@ -138,21 +139,49 @@ extern "C" {
 #define TYPE_SENSOR_APPENDMAP 109
 #define TYPE_SENSOR_APPENDLINES 108
 #define TYPE_SENSOR_APPENDTARGETS 116
+#define TYPE_SENSOR_APPENDAVERAGE 97
 #define TYPE_SENSOR_CLEARMAP 77
 #define TYPE_SENSOR_CLEARLINES 76
 #define TYPE_SENSOR_CLEARTARGETS 84
 #define TYPE_SENSOR_CLEARALL 67
-#define TYPE_SENSOR_DISPLAYFULLMAP 100
-#define TYPE_SENSOR_DISPLAYTARGETS 68
+#define TYPE_SENSOR_DISPLAYSINGLEMAP 100
+#define TYPE_SENSOR_DISPLAYFIELD 68
+#define TYPE_SENSOR_DISPLAYAVERAGES 65
 #define TYPE_SENSOR_ECHO 101
     
 #define PROCESS_TIMERINIT_FAIL 0x67
 #define PROCESS_QUEUE_FAIL 0x27
-
-#define OBSTACLE_TYPE_SERVOA 0
-#define OBSTACLE_TYPE_SERVOB 1
-#define OBSTACLE_TYPE_SERVOC 2
-#define OBSTACLE_TYPE_SERVOD 3
+    
+#define OBSTACLE_TYPE_SERVOA 65
+#define OBSTACLE_TYPE_SERVOB 66
+#define OBSTACLE_TYPE_SERVOC 67
+#define OBSTACLE_TYPE_SERVOD 68
+#define OBSTACLE_TYPE_SERVOA_LR 97
+#define OBSTACLE_TYPE_SERVOB_LR 98
+#define OBSTACLE_TYPE_SERVOC_LR 99
+#define OBSTACLE_TYPE_SERVOD_LR 100
+#define OBSTACLE_TYPE_MAP 109
+#define OBSTACLE_TYPE_UPDATEREQUESTED 117
+#define OBSTACLE_TYPE_PROCESSED 80
+    
+//Defines for moving servo
+#define SERVOANGLE_MIN 80
+#define SERVOANGLE_MAX 170
+#define SERVO_DEGREES 90
+    
+//Defines for interpreting sensor data
+#define SERVO_MAXRANGE_CM 75 //90
+#define LINE_MINDELTA_CM  10
+#define LINE_MINLENGTH_CM 4
+#define TARGET_MIN_RADIUS_SQUARED 75 //12cm ^2
+#define TARGET_MAX_BOUNCERADIUS_SQUARED 75 //5cm ^2
+  
+//Defines for debugging
+//#define SENSOR_DEBUG_ISOLATESENSOR 45
+//#define SENSOR_DEBUG_SINGLEMAP OBSTACLE_TYPE_SERVOA_LR
+#define SENSOR_DEBUG_NETWORK
+//#define SENSOR_DEBUG_NETWORK_LR
+//#define SENSOR_DEBUG_NETWORKAVERAGES
    
     
     // *****************************************************************************
@@ -172,16 +201,30 @@ extern "C" {
     
     typedef struct
     {
-        int type;          //identifies which servo found the obstacle
-        int start_radius;  //first degree that the sensor picked up the obstacle
-        int end_radius;    //last degree that the sensor picked up the obstacle
-        int length_of_arc; //difference between start_radius and end_radius in cm
+        int type;         //identifies the sender of this obstacle
+        //int start_theta;  //first degree that the sensor picked up the obstacle
+        //int end_theta;    //last degree that the sensor picked up the obstacle
+        int standard_deviation;
+        int max_deviation;
+        //int length_of_arc; //difference between start_radius and end_radius in cm
         unsigned int midpoint_r; //midpoint of the obstacle in polar coordinates in cm
         int midpoint_theta;      //midpoint of the obstacle in polar coordinates in degrees
         int midpoint_x;    //midpoint of the obstacle in rectangular coordinates in cm
         int midpoint_y;    //midpoint of the obstacle in rectangular coordinates in cm
-        double slope;      //slope of the line in polar coordinates
+        //double slope;      //slope of the line in polar coordinates
+
     } Obstacle;
+    
+    /*
+    typedef struct
+    {
+        int mean_x; //average x coordinate
+        int mean_y; //average y coordinate
+        int std_x;  //standard deviation in the x direction
+        int std_y;  //standard deviation in the y direction
+        int std_max;//maximum recorded deviation
+    } AverageObstacle;
+     * */
 
     // *****************************************************************************
     // *****************************************************************************
