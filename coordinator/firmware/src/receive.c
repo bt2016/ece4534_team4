@@ -85,7 +85,7 @@ void reportMsgDataToSendQ() {
     data[8] = (receiveData.goodMsg & 0xFF);
     data[9] = MSG_STOP;             // Stop byte
         
-    putMsgOnSendQueue(data);  // Transfer message to Send task queue
+  //  putMsgOnSendQueue(data);  // Transfer message to Send task queue
     
     receiveData.badMsg = 0;
     receiveData.goodMsg = 0;
@@ -94,7 +94,7 @@ void reportMsgDataToSendQ() {
 void sendLRMotorInstruction() {
     receiveData.motorCtrl[2] = receiveData.count_LeadMotor;
     
-    putMsgOnSendQueue(receiveData.motorCtrl);
+   // putMsgOnSendQueue(receiveData.motorCtrl);
     
     receiveData.count_LeadMotor++;
 }
@@ -124,9 +124,9 @@ void sendTokenAlert(char* tokenTime) {
         ++k;
     }
     // Report token found to follower
-    putMsgOnSendQueue(foundToken);
+    //putMsgOnSendQueue(foundToken);
     // Send handshake acknowledge to lead rover
-    putMsgOnSendQueue(handShake);
+    //putMsgOnSendQueue(handShake);
     
     receiveData.count_FollowerAlert++;
     receiveData.count_LeadHandshake++;

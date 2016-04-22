@@ -63,6 +63,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "debug.h"       
 #include "timerCallback.h"
 #include "proj_definitions.h"
+#include "math.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -96,6 +97,15 @@ typedef enum
     PROCESS_STATE_SET_TOKENS=1,
     PROCESS_STATE_MESSAGES=2,
     PROCESS_STATE_SEND_MAP=3,
+    PROCESS_STATE_MOVE_ORIGIN=4, //move the rover towards starting point
+    PROCESS_STATE_MOVE=5, //issue next move command for search path
+    PROCESS_STATE_LOCATE_ROVER_INIT=6, //locate the rover and its direction
+    PROCESS_STATE_UPDATE_LOCATIONS=7, //update object locations
+    PROCESS_STATE_LOCATE_ROVER_MOVE=8, //locate the rover and its direction
+    PROCESS_STATE_LOCATE_ROVER_ANALYZE=9, //locate the rover and its direction
+    PROCESS_STATE_DIVERT=10, //Handles diverting around an obstacle
+    PROCESS_STATE_WAIT_FOR_CALIBRATION_START=11,
+            
 
 	/* TODO: Define states used by the application state machine. */
 
@@ -119,18 +129,63 @@ typedef struct
 {
     /* The application's current state */
     PROCESS_STATES state;
+    PROCESS_STATES next_state;
     
     QueueHandle_t processQ_CD;
     
     int number_of_tokens;
     
+    //DEBUG
+    double last_distance_calculated;
+    int max_move_amount_last_calculated;
+    int obs_x;
+    int obs_y;
+    int rover_location_in_q; 
+    
+        
+    int debug;
+    int turn_rover_called;
+    
+    int number_of_sensor_pans; 
+    
+    int last_move_amount;
+    
+    int divert_direction; //direction you WANT the rover to go
+    int divert_moves; //number of steps diverted
+    int lr_last_direction; //last known direction of the lead rover
+    double direction_degrees; //last known exact orientation
+    int hit_origin; 
+    int rover_located; 
+    int finished;
+    int expecting_new_locations; //set to true to set object_locations_am
+    
+    int refresh_rate; //Number of move commands to issue before map refresh
+    int need_divert; //TRUE if need to divert for obstacle, false else
+    
+    int next_move_amt; //cm's you want to move forward by
+    
+    //Farthest we want to go in either direction 
+    int max_x;
+    int max_y; 
+    
+    int min_x;
+    int min_y;
+    
+    int rover_x;
+    int rover_y;
+    
     char new_message[MSG_LENGTH];
     
     //A 2D array capable of holding N messages
     //Where N = TRACKED_OBJECT_AMOUNT
-    char object_locations[TRACKED_OBJECT_AMOUNT][MSG_LENGTH]; 
-    int new_object_location;
+    char object_locations[TRACKED_OBJECT_AMOUNT][MSG_LENGTH];
+    char object_locations_am[TRACKED_OBJECT_AMOUNT][MSG_LENGTH]; //locations AFTER a move 
+    char obstacle_averages[TRACKED_OBJECT_AMOUNT][MSG_LENGTH]; //locations AFTER a move 
     
+    
+    int new_object_location;
+    int new_object_location_am;
+    int number_of_obstacle_averages;
     /* TODO: Define any additional data used by the application. */
 
 

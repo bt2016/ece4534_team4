@@ -127,9 +127,9 @@ void receiveFromSendQ()
 
     // If message received, push to UART transmit queue
     // If statement protects against repeat data.
-    if (newData && ((read[1] != sendData.prevType) || (read[2] != sendData.prevCount))) {
-        sendDataToTransmitQ(read);
-    }
+    //if (newData && ((read[1] != sendData.prevType) || (read[2] != sendData.prevCount))) {
+    sendDataToTransmitQ(read);
+    //}
     
     sendData.prevType = read[1];
     sendData.prevCount = read[2];
