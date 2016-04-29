@@ -105,6 +105,7 @@ typedef enum
     PROCESS_STATE_LOCATE_ROVER_ANALYZE=9, //locate the rover and its direction
     PROCESS_STATE_DIVERT=10, //Handles diverting around an obstacle
     PROCESS_STATE_WAIT_FOR_CALIBRATION_START=11,
+    PROCESS_STATE_SEND_FOLLOWER_GO=12,
             
 
 	/* TODO: Define states used by the application state machine. */
@@ -133,7 +134,12 @@ typedef struct
     
     QueueHandle_t processQ_CD;
     
+    TimerHandle_t processTimer_CD;
+    
     int number_of_tokens;
+    
+    int executeTimer; 
+    int executeSensorTimer;
     
     //DEBUG
     double last_distance_calculated;
@@ -147,13 +153,17 @@ typedef struct
     int turn_rover_called;
     
     int number_of_sensor_pans; 
+    char sensorStore;
+    int sensor_ack_number; 
+    
+    
     
     int last_move_amount;
     
     int divert_direction; //direction you WANT the rover to go
     int divert_moves; //number of steps diverted
     int lr_last_direction; //last known direction of the lead rover
-    double direction_degrees; //last known exact orientation
+    int direction_degrees; //last known exact orientation
     int hit_origin; 
     int rover_located; 
     int finished;
@@ -173,6 +183,9 @@ typedef struct
     
     int rover_x;
     int rover_y;
+    
+    int calc_rover_x;
+    int calc_rover_y; 
     
     char new_message[MSG_LENGTH];
     
@@ -271,6 +284,10 @@ void PROCESS_Initialize ( void );
     This routine must be called from SYS_Tasks() routine.
  */
 void processTokenMsg();
+
+void processSendTokenFound();
+void processSendSensorRequest();
+
 void PROCESS_Tasks( void );
 
 

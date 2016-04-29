@@ -151,12 +151,6 @@ uint8_t removeSendQueueData() {
 // Place data passed from other tasks into send queue
 void putMsgOnSendQueue(char* data) {
     
-    sendData.enqueueCount++;
-    
-    // Error simulation code, skip send enqueue
-    if (sendData.enqueueCount % MESSAGE_SKIP_DIV == 1)
-        return;
-    
     if (sendData.sendQ_CD != 0) {
         
         // Check for full queue. If no spaces available, call to remove oldest data.

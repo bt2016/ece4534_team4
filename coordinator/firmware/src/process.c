@@ -169,27 +169,25 @@ void processTokenMsg(){
 
 //Tell the pi to send us updated map data
 void processUpdateMap(){
-        
-    //Update the coordinate list
-    int msg = 0;
+            
     
     //Tell the pi to send us updated map data
-    char msgToSend[MSG_LENGTH];    
-    msgToSend[0] = MSG_START;
-    msgToSend[MSG_LENGTH-1] = MSG_STOP;
-    //msgToSend[1] = TYPEC_UPDATE_MAP;
-    msgToSend[1] = TYPE_SENSOR_MULTIPLEREQUESTED;
-    msgToSend[3] = processData.number_of_sensor_pans; //D1, the number of pans 
-    msgToSend[4] = 0; //D2, the "store" bit - Don't want the sensor grid to store these values 
+    processData.executeSensorTimer = TRUE;
+                
+    while(processData.new_message[1] != (char)ACK_FROM_SENSOR){
+        receiveFromProcessQ();                    
+    }
+
+    processData.executeSensorTimer = FALSE;
     
-    processData.number_of_sensor_pans = 1; //Reset this back to 1 incase it was heightened elsewhere
-    putMsgOnSendQueue(msgToSend);
+    processData.number_of_sensor_pans = 2; //Reset this back to 2 incase it was heightened elsewhere
+
     
 }
 
 //Similar to Java's atan2 function. Note that y is passed in before x. 
 //Returns a number from 0 to 360 in degrees. Returns -1 if x=0, y=0
-double atan2_custom(double y, double x){
+int atan2_custom(double y, double x){
     
     double result;
     
@@ -229,24 +227,30 @@ double atan2_custom(double y, double x){
     double val = 180 / PI;
     result = (result * val);
     
-    return result; 
+    return (int)result; 
 }
 
 void processMoveRoverTurn(int direction){
+    
+    
     
     if(processData.turn_rover_called == TRUE && processData.state != PROCESS_STATE_DIVERT){
         return; 
     }
     
-    processData.turn_rover_called = TRUE;
+    //TEST:
+   // if(processData.rover_located == FALSE){
+   //     return;       
+   // }
     
+    processData.turn_rover_called = TRUE;
     char msgToSend[MSG_LENGTH];
     msgToSend[0] = MSG_START;
     msgToSend[MSG_LENGTH-1] = MSG_STOP;
-
     msgToSend[1] = TYPEC_ROTATE;
     
-    double degrees_to_rotate;
+        
+    int degrees_to_rotate = 0;
     
     if(direction == LR_UP){
         processData.lr_last_direction = LR_UP; 
@@ -264,52 +268,73 @@ void processMoveRoverTurn(int direction){
     }
     else if(direction == LR_RIGHT){
         processData.lr_last_direction = LR_RIGHT; 
-        degrees_to_rotate = 360 - processData.direction_degrees;
+        degrees_to_rotate = 0 - processData.direction_degrees;
         
     }
     
     //Normally we won't need to worry about changing this, but keep track for diversion state
-    processData.direction_degrees += degrees_to_rotate; 
+        //This breaks things for some reason??
+    if(processData.state == PROCESS_STATE_DIVERT){
+        processData.direction_degrees += degrees_to_rotate; 
+
+        if(processData.direction_degrees < 0){
+            processData.direction_degrees = 360 - abs(processData.direction_degrees);
+        }
+        if(processData.direction_degrees > 360){
+            processData.direction_degrees = processData.direction_degrees - 360;
+        }
+     }
     
-    if(processData.direction_degrees < 0){
-        processData.direction_degrees = abs(processData.direction_degrees);
+    
+    
+    if(degrees_to_rotate == 46){
+        degrees_to_rotate = 47;
     }
-    if(processData.direction_degrees > 360){
-        processData.direction_degrees = 360 - processData.direction_degrees;
-    }
     
-    
+    msgToSend[3] = 1;  //Rotate RIGHT
     if(degrees_to_rotate < 0){
-        degrees_to_rotate = abs(degrees_to_rotate);
-        //we should rotate to the right
-        msgToSend[3] = 1;               
+        degrees_to_rotate = (-1 * degrees_to_rotate);       
     }
     else{
-        msgToSend[3] = 0;              
+         msgToSend[3] = 0; //rotate LEFT
+    }
+            
+    
+    //Can't fit into the char sized buffer thingy 
+    if(degrees_to_rotate < 220){
+        msgToSend[4] = degrees_to_rotate;
+        msgToSend[5] = 0;
+    }
+    else{
+        msgToSend[4] = degrees_to_rotate - 200;
+        msgToSend[5] = 200;
     }
     
-    msgToSend[4] = degrees_to_rotate;
     
     putMsgOnSendQueue(msgToSend);
     
 }
 
 void processFindRoverData(){
-    
-    //This is going to need to be changed for production. B/C it assumes the same number
-    // of objects will always be in each list.
-    
-    
+   
     int msg = 0;
     if(processData.rover_located == FALSE){
         
+        
+        int old_msg = 0;
+        int rover_location_old_msg = processData.new_object_location; 
+        for(old_msg=0; old_msg < processData.new_object_location; old_msg++){
+            if(processData.object_locations[old_msg][5] == 'Y'){
+                rover_location_old_msg = old_msg;
+            }
+        }
+                
         //Needs to be revised to go over all data points as well as add in weights and last move amount
-        for(msg=0; msg < processData.new_object_location; msg++){ 
+        for(msg=0; msg < processData.new_object_location_am; msg++){ 
              
             // if((processData.object_locations[msg][3] != processData.object_locations_am[msg][3]) || (processData.object_locations[msg][4] != processData.object_locations_am[msg][4])   ){
             if(processData.object_locations_am[msg][5] == 'Y'){ //Y
                 
-                    
                     //Used to help in avoiding obstacles
                     processData.rover_located = TRUE;
                     
@@ -322,9 +347,12 @@ void processFindRoverData(){
                     processData.rover_x = processData.object_locations_am[msg][3];
                     processData.rover_y = processData.object_locations_am[msg][4];
 
+                    processData.calc_rover_x = processData.object_locations_am[msg][3];
+                    processData.calc_rover_y = processData.object_locations_am[msg][4];
+                    
                     //Find the orientation
-                    int old_x = processData.object_locations[msg][3]; 
-                    int old_y = processData.object_locations[msg][4]; 
+                    int old_x = processData.object_locations[msg][3]; //rover_location_old_msg
+                    int old_y = processData.object_locations[msg][4]; //rover_location_old_msg
 
                     int new_x = processData.object_locations_am[msg][3]; 
                     int new_y = processData.object_locations_am[msg][4]; 
@@ -339,7 +367,7 @@ void processFindRoverData(){
                     //If we get a -1 from this then direction is unknown
                     processData.direction_degrees = atan2_custom(deltaY, deltaX);
                     
-                    double degrees = processData.direction_degrees;
+                    int degrees = processData.direction_degrees;
                     
                     
                     //Rough degrees
@@ -352,7 +380,7 @@ void processFindRoverData(){
                     else if(degrees > 135 && degrees < 225){
                         processData.lr_last_direction = LR_LEFT;
                     }
-                    else if((degrees > 45) || (degrees > 315)){
+                    else if((degrees < 45) || (degrees > 315)){
                         processData.lr_last_direction = LR_RIGHT;
                     }
                     else{
@@ -363,10 +391,7 @@ void processFindRoverData(){
                         processData.lr_last_direction = LR_UNKNOWN;
                     }
                                      
-                    //In ProcessMoveRoverTurn(int direction), this function should be altered to 
-                    //Tell the rover to turn a number of degrees in the proper direction. 
-                   
-            
+                             
 
                 }
                         
@@ -672,7 +697,7 @@ int distanceToObstacle(int distance_wanted){
  * 
  */ 
 
-void DIVERT_MoveRoverForward(){
+void DIVERT_MoveRoverForward(int amt){
     char msgToSend[MSG_LENGTH];
     msgToSend[0] = MSG_START;
     msgToSend[MSG_LENGTH-1] = MSG_STOP;
@@ -680,33 +705,33 @@ void DIVERT_MoveRoverForward(){
     
     //Figure out the move amount we can move before hitting something       
     if(processData.lr_last_direction == LR_UP){
-        processData.rover_y += 1;
+        processData.rover_y += amt;
         if(processData.rover_y > 90){
             processData.rover_y = 90;
         }
     }
     else if(processData.lr_last_direction == LR_DOWN){
-        processData.rover_y += -1;
+        processData.rover_y += -amt;
         if(processData.rover_y < 1){
             processData.rover_y = 1;
         }
     }
     else if(processData.lr_last_direction == LR_RIGHT){
-        processData.rover_x += 1;
+        processData.rover_x += amt;
         if(processData.rover_x > 90){
             processData.rover_x = 90;
         }
     }
     else if(processData.lr_last_direction == LR_LEFT){
-        processData.rover_x += -1;
+        processData.rover_x += -amt;
         if(processData.rover_x < 1){
             processData.rover_x = 1;
         }
         
     }    
    
-    msgToSend[3] = 1; 
-    processData.last_move_amount = 1;
+    msgToSend[3] = amt; 
+    processData.last_move_amount = amt;
     putMsgOnSendQueue(msgToSend);
 }
 
@@ -732,21 +757,21 @@ void processMoveRoverForward(int amount){
         }  
         
         if(processData.lr_last_direction == LR_UP){
-            processData.rover_y += amount;
+            processData.calc_rover_y += amount;
         }
         else if(processData.lr_last_direction == LR_DOWN){
-            processData.rover_y += -amount;
-            if(processData.rover_y < 1){
-                processData.rover_y = 1;
+            processData.calc_rover_y += -amount;
+            if(processData.calc_rover_y < 1){
+                processData.calc_rover_y = 1;
             }
         }
         else if(processData.lr_last_direction == LR_RIGHT){
-            processData.rover_x += amount;
+            processData.calc_rover_x += amount;
         }
         else if(processData.lr_last_direction == LR_LEFT){
-            processData.rover_x += -amount;
-            if(processData.rover_x < 1){
-                processData.rover_x = 1;
+            processData.calc_rover_x += -amount;
+            if(processData.calc_rover_x < 1){
+                processData.calc_rover_x = 1;
             }
         }    
 
@@ -770,39 +795,90 @@ void processTransferMapDataBuffers(){
         strncpy(processData.object_locations[msg], processData.object_locations_am[msg], MSG_LENGTH);            
     }
     processData.new_object_location = processData.new_object_location_am; 
-    processData.new_object_location_am = 0; 
+    //processData.new_object_location_am = 0; 
 }
 
 //Call this if you want to adjust map data
 void processMapDataMsg(){
     
+    processData.sensor_ack_number = processData.new_message[6]; 
+    
+    char msgToSend[MSG_LENGTH];
+    msgToSend[0] = MSG_START;
+    msgToSend[MSG_LENGTH-1] = MSG_STOP;
+    msgToSend[1] = TYPEC_ACK_SENSOR_DATA;
+    msgToSend[6] = processData.sensor_ack_number; 
+    
     if(processData.expecting_new_locations == FALSE){
         if(processData.new_object_location <= TRACKED_OBJECT_AMOUNT-1){        
-            strncpy(processData.object_locations[processData.new_object_location], processData.new_message, MSG_LENGTH);
-            processData.new_object_location++;           
+            strncpy(processData.object_locations[processData.sensor_ack_number], processData.new_message, MSG_LENGTH);
+            processData.new_object_location = processData.sensor_ack_number+1;           
         }
         else{
             processData.new_object_location = 0;
-            strncpy(processData.object_locations[processData.new_object_location], processData.new_message, MSG_LENGTH);
-            processData.new_object_location++;        
+            strncpy(processData.object_locations[processData.sensor_ack_number], processData.new_message, MSG_LENGTH);
+            processData.new_object_location = processData.sensor_ack_number + 1;        
         }   
     }
     else{
         if(processData.new_object_location_am <= TRACKED_OBJECT_AMOUNT-1){        
-            strncpy(processData.object_locations_am[processData.new_object_location_am], processData.new_message, MSG_LENGTH);
-            processData.new_object_location_am++;
+            strncpy(processData.object_locations_am[processData.sensor_ack_number], processData.new_message, MSG_LENGTH);
+            processData.new_object_location_am = processData.sensor_ack_number + 1;
         }
         else{
             processData.new_object_location_am = 0;
-            strncpy(processData.object_locations_am[processData.new_object_location_am], processData.new_message, MSG_LENGTH);
-            processData.new_object_location_am++;        
+            strncpy(processData.object_locations_am[processData.sensor_ack_number], processData.new_message, MSG_LENGTH);
+            processData.new_object_location_am = processData.sensor_ack_number + 1;        
         }
-    }
+    }    
+    
+    putMsgOnSendQueue(msgToSend);
+    
 }
 
+void processSendTokenFound(){
+    
+    
+    
+    if(processData.executeTimer == TRUE){
+        
+        
+        //Send a message to the sensor telling it to pan and store values
+        char msgToSend[MSG_LENGTH];
+        msgToSend[0] = MSG_START;
+        msgToSend[MSG_LENGTH-1] = MSG_STOP;
 
+        //Tell the Pi we want the token number
+        msgToSend[1] = TYPEC_LR_SENSOR_TO_FR; //type
+        msgToSend[8] = processData.number_of_tokens;
+        
+        putMsgOnSendQueue(msgToSend);
+                
+    }
+    
+}
 
+void processSendSensorRequest(){
+    
+    if(processData.executeSensorTimer == TRUE){
+        
+        //Send a message to the sensor telling it to pan and store values
+        char msgToSend[MSG_LENGTH];
+        msgToSend[0] = MSG_START;
+        msgToSend[MSG_LENGTH-1] = MSG_STOP;
 
+        
+        msgToSend[1] = TYPE_SENSOR_MULTIPLEREQUESTED; //type
+        msgToSend[3] = processData.number_of_sensor_pans; //D1, the number of pans 
+        msgToSend[4] = processData.sensorStore; //D2, the "store" bit
+
+        putMsgOnSendQueue(msgToSend);
+                
+        
+        
+    }
+    
+}
 
 
 /*******************************************************************************
@@ -824,7 +900,10 @@ void PROCESS_Initialize ( void )
     processData.refresh_rate = 0;
     processData.need_divert = FALSE;    
     
-    processData.number_of_sensor_pans = 1;
+    processData.calc_rover_x = 0;
+    processData.calc_rover_y = 0;
+    
+    processData.number_of_sensor_pans = 2;
     
     processData.number_of_tokens = -1;
     processData.new_object_location = 0;
@@ -837,17 +916,24 @@ void PROCESS_Initialize ( void )
     
     processData.finished = FALSE;
     
+    processData.executeTimer = FALSE;
+    processData.executeSensorTimer = FALSE;
+    
+    processData.sensorStore = 0; //this is a char, set to '1' to store data
+    
     //CHANGE AS NEEDED
-    processData.min_x = 4 + ROVER_WIDTH;
-    processData.min_y = 4 + ROVER_WIDTH;
+    processData.min_x = 8 + ROVER_WIDTH;
+    processData.min_y = 8 + ROVER_WIDTH;
             
     
-    processData.max_x = 86 - ROVER_WIDTH;
-    processData.max_y = 86 - ROVER_WIDTH;     
+    processData.max_x = 82 - ROVER_WIDTH;
+    processData.max_y = 82 - ROVER_WIDTH;     
     
-    processData.next_move_amt = 6; //Set to 6 for initially finding rover
+    processData.next_move_amt = 30; //Set to 6 for initially finding rover
     
     processData.last_move_amount = 1;
+    
+    processData.sensor_ack_number = 0;
     
  
     /* TODO: Initialize your application's state machine and other
@@ -859,8 +945,8 @@ void PROCESS_Initialize ( void )
     if (processData.processQ_CD == 0) {
         stopAll();
     }
+     
     
-   
     
 }
 
@@ -920,27 +1006,74 @@ void PROCESS_Tasks ( void )
         {
             //Wait for the "GO" message to appear on receive queue
             receiveFromProcessQ();
-            if(processData.new_message[1] == TYPEC_CONTINUE){
+            if(processData.new_message[1] == (char)TYPEC_CONTINUE){
+            
+                
+                processData.number_of_sensor_pans = 3;
+                processData.sensorStore = '1';
+                processData.executeSensorTimer = TRUE;
+                   
+                
+                while(processData.new_message[1] != (char)ACK_FROM_SENSOR){
+                    receiveFromProcessQ();                    
+                }
+                
+                processData.executeSensorTimer = FALSE;
+                processData.sensorStore = 0; 
+                
+                
+                //Off load the data and ACK it so we can move on. 
+                 while(processData.new_message[1] != (char)TYPEC_END_MAP_DATA){
+                    receiveFromProcessQ();
+                    
+                    char msgToSend[MSG_LENGTH];
+                    msgToSend[0] = MSG_START;
+                    msgToSend[MSG_LENGTH-1] = MSG_STOP;
+                    msgToSend[6] = processData.new_message[6];
+
+                    //Tell the Pi we want the token number
+                    msgToSend[1] = TYPEC_ACK_SENSOR_DATA;
+                    putMsgOnSendQueue(msgToSend); 
+
+                }
+                
+                processData.number_of_sensor_pans = 2; 
+                
+                processData.state = PROCESS_STATE_SEND_FOLLOWER_GO;
+            }
+            else if(processData.new_message[1] == (char)TYPEC_SKIP){ 
+                processData.state = PROCESS_STATE_SEND_FOLLOWER_GO;                
+            }
+            
+            break;
+        }
+        
+        case PROCESS_STATE_SEND_FOLLOWER_GO:
+        {
+            //Wait for the "GO" message to appear on receive queue
+            receiveFromProcessQ();
+            if(processData.new_message[1] == (char)TYPEC_CONTINUE){
             
                 //Send a message to the sensor telling it to pan and store values
                 char msgToSend[MSG_LENGTH];
                 msgToSend[0] = MSG_START;
                 msgToSend[MSG_LENGTH-1] = MSG_STOP;
 
-                //Tell the Pi we want the token number
-                msgToSend[1] = TYPE_SENSOR_MULTIPLEREQUESTED; //type
-                msgToSend[3] = 5; //D1, the number of pans 
-                msgToSend[4] = '1'; //D2, the "store" bit
+                
+                msgToSend[1] = TYPEC_GO; //type
                 putMsgOnSendQueue(msgToSend);       
                 
-                processData.state = PROCESS_STATE_UPDATE_LOCATIONS;
+                processData.state =  PROCESS_STATE_MESSAGES; 
             }
-            else if(processData.new_message[1] == TYPEC_SKIP){
-                processData.state = PROCESS_STATE_MESSAGES;
+            else if(processData.new_message[1] == (char)TYPEC_SKIP){                
+                processData.state = PROCESS_STATE_MESSAGES;                
             }
             
             break;
+            
+            
         }
+        
         
         
         case PROCESS_STATE_MESSAGES:
@@ -949,22 +1082,22 @@ void PROCESS_Tasks ( void )
             receiveFromProcessQ();            
             
             //Check that the message is for setting tokens
-            if(processData.new_message[1] == TYPEC_TOKEN_NUMBER){
+            if(processData.new_message[1] == (char)TYPEC_TOKEN_NUMBER){
                 processTokenMsg();
             }
             
-            else if(processData.new_message[1] == TYPEC_MAP_DATA){
+            else if(processData.new_message[1] == (char)TYPEC_MAP_DATA){
                // processMapDataMsg();
             }
             
-            else if(processData.new_message[1] == TYPEC_TOKEN_FOUND){
+            else if(processData.new_message[1] == (char)TYPEC_TOKEN_FOUND){
                 processData.number_of_tokens += -1;
                 if(processData.number_of_tokens == 0){
                     processData.finished = TRUE; //Stop searching
                 }
             }
             
-            else if(processData.new_message[1] == TYPEC_LR_MOVE_COMPLETE){
+            else if(processData.new_message[1] == (char)TYPEC_LR_MOVE_COMPLETE){
                 //Check if we have finished searching the map
                 /*
                 if(processData.finished == FALSE){
@@ -986,25 +1119,27 @@ void PROCESS_Tasks ( void )
                  */
             }
             
-            else if(processData.new_message[1] == TYPEC_CLEAR_MAP){
+            else if(processData.new_message[1] == (char)TYPEC_CLEAR_MAP){
                // processData.new_object_location = 0;
             }
             
             //This function is from the Pi, asking the coordinator to 
             //Send the Pi the same message back, to update the map list ON THE PI
             //The Pi will then update the map list on the coordinator
-            else if(processData.new_message[1] == TYPEC_UPDATE_MAP){
-                /*
-                processData.state = PROCESS_STATE_UPDATE_LOCATIONS;
-                processData.next_state = PROCESS_STATE_MESSAGES; //bring it back to this state
-                processData.new_object_location = 0;
-                processData.expecting_new_locations = FALSE; //We want locations to go to the regular spot
-                processUpdateMap();
-                 */
+            else if(processData.new_message[1] == (char)TYPEC_UPDATE_MAP){
+                //Just ACK messages 
+                
+                char msgToSend[MSG_LENGTH];
+                msgToSend[0] = MSG_START;
+                msgToSend[MSG_LENGTH-1] = MSG_STOP;
+                msgToSend[1] = TYPEC_ACK_SENSOR_DATA;
+                msgToSend[6] = processData.new_message[6]; 
+                putMsgOnSendQueue(msgToSend);
+                
             }
             
             //Transition into a command state
-            else if(processData.new_message[1] == TYPEC_MAKE_MOVE){
+            else if(processData.new_message[1] == (char)TYPEC_MAKE_MOVE){
                 
                 //Check if we have finished searching the map
                 if(processData.finished == FALSE){
@@ -1038,22 +1173,29 @@ void PROCESS_Tasks ( void )
             receiveFromProcessQ();
             
             //Check that the message is for end of map data
-            if(processData.new_message[1] == TYPEC_END_MAP_DATA){
+            if(processData.new_message[1] == (char)TYPEC_END_MAP_DATA){
                 processData.state = processData.next_state;
-                //LATACLR = 1 << 3;
+                
+                char msgToSend[MSG_LENGTH];
+                msgToSend[0] = MSG_START;
+                msgToSend[MSG_LENGTH-1] = MSG_STOP;
+
+                //Tell the Pi we want the token number
+                msgToSend[1] = TYPEC_ACK_SENSOR_DATA;
+                putMsgOnSendQueue(msgToSend); 
             }
             
-            else if(processData.new_message[1] == TYPEC_MAP_DATA){
+            else if(processData.new_message[1] == (char)TYPEC_MAP_DATA){
                 processMapDataMsg();
             }
             
             //Force move - not advised :< 
-            else if(processData.new_message[1] == TYPEC_MAKE_MOVE){
+            else if(processData.new_message[1] == (char)TYPEC_MAKE_MOVE){
                 processData.state = processData.next_state;
                 //LATACLR = 1 << 3;
                 //DO nothing, we need these queues to be updated perfectly
             }
-            else if(processData.new_message[1] == TYPEC_TOKEN_FOUND){
+            else if(processData.new_message[1] == (char)TYPEC_TOKEN_FOUND){
                 processData.number_of_tokens += -1;
                 if(processData.number_of_tokens == 0){
                     processData.finished = TRUE; //Stop searching
@@ -1078,15 +1220,50 @@ void PROCESS_Tasks ( void )
         case PROCESS_STATE_LOCATE_ROVER_MOVE:
         {
             //Tell the rover to move forward x amount, should be 6 initially 
-            processMoveRoverTurn(processData.lr_last_direction); //constantly call to make sure we actually facing proper direction
+            if(processData.rover_located == TRUE){
+                processMoveRoverTurn(processData.lr_last_direction); //constantly call to make sure we actually facing proper direction
+            }            
             processMoveRoverForward(processData.next_move_amt);
             //Wait for the rover to finish moving
             
+            processData.rover_located = FALSE; //We no longer know where the rover is  
             LATASET = 1 << 3;
             
             
-            while(processData.new_message[1] != TYPEC_LR_MOVE_COMPLETE){
+            while(processData.new_message[1] != (char)TYPEC_LR_MOVE_COMPLETE){
                 receiveFromProcessQ(); //This ejects the "finish moving message from the Q. TODO change this later
+
+                //Add token logic 
+                if(processData.new_message[1] == (char)TYPEC_LR_SENSOR_TO_FR){
+                
+                    processData.executeTimer = TRUE;
+                    
+                    processSendTokenFound();
+                    
+                }
+                else if(processData.new_message[1] == (char)TYPE_FR_ACK){
+                    processData.executeTimer = FALSE; 
+                }
+                
+                else if(processData.new_message[1] == (char)TYPE_FR_FOUND_TOKEN){
+                    
+                    processData.number_of_tokens = processData.new_message[8];
+                    
+                    if(processData.number_of_tokens <= 0){
+                        processData.finished = TRUE; //Stop searching
+                    }
+                    
+                    //Send an ACK to the FR that we received this message
+                    //Send a message to the sensor telling it to pan and store values
+                    char msgToSend[MSG_LENGTH];
+                    msgToSend[0] = MSG_START;
+                    msgToSend[MSG_LENGTH-1] = MSG_STOP;
+                    msgToSend[1] = TYPEC_TOKEN_FOUND_ACK; //type
+                    msgToSend[8] = processData.number_of_tokens;
+                    putMsgOnSendQueue(msgToSend);       
+                    
+                }
+                
             }
             
             
@@ -1125,24 +1302,29 @@ void PROCESS_Tasks ( void )
             }
             
             else{
-                processData.state = PROCESS_STATE_MESSAGES; 
+                processData.state = PROCESS_STATE_MOVE_ORIGIN; 
             }
+                                   
             break;  
         }
         
         //We are just starting out and want to get the rover to (0,0)
         case PROCESS_STATE_MOVE_ORIGIN:
         {   
-            if(processData.rover_x > processData.min_x){
+            if(processData.rover_x > (processData.min_x + TOLERANCE)){ //The 3 is for tolerance 
                 if(processData.lr_last_direction != LR_LEFT){
                     processMoveRoverTurn(LR_LEFT);
-                    processData.lr_last_direction = LR_LEFT;
                 } 
                 
                 int move_amt = distanceToMove(processData.rover_x, processData.min_x);
 
-                processMoveRoverForward(move_amt); //Keep going until we hit the left wall              
-
+                //processMoveRoverForward(move_amt); //Keep going until we hit the left wall 
+                
+                //Transfer the newest map data into the old buffer since its now old data (after move)
+                processTransferMapDataBuffers();
+                processData.next_move_amt = move_amt; 
+                processData.state = PROCESS_STATE_LOCATE_ROVER_MOVE;
+                
             }           
             else{
                 processData.hit_origin = TRUE;
@@ -1150,15 +1332,16 @@ void PROCESS_Tasks ( void )
                 //Do this to set the rover in the correct direction to be taken over by the move commands
                 processMoveRoverTurn(LR_UP);
                 processData.lr_last_direction = LR_UP;
+                processData.state = PROCESS_STATE_MESSAGES;
             }
             
-            //Transfer the newest map data into the old buffer since its now old data (after move)
-            //processTransferMapDataBuffers();
+            
+            
             
             //TODO: ADD in the logic that checks for the refresh rate here
             //isDivertNeeded();
             
-            processData.state = PROCESS_STATE_MESSAGES;
+            
                       
        
             break;  
@@ -1169,22 +1352,26 @@ void PROCESS_Tasks ( void )
         {
             //Decide if we need to switch directions (obstacle or need to turn)
                        
-            int decrement = ROVER_WIDTH - 1; //change as needed
+            int decrement = ROVER_WIDTH + 11; //change as needed
             
             //Handle the "corners"
-            if((processData.rover_x >= processData.max_x) && (processData.rover_y >= processData.max_y) && processData.lr_last_direction == LR_RIGHT){
+            // COMMENTED OUT : (processData.rover_y >= (processData.max_y - TOLERANCE)) &&
+            if((processData.rover_x >= (processData.max_x - TOLERANCE)) &&  processData.lr_last_direction == LR_RIGHT){
                 processMoveRoverTurn(LR_DOWN); //down
                 processData.max_x += -decrement;  
             }
-            else if((processData.rover_x >= processData.max_x) && (processData.rover_y <= processData.min_y) && processData.lr_last_direction == LR_DOWN){
+            //COMMENTED OUT : (processData.rover_x >= (processData.max_x - TOLERANCE)) &&
+            else if((processData.rover_y <= (processData.min_y + TOLERANCE)) && processData.lr_last_direction == LR_DOWN){
                 processMoveRoverTurn(LR_LEFT); //left
                 processData.min_y += decrement;
             }
-            else if((processData.rover_x <= processData.min_x) && (processData.rover_y >= processData.max_y) && processData.lr_last_direction == LR_UP){
+            //COMMENTED OUT: (processData.rover_x <= (processData.min_x + TOLERANCE)) &&
+            else if((processData.rover_y >= (processData.max_y - TOLERANCE)) && processData.lr_last_direction == LR_UP){
                 processMoveRoverTurn(LR_RIGHT); //right
                 processData.max_y += -decrement;
             }
-            else if((processData.rover_x <= processData.min_x) && (processData.rover_y <= processData.min_y) && processData.lr_last_direction == LR_LEFT){
+            //COMMENTED OUT : && (processData.rover_y <= (processData.min_y - TOLERANCE))
+            else if((processData.rover_x <= (processData.min_x + TOLERANCE)) && processData.lr_last_direction == LR_LEFT){
                 processMoveRoverTurn(LR_UP); //up
                 processData.min_x += decrement;
             }
@@ -1262,8 +1449,6 @@ void PROCESS_Tasks ( void )
             //Move our newest data into the "old" data queue, since the rover is about to move
             processTransferMapDataBuffers(); 
             
-            //This is okay for now...
-            processData.rover_located = FALSE;
             
                    
             
@@ -1283,19 +1468,19 @@ void PROCESS_Tasks ( void )
                 //Divert around obstacle 
                 //Decide which way to go around it
                 
-                int moves = abs(processData.rover_x - processData.obs_x) + BUFFER_ZONE + ERROR_AMT;
+                int moves = abs(processData.calc_rover_x - processData.obs_x) + BUFFER_ZONE + ERROR_AMT;
                 int next_dir;
                 //See if we've covered that ground already
-                if((processData.rover_x - moves) <= processData.min_x){
+                if((processData.calc_rover_x - moves) <= processData.min_x){
                     processMoveRoverTurn(LR_RIGHT);
                     next_dir = LR_LEFT;
                 }
-                else if((processData.rover_x + moves) >= processData.max_x){
+                else if((processData.calc_rover_x + moves) >= processData.max_x){
                     processMoveRoverTurn(LR_LEFT); 
                     next_dir = LR_RIGHT;
                 }
                 else{ //if it doesn't matter, choose the best path.
-                    if(processData.rover_x < processData.obs_x){
+                    if(processData.calc_rover_x < processData.obs_x){
                         processMoveRoverTurn(LR_LEFT);
                         next_dir = LR_RIGHT;
                     }
@@ -1306,19 +1491,17 @@ void PROCESS_Tasks ( void )
                     }
                 }   
                 
-                int increment = 0;
-                for(increment=0; increment < moves+1; increment++){
-                    DIVERT_MoveRoverForward();
-                }
+               DIVERT_MoveRoverForward(moves+1);
+                
 
-                int other_moves = abs(processData.obs_y - processData.rover_y) + OBSTACLE_DIAMETER;
+                int other_moves = abs(processData.obs_y - processData.calc_rover_y) + OBSTACLE_DIAMETER;
                 processMoveRoverTurn(LR_UP);
                 
-                increment = 0;                
+                int increment = 0;                
                 for(increment=0; increment < other_moves; increment++){
-                    DIVERT_MoveRoverForward();
+                    DIVERT_MoveRoverForward(1);
                     //Determine if we should instead make the next turn
-                    if(processData.rover_y >= processData.max_y){
+                    if(processData.calc_rover_y >= processData.max_y){
                         processMoveRoverTurn(LR_RIGHT); //right
                         processData.max_y += -ROVER_WIDTH - 1;
                         broke = TRUE;
@@ -1329,10 +1512,9 @@ void PROCESS_Tasks ( void )
                 if(broke == FALSE){
                     processMoveRoverTurn(next_dir); 
 
-                    increment = 0;
-                    for(increment=0; increment < moves+1; increment++){
-                        DIVERT_MoveRoverForward();
-                    }
+                    
+                    DIVERT_MoveRoverForward(moves+1);
+                    
                     //Return rover to last direction to continue on
                     processMoveRoverTurn(LR_UP);
                 }
@@ -1340,19 +1522,19 @@ void PROCESS_Tasks ( void )
             else if((processData.lr_last_direction == LR_DOWN) && (broke == FALSE)){
                 //Divert around obstacle 
                 
-                int moves = abs(processData.obs_x - processData.rover_x) + BUFFER_ZONE + ERROR_AMT;
+                int moves = abs(processData.obs_x - processData.calc_rover_x) + BUFFER_ZONE + ERROR_AMT;
                 int next_dir;
                 //See if we've covered that ground already
-                if((processData.rover_x - moves) <= processData.min_x){
+                if((processData.calc_rover_x - moves) <= processData.min_x){
                     processMoveRoverTurn(LR_RIGHT);
                     next_dir = LR_LEFT;
                 }
-                else if((processData.rover_x + moves) >= processData.max_x){
+                else if((processData.calc_rover_x + moves) >= processData.max_x){
                     processMoveRoverTurn(LR_LEFT); 
                     next_dir = LR_RIGHT;
                 }
                 else{
-                    if(processData.rover_x < processData.obs_x){
+                    if(processData.calc_rover_x < processData.obs_x){
                         processMoveRoverTurn(LR_LEFT);
                         next_dir = LR_RIGHT;
                     }
@@ -1363,20 +1545,19 @@ void PROCESS_Tasks ( void )
                 }
                                
                 
-                int increment = 0;
-                for(increment=0; increment < moves+1; increment++){
-                    DIVERT_MoveRoverForward();
-                }
                 
-                int other_moves = abs(processData.rover_y - processData.obs_y) + OBSTACLE_DIAMETER;
+                DIVERT_MoveRoverForward(moves+1);
+                
+                
+                int other_moves = abs(processData.calc_rover_y - processData.obs_y) + OBSTACLE_DIAMETER;
                 
                 processMoveRoverTurn(LR_DOWN);
                 
-                increment = 0;
+                int increment = 0;
                 for(increment=0; increment < other_moves; increment++){
-                    DIVERT_MoveRoverForward();
+                    DIVERT_MoveRoverForward(1);
                     //Determine if we should instead make the next turn
-                    if((processData.rover_y <= processData.min_y)){
+                    if((processData.calc_rover_y <= processData.min_y)){
                         processMoveRoverTurn(LR_LEFT);
                         processData.min_y += ROVER_WIDTH - 1;
                         broke = TRUE;
@@ -1386,10 +1567,9 @@ void PROCESS_Tasks ( void )
                 if(broke == FALSE){
                     processMoveRoverTurn(next_dir);                 
 
-                    increment = 0;
-                    for(increment=0; increment < moves+1; increment++){
-                        DIVERT_MoveRoverForward();
-                    }                
+                    
+                    DIVERT_MoveRoverForward(moves+1);
+                            
 
                     processMoveRoverTurn(LR_DOWN);
                 }
@@ -1399,19 +1579,19 @@ void PROCESS_Tasks ( void )
                 //Divert around obstacle 
                 //Decide which way to go around it
                 
-                int moves = abs(processData.obs_y - processData.rover_y) + BUFFER_ZONE + ERROR_AMT;
+                int moves = abs(processData.obs_y - processData.calc_rover_y) + BUFFER_ZONE + ERROR_AMT;
                 int next_dir;
                 //See if we've covered that ground already
-                if((processData.rover_y - moves) <= processData.min_y){
+                if((processData.calc_rover_y - moves) <= processData.min_y){
                     processMoveRoverTurn(LR_UP);
                     next_dir = LR_DOWN;
                 }
-                else if((processData.rover_y + moves) >= processData.max_y){
+                else if((processData.calc_rover_y + moves) >= processData.max_y){
                     processMoveRoverTurn(LR_DOWN); 
                     next_dir = LR_UP;
                 }
                 else{
-                    if(processData.rover_y > processData.obs_y){
+                    if(processData.calc_rover_y > processData.obs_y){
                         processMoveRoverTurn(LR_UP);
                         next_dir = LR_DOWN;
                     }
@@ -1421,18 +1601,17 @@ void PROCESS_Tasks ( void )
                     }              
                 }
                                 
-                int increment = 0;
-                for(increment=0; increment < moves+1; increment++){
-                    DIVERT_MoveRoverForward();
-                }
                 
-                int other_moves = abs(processData.obs_x - processData.rover_x) + OBSTACLE_DIAMETER;
+                DIVERT_MoveRoverForward(moves+1);
+                
+                
+                int other_moves = abs(processData.obs_x - processData.calc_rover_x) + OBSTACLE_DIAMETER;
                 processMoveRoverTurn(LR_RIGHT);
                                
-                increment = 0;
+                int increment = 0;
                 for(increment=0; increment < other_moves; increment++){
-                    DIVERT_MoveRoverForward();
-                    if((processData.rover_x >= processData.max_x)){
+                    DIVERT_MoveRoverForward(1);
+                    if((processData.calc_rover_x >= processData.max_x)){
                         processMoveRoverTurn(LR_DOWN);
                         processData.max_x += -ROVER_WIDTH - 1;
                         broke = TRUE;
@@ -1443,10 +1622,9 @@ void PROCESS_Tasks ( void )
                 if(broke == FALSE){
                     processMoveRoverTurn(next_dir); 
 
-                    increment = 0;
-                    for(increment=0; increment < moves+1; increment++){
-                        DIVERT_MoveRoverForward();
-                    }
+                    
+                    DIVERT_MoveRoverForward(moves+1);
+                   
 
                     processMoveRoverTurn(LR_RIGHT);   
                 }
@@ -1455,19 +1633,19 @@ void PROCESS_Tasks ( void )
             else if((processData.lr_last_direction == LR_LEFT) && (broke == FALSE)){
                 //Divert around obstacle 
                 
-                int moves = abs(processData.obs_y - processData.rover_y) + BUFFER_ZONE + ERROR_AMT;
+                int moves = abs(processData.obs_y - processData.calc_rover_y) + BUFFER_ZONE + ERROR_AMT;
                 int next_dir; 
                 //See if we've covered that ground already
-                if((processData.rover_y - moves) <= processData.min_y){
+                if((processData.calc_rover_y - moves) <= processData.min_y){
                     processMoveRoverTurn(LR_UP);
                     next_dir = LR_DOWN;
                 }
-                else if((processData.rover_y + moves) >= processData.max_y){
+                else if((processData.calc_rover_y + moves) >= processData.max_y){
                     processMoveRoverTurn(LR_DOWN); 
                     next_dir = LR_UP;
                 }
                 else{
-                    if(processData.rover_y > processData.obs_y){
+                    if(processData.calc_rover_y > processData.obs_y){
                         processMoveRoverTurn(LR_UP);
                         next_dir = LR_DOWN;
                     }
@@ -1477,18 +1655,17 @@ void PROCESS_Tasks ( void )
                     }    
                 }
                 
-                int increment = 0;
-                for(increment=0; increment < moves+1; increment++){
-                    DIVERT_MoveRoverForward();
-                }
                 
-                int other_moves = abs(processData.rover_x - processData.obs_x) + OBSTACLE_DIAMETER;
+                DIVERT_MoveRoverForward(moves+1);
+                
+                
+                int other_moves = abs(processData.calc_rover_x - processData.obs_x) + OBSTACLE_DIAMETER;
                 processMoveRoverTurn(LR_LEFT);
                 
-                increment = 0;
+                int increment = 0;
                 for(increment=0; increment < other_moves; increment++){
-                    DIVERT_MoveRoverForward();
-                    if((processData.rover_x <= processData.min_x)){
+                    DIVERT_MoveRoverForward(1);
+                    if((processData.calc_rover_x <= processData.min_x)){
                         processMoveRoverTurn(LR_UP);
                         processData.min_x += ROVER_WIDTH - 1;
                         broke = TRUE;
@@ -1499,10 +1676,9 @@ void PROCESS_Tasks ( void )
                 if(broke == FALSE){                    
                     processMoveRoverTurn(next_dir); 
 
-                    increment = 0;
-                    for(increment=0; increment < moves+1; increment++){
-                        DIVERT_MoveRoverForward();
-                    }                
+                    
+                    DIVERT_MoveRoverForward(moves+1);
+                                   
 
                     processMoveRoverTurn(LR_LEFT); 
                 }           

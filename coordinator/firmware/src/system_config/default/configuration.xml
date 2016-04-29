@@ -253,21 +253,5 @@
         <Checksum>1B968DA82B5DD869A6119C3B7628D753</Checksum>
       </Template>
     </Templates>
-    <CompilerItems>
-      <C32-AS>
-        <Include value="../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
-        <Include value="../../../../../third_party/rtos/FreeRTOS/Source/include"/>
-        <Include value="../src/system_config/default"/>
-      </C32-AS>
-      <C32>
-        <Include value="../../../../../third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
-        <Include value="../../../../../third_party/rtos/FreeRTOS/Source/include"/>
-        <Include value="../src/system_config/default"/>
-        <Define value="__XC"/>
-      </C32>
-    </CompilerItems>
-    <Libraries>
-      <Library value="../../../../../bin/framework/peripheral/PIC32MX795F512L_peripherals.a"/>
-    </Libraries>
   </Manifest>
 </configuration>
