@@ -1,0 +1,20 @@
+
+import matplotlib.pyplot as plt
+r_list = list()
+theta_list = list()
+f = open("coordinates.txt", 'r')
+f_coordinates = f.readlines()
+f.close()
+for coordinate in f_coordinates:
+    r = int(float(coordinate.split()[0])) 
+    theta = int(float(coordinate.split()[1]))
+    r_list.append(r)
+    theta_list.append(theta)
+#plt.ion()
+plt.plot(theta_list, r_list, 'o')
+plt.axis([0,90,0,150])
+plt.xlabel('theta (degrees)')
+plt.ylabel('distance (cm)')
+plt.title('Sensor Data')
+plt.grid(True)
+plt.show()

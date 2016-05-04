@@ -1063,7 +1063,7 @@ void PROCESS_Tasks ( void )
                 msgToSend[1] = TYPEC_GO; //type
                 putMsgOnSendQueue(msgToSend);       
                 
-                processData.state =  PROCESS_STATE_MESSAGES; 
+                processData.state = PROCESS_STATE_LOCATE_ROVER_MOVE; //PROCESS_STATE_MESSAGES;
             }
             else if(processData.new_message[1] == (char)TYPEC_SKIP){                
                 processData.state = PROCESS_STATE_MESSAGES;                

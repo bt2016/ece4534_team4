@@ -13,6 +13,7 @@ from globalVARS import *
 from SENSOR_PROC import processMsgToCoordinator as sendToCoordinator
 from SENSOR_PROC import processMsgFromCoordinator as processCoordinatorMsg
 from SENSOR_PROC import processMsgFromBrooke as processBrookeMsg
+from SENSOR_PROC import processMsgFromSensor as processSensorMsg
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
@@ -90,10 +91,15 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                txrate = EXPECTED_FR_SEND
                rxrate = EXPECTED_FR_RECEIVE
             elif BROOKELAPTOP_IP in self.request.getpeername():
-                print("Brooke has connected.")
+               print("Brooke has connected.")
+               name = "BROOKE"
+               txrate = EXPECTED_SA_SEND
+               rxrate = EXPECTED_SA_RECEIVE
                 
 
+
             while True:
+
                 data = self.request.recv(1) #96
 
                 if data == MESSAGE_START_BYTE:
@@ -159,9 +165,12 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                          totalrate = (goodMsg+badMsg)/inter_time
                          pushrate = sent_messages/inter_time
 
-                         #receiverate = abs((totalrate-rxrate)/(rxrate+0.000001))
+			 #uncommented by brooke 3/3/16
+                         receiverate = abs((totalrate-rxrate)/(rxrate+0.000001))
+
                          if rxrate != 0:
                             receiverate = totalrate/rxrate
+
 
                          if totalrate == 0 and rxrate == 0:
                             rxreport = "RX Rate - GOOD!"
@@ -204,7 +213,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                             print("        {0} || {1} || {2}".format(rxreport, txreport, errport))
                             #print("        Rate/sec - Received: {0:.3g}     Sent: {1:.3g}".format(totalrate, pushrate))
                          else:
-                            print("<{0}> received and sent 0 messages in {1:.3g}s. Expecting {2} received and {3] sent.".format(name, inter_time, txrate, rxrate))
+                            print("<{0}> received and sent 0 messages in {1:.3g}s. Expecting {2} received and {3} sent.".format(name, inter_time, txrate, rxrate))
 
                          print("")
 
@@ -212,10 +221,18 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                       sent_messages = 0
                       continue
 
+
+
                    if COORDINATOR_IP in self.request.getpeername():
                       processCoordinatorMsg(type, message)
+
+
                    elif BROOKELAPTOP_IP in self.request.getpeername():
                       processBrookeMsg(type, message)
+
+                   elif SENSOR_IP in self.request.getpeername():
+                      processSensorMsg(type, message)
+
                    else:
                       sendToCoordinator(message)
                       if message[1] == TYPE_LR_SENSOR and message[3] == chr(88):
@@ -226,6 +243,11 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                       
                    if len(message) > 2:
                       num = ord(message[2])
+
+                   #added by brooke
+                   if type == 0:
+                      print message
+                   #end added by brooke
 
                    self.trackIncoming(type, int(num))
 
