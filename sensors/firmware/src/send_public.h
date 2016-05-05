@@ -31,6 +31,7 @@ extern "C" {
     // *****************************************************************************
 
     void putMsgOnSendQueue(char* data);
+    void sendStoredMessageToTransmitQ();
 
     /* Provide C++ Compatibility */
 #ifdef __cplusplus

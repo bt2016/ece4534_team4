@@ -112,6 +112,7 @@ void IntHandlerDrvAdc(void)
         ADCVoltage = (ADCVal/(double)1024)*3.3;
         distance = ((16.211*ADCVoltage*ADCVoltage*ADCVoltage*ADCVoltage) - (127.77*ADCVoltage*ADCVoltage*ADCVoltage) + (371.33*ADCVoltage*ADCVoltage) - (494.66*ADCVoltage) + 297.73);
         if (distance > SERVO_MAXRANGE_CM) distance = 0;
+        //else if (distance < SERVO_MINRANGE_CM) distance = 0;
         retval = (unsigned int)(distance+0.5);
         sendValToSensorTaskFromISR(&retval);
     }

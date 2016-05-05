@@ -64,50 +64,105 @@ void processSensorData(char* sensorData) {
     
 }
 
+//tells the coordinator that I am finished sending data
+void sendEndMessage(){
+    //Convert sensor data to message format character array
+    char data[10];
+    data[0] = MSG_START;
+    data[1] = TYPE_SENSOR_ENDUPDATE;
+    data[2] = processData.endCount;
+    data[3] = 0;
+    data[4] = 0;
+    data[5] = 0;
+    data[6] = 0;
+    data[7] = 0;
+    data[8] = 0;
+    data[9] = MSG_STOP;
+    putMsgOnSendQueue(data);  // Transfer message to Send task queue]
+    processData.endCount++;
+}
+
 void sendClearMessage(){
     //Convert sensor data to message format character array
-    char data[4];
+    char data[10];
     data[0] = MSG_START;
     data[1] = TYPE_SENSOR_CLEARALL;
     data[2] = processData.clearCount;
-    data[3] = MSG_STOP;
+    data[3] = 0;
+    data[4] = 0;
+    data[5] = 0;
+    data[6] = 0;
+    data[7] = 0;
+    data[8] = 0;
+    data[9] = MSG_STOP;
     putMsgOnSendQueue(data);  // Transfer message to Send task queue]
     processData.clearCount++;
 }
 
 void sendDisplayMessage(){
     //Convert sensor data to message format character array
-    char data[4];
+    char data[10];
     data[0] = MSG_START;
     data[1] = TYPE_SENSOR_DISPLAYSINGLEMAP;
     data[2] = processData.displayCount;
-    data[3] = MSG_STOP;
+    data[3] = 0;
+    data[4] = 0;
+    data[5] = 0;
+    data[6] = 0;
+    data[7] = 0;
+    data[8] = 0;
+    data[9] = MSG_STOP;
     putMsgOnSendQueue(data);  // Transfer message to Send task queue
     processData.displayCount++;
 }
 
 void sendDisplayFieldMessage(){
     //Convert sensor data to message format character array
-    char data[4];
+    char data[10];
     data[0] = MSG_START;
     data[1] = TYPE_SENSOR_DISPLAYFIELD;
     data[2] = processData.displayFieldCount;
-    data[3] = MSG_STOP;
+    data[3] = 0;
+    data[4] = 0;
+    data[5] = 0;
+    data[6] = 0;
+    data[7] = 0;
+    data[8] = 0;
+    data[9] = MSG_STOP;
     putMsgOnSendQueue(data);  // Transfer message to Send task queue
     processData.displayFieldCount++;
 }
 
 void sendEchoMessage(Obstacle o){
-    char data[7];
+    char data[10];
     data[0] = MSG_START;             //Start byte
     data[1] = TYPE_SENSOR_ECHO;      //Type byte
     data[2] = processData.echoCount; //Count byte
     data[3] = o.type;                //data1;
     data[4] = o.midpoint_r;          //data1;
     data[5] = o.midpoint_theta;      //data2;
-    data[6] = MSG_STOP;              //Stop byte
+    data[6] = 0;
+    data[7] = 0;
+    data[8] = 0;
+    data[9] = MSG_STOP;              //Stop byte
     putMsgOnSendQueue(data);
     processData.echoCount++;
+}
+
+void sendAckMessage(){
+    char data[10];
+    data[0] = MSG_START;
+    data[1] = TYPE_COORD_ACK;
+    data[2] = processData.ackCount;
+    data[3] = 0;
+    data[4] = 0;
+    data[5] = 0;
+    data[6] = 0;
+    data[7] = 0;
+    data[8] = 0;
+    data[9] = MSG_STOP;              //Stop byte
+    putMsgOnSendQueue(data);
+    processData.ackCount++;
 }
 
 // Convert sensor data to message format character array
@@ -128,7 +183,7 @@ void sendProcessedData(Obstacle o) {
 }
 
 void sendMapData(Obstacle o){
-    char data[8];
+    char data[10];
     data[0] = MSG_START;                    // Start byte
     data[1] = TYPE_SENSOR_APPENDMAP;
     data[2] = processData.mapCount;      // Count byte
@@ -136,7 +191,9 @@ void sendMapData(Obstacle o){
     data[4] = o.midpoint_theta;             //data2;
     data[5] = o.midpoint_x;                 //data3;
     data[6] = o.midpoint_y;                 //data4;
-    data[7] = MSG_STOP;                     // Stop byte
+    data[7] = 0;
+    data[8] = 0;
+    data[9] = MSG_STOP;                     // Stop byte
     
     if (o.midpoint_r == 46)
         data[3] = 47;
@@ -152,7 +209,7 @@ void sendMapData(Obstacle o){
 }
 
 void sendLinesData(Obstacle o){
-    char data[8];
+    char data[10];
     data[0] = MSG_START;                    // Start byte
     data[1] = TYPE_SENSOR_APPENDLINES;
     data[2] = processData.linesCount;      // Count byte
@@ -160,7 +217,9 @@ void sendLinesData(Obstacle o){
     data[4] = o.midpoint_theta;             //data2;
     data[5] = o.midpoint_x;                 //data3;
     data[6] = o.midpoint_y;                 //data4;
-    data[7] = MSG_STOP;                     // Stop byte
+    data[7] = 0;
+    data[8] = 0;
+    data[9] = MSG_STOP;                     // Stop byte
     
     //correct for collisions with MSG_STOP
     if (o.midpoint_r == 46)
@@ -175,28 +234,31 @@ void sendLinesData(Obstacle o){
     putMsgOnSendQueue(data);  // Transfer message to Send task queue
     processData.linesCount++;
 }
-void sendTargetsData(Obstacle o){
+void sendTargetsData(Obstacle o, int index){
     char data[10];
-    data[0] = MSG_START;                    // Start byte
-    data[1] = TYPE_SENSOR_APPENDTARGETS;
-    data[2] = processData.targetsCount;      // Count byte
-    data[3] = o.midpoint_r;                 //data1;
-    data[4] = o.midpoint_theta;             //data2;
-    data[5] = o.midpoint_x;                 //data3;
-    data[6] = o.midpoint_y;                 //data4;
-    data[7] = o.standard_deviation;         //data5;
-    data[8] = o.max_deviation;              //data6;
-    data[9] = MSG_STOP;                     // Stop byte
+    data[0] = MSG_START;                    //start byte
+    data[1] = TYPE_SENSOR_APPENDTARGETS;    //type byte
+    data[2] = processData.targetsCount;     //count byte
+    data[3] = o.midpoint_x;                 //x coordinate
+    data[4] = o.midpoint_y;                 //y coordinate
+    if (o.type == OBSTACLE_TYPE_LR) data[5] = 'Y'; //is this the lead rover?
+    else data[5] = 0;                            //is this the lead rover?
+    data[6] = processData.targetsThisIteration;  //sequence number for the target itself, used in the acking code
+    data[7] = o.standard_deviation;         //standard deviation used to calculate this obstacle
+    data[8] = o.type;                       //type of obstacle being sent
+    data[9] = MSG_STOP;                     //stop byte
     
     //correct for collisions with MSG_STOP
-    if (o.midpoint_r == 46)
-        data[3] = 47;
-    if (o.midpoint_theta == 46)
-        data[4] = 47;
     if (o.midpoint_x == 46)
-        data[5] = 47;
+        data[3] = 47;
     if (o.midpoint_y == 46)
+        data[4] = 47;
+    if (o.standard_deviation == 46)
         data[6] = 47;
+    if (o.max_deviation == 46)
+        data[7] = 47;
+    if (o.type == 46)
+        data[8] = 47;
     
     putMsgOnSendQueue(data);  // Transfer message to Send task queue
     processData.targetsCount++;
@@ -208,7 +270,27 @@ void sendRequestForUpdateToProcessTask(){
     o.midpoint_y = 0;
     o.midpoint_theta = 0;
     o.midpoint_r = 0;
-    o.type = OBSTACLE_TYPE_UPDATEREQUESTED;
+    o.type = TYPE_SENSOR_UPDATEREQUESTED;
+    putDataOnProcessQ(&o);    
+}
+
+void sendRequestForSingleToProcessTask(char storagechar){
+    Obstacle o;
+    o.midpoint_x = 0;
+    o.midpoint_y = 0;
+    o.midpoint_theta = 0;
+    o.midpoint_r = storagechar;
+    o.type = TYPE_SENSOR_SINGLEREQUESTED;
+    putDataOnProcessQ(&o);    
+}
+
+void sendRequestForMultipleToProcessTask(int iterationsRequested, char storagechar){
+    Obstacle o;
+    o.midpoint_x = 0;
+    o.midpoint_y = 0;
+    o.midpoint_theta = storagechar;
+    o.midpoint_r = iterationsRequested;
+    o.type = TYPE_SENSOR_MULTIPLEREQUESTED;
     putDataOnProcessQ(&o);    
 }
 
@@ -402,15 +484,26 @@ void PROCESS_Initialize ( void )
     processData.mapCount = 0;
     processData.linesCount = 0;
     processData.targetsCount = 0;
+    processData.targetsThisIteration = 0;
+    processData.endCount = 0;
+    processData.ackCount = 0;
     
     processData.map_index = 0;
     processData.obstacles_from_sensors_index = 0;
     processData.processed_obstacles_index = 0;
+    processData.averaged_obstacles_index = 0;
     processData.lr_obstacles_from_sensors_index = 0;
     processData.lr_processed_obstacles_index = 0;
-    //processData.averaged_obstacles_index = 0;
+    processData.lr_averaged_obstacles_index = 0;
     
     processData.iterations = 0;
+    processData.iterationsRequested = 0;
+    processData.isUpdateRequested = 0;
+    processData.isSingleRequested = 0;
+    processData.isMultipleRequested = 0;
+    processData.updateNow = 0;
+    processData.storeObstaclesNow = 0;
+    processData.useStoredObstacles = 0;
     
     //Create a queue capable of holding 1000 characters (bytes))
     //processData.processQ_SA = xQueueCreate(1000, MSG_LENGTH+1 ); 
@@ -420,6 +513,7 @@ void PROCESS_Initialize ( void )
         stopAll(); //ERROR
     }
     
+    /*
     //Timer to send to internal task queue
     processData.process_Timer_SA = xTimerCreate(  
                      "ProcessTimer", //Just a text name
@@ -437,6 +531,7 @@ void PROCESS_Initialize ( void )
         dbgOutputVal(PROCESS_TIMERINIT_FAIL);
         stopAll();
     }
+     * */
     
 }
 
@@ -456,18 +551,19 @@ void PROCESS_Tasks ( void )
         /* Application's initial state. */
         case PROCESS_STATE_INIT:
         {
-            //initialize variables
+            //zero array indices
             processData.map_index = 0;
             processData.obstacles_from_sensors_index = 0;
             processData.processed_obstacles_index = 0;
+            processData.averaged_obstacles_index = 0;
             processData.lr_obstacles_from_sensors_index = 0;
             processData.lr_processed_obstacles_index = 0;
      
-            //send a message to clear all of the text files
-            sendClearMessage();
             processData.state = PROCESS_STATE_GATHERDATA;
             break;
         }
+        
+        
         
         case PROCESS_STATE_GATHERDATA:
         {            
@@ -508,8 +604,27 @@ void PROCESS_Tasks ( void )
                     processData.lr_obstacles_from_sensors[processData.lr_obstacles_from_sensors_index] = qData;
                     processData.lr_obstacles_from_sensors_index++;
                 }
-                else if (qData.type == OBSTACLE_TYPE_UPDATEREQUESTED){
+                else if (qData.type == OBSTACLE_TYPE_END){
                     processData.state = PROCESS_STATE_PROCESS;
+                    break;
+                }
+                else if (qData.type == TYPE_SENSOR_UPDATEREQUESTED){
+                    processData.isUpdateRequested = 1;
+                    break;
+                }
+                else if (qData.type == TYPE_SENSOR_SINGLEREQUESTED){
+                    sendEchoMessage(qData);
+                    sendAckMessage();
+                    processData.isSingleRequested = 1;
+                    if (qData.midpoint_r == '1') processData.storeObstaclesNow = 1;
+                    break;
+                }
+                else if (qData.type == TYPE_SENSOR_MULTIPLEREQUESTED){
+                    sendEchoMessage(qData);
+                    sendAckMessage();
+                    processData.isMultipleRequested = 1;
+                    processData.iterationsRequested = qData.midpoint_r;
+                    if (qData.midpoint_theta == '1') processData.storeObstaclesNow = 1;
                     break;
                 }
                 //else ignore the message
@@ -517,71 +632,216 @@ void PROCESS_Tasks ( void )
 			break;
         }//end case PROCESS_STATE_GATHERDATA
         
+        
+        
+        
+        
         case PROCESS_STATE_PROCESS:
         {
             #ifdef SENSOR_DEBUG_SINGLEMAP
-                //send all obstacles found by sensors themselves
-                for (i=0; i<processData.obstacles_from_sensors_index; i++){
-                    sendLinesData(processData.obstacles_from_sensors[i]);
-                    //sendEchoMessage(processData.obstacles_from_sensors[i]); //for debugging
-                }
-                //also send the map of the field
-                for (i=0; i<processData.map_index; i++){
-                    sendMapData(processData.map[i]);
-                }
+                sendClearMessage();
+                for (i=0; i<processData.map_index; i++) sendMapData(processData.map[i]);
+                for (i=0; i<processData.obstacles_from_sensors_index; i++) sendLinesData(processData.obstacles_from_sensors[i]);
                 sendDisplayMessage();
+                processData.state = PROCESS_STATE_INIT;
+                break;
             #endif
 
-            //if we are in SENSOR_DEBUG_NETWORK mode, then forward targets and lines to the pi, and display them
-            #ifdef SENSOR_DEBUG_NETWORK
-                //populate the processData.processed_obstacles array
-                processData.processed_obstacles_index = processObstacleArray(processData.obstacles_from_sensors, processData.obstacles_from_sensors_index, processData.processed_obstacles, 0);
+            //populate the targets array using the data from the sensors
+            processData.processed_obstacles_index = processObstacleArray(processData.obstacles_from_sensors, processData.obstacles_from_sensors_index, processData.processed_obstacles, processData.processed_obstacles_index);
             
-                for (i=0; i<processData.processed_obstacles_index; i++){
-                    sendTargetsData(processData.processed_obstacles[i]);
+            //find the LR target
+            //commented 04/23/16
+            //processData.lr_processed_obstacles_index = processObstacleArray(processData.lr_obstacles_from_sensors, processData.lr_obstacles_from_sensors_index, processData.lr_processed_obstacles, processData.lr_processed_obstacles_index);
+            
+            //if we found more than 1 LR target
+            
+            //Decide what the next state will be
+            if ((processData.isSingleRequested > 0) && (processData.updateNow > 0)){
+                processData.state = PROCESS_STATE_UPDATESINGLE;
+            }
+            else if ((processData.isSingleRequested > 0) && (processData.updateNow == 0)){
+                processData.updateNow = 1;
+                processData.state = PROCESS_STATE_INIT;
+            }
+            else if ((processData.isMultipleRequested > 0) && (processData.updateNow == 0)){
+                //zero important array indices and skip straight to GATHERDATA
+                processData.updateNow = 1;
+                processData.iterations = 0;
+                processData.obstacles_from_sensors_index = 0;
+                //processData.lr_obstacles_from_sensors_index = 0; //commented 04/23/16
+                processData.state = PROCESS_STATE_GATHERDATA;
+            }
+            else if ((processData.isMultipleRequested > 0) && (processData.updateNow > 0) && (processData.iterations < processData.iterationsRequested)){
+                //zero important array indices and skip straight to GATHERDATA
+                processData.iterations++;
+                processData.obstacles_from_sensors_index = 0;
+                //processData.lr_obstacles_from_sensors_index = 0; //commented 04/23/16
+                processData.state = PROCESS_STATE_GATHERDATA;
+            }
+            else if ((processData.isMultipleRequested > 0) && (processData.updateNow > 0) && (processData.iterationsRequested == processData.iterations)){
+                processData.state = PROCESS_STATE_UPDATEMULTIPLE;
+            }
+            else
+                processData.state = PROCESS_STATE_INIT;
+                                
+            break;
+        }
+        
+        
+        
+        
+        
+        case PROCESS_STATE_UPDATESINGLE:
+        {
+            processData.targetsThisIteration = 0;
+            sendClearMessage();
+            
+            //save this set of obstacles if necessary
+            if (processData.storeObstaclesNow > 0){
+                for (i=0; i<processData.processed_obstacles_index; i++) processData.stored_obstacles[i] = processData.processed_obstacles[i];
+                processData.stored_obstacles_index = processData.processed_obstacles_index;
+                processData.useStoredObstacles = 1;
+            }
+            
+            //send all targets
+            if (processData.useStoredObstacles > 0)
+                for (i=0; i<processData.stored_obstacles_index; i++){
+                    sendTargetsData(processData.stored_obstacles[i], processData.targetsThisIteration);
+                    processData.targetsThisIteration++;
                 }
-
+            else
+                for (i=0; i<processData.processed_obstacles_index; i++){
+                    sendTargetsData(processData.processed_obstacles[i], processData.targetsThisIteration);
+                    processData.targetsThisIteration++;
+                }
+            
+            //send the LR's position only if a LR has been found
+            if (processData.lr_processed_obstacles_index > 0){
+                processData.lr_processed_obstacles[0].type = OBSTACLE_TYPE_LR;
+                sendTargetsData(processData.lr_processed_obstacles[0], processData.targetsThisIteration);
+                processData.targetsThisIteration++;
+            }
+            
+            /*
+            //Send all LR targets
+            for (i=0; i<processData.lr_processed_obstacles_index; i++){
+                processData.lr_processed_obstacles[i].type = OBSTACLE_TYPE_LR;
+                sendTargetsData(processData.lr_processed_obstacles[i], processData.targetsThisIteration);
+                processData.targetsThisIteration++;
+            }
+             * */
+            
+            //send sensor lines
+            #ifdef SENSOR_DEBUG_OBSTACLELINES
                 for (i=0; i<processData.obstacles_from_sensors_index; i++){
                     sendLinesData(processData.obstacles_from_sensors[i]);
                 }
-                sendDisplayFieldMessage();
             #endif
-
-            #ifdef SENSOR_DEBUG_NETWORK_LR
-                processData.lr_processed_obstacles_index = processObstacleArray(processData.lr_obstacles_from_sensors, processData.lr_obstacles_from_sensors_index, processData.lr_processed_obstacles, 0);
-                for (i=0; i<processData.lr_processed_obstacles_index; i++){
-                    sendTargetsData(processData.lr_processed_obstacles[i]);
-                }
-                for (i=0; i<processData.lr_obstacles_from_sensors_index; i++){
-                    sendLinesData(processData.lr_obstacles_from_sensors[i]);
-                }
-                sendDisplayFieldMessage();
-            #endif  
-
-            //if we are in SENSOR_DEBUG_NETWORKAVERAGES mode, then do statistics on the array then forward to the pi
-            #ifdef SENSOR_DEBUG_NETWORKAVERAGES
-                //process obstacles_from_sensors[] into averaged_obstacles[]
-                processData.averaged_obstacles_index = processObstacleArray(processData.obstacles_from_sensors, processData.obstacles_from_sensors_index, processData.averaged_obstacles, processData.averaged_obstacles_index);
-
-                if (processData.iterations < 2) processData.iterations++;
-                else{
-                    //process averaged_obstacles[] into processed_obstacles[]
-                    for (i=0; i<processData.averaged_obstacles_index; i++) processData.averaged_obstacles[i].type = OBSTACLE_TYPE_SERVOA;
-                    processData.processed_obstacles_index = processObstacleArray(processData.averaged_obstacles, processData.averaged_obstacles_index, processData.processed_obstacles, 0);
-
-                    //send all intermediate targets and averaged targets to the pi
-                    for (i=0; i<processData.processed_obstacles_index; i++) sendTargetsData(processData.processed_obstacles[i]);
-                    for (i=0; i<processData.averaged_obstacles_index; i++)  sendLinesData(processData.averaged_obstacles[i]);
-
-                    processData.iterations = 0;
-                    processData.averaged_obstacles_index = 0;
-                    sendDisplayFieldMessage();
-                }
+            
+            //also send LR sensor lines
+            #ifdef SENSOR_DEBUG_LRLINES
+                for (i=0; i<processData.lr_obstacles_from_sensors_index; i++) sendLinesData(processData.lr_obstacles_from_sensors[i]);
             #endif
-                
+            
+            //display and end the udpate
+            sendEndMessage(); //tell the coordinator that I am finished sending data
+            sendDisplayFieldMessage();
+
+            processData.isSingleRequested = 0;
+            processData.updateNow = 0;
+            processData.storeObstaclesNow = 0;
+            
             processData.state = PROCESS_STATE_INIT;
             break;
         }
+        
+        
+        
+        
+        
+        case PROCESS_STATE_UPDATEMULTIPLE:
+        {
+            processData.targetsThisIteration = 0;
+            sendClearMessage();
+                       
+            //mark all data points as unvisited for the processObstacleArray algorithm
+            for (i=0; i<processData.processed_obstacles_index; i++) processData.processed_obstacles[i].type = OBSTACLE_TYPE_SERVOA;
+
+            //processData.processed_obstacles contains all lines data from all pans of all sensors
+            //processData.averaged_obstacles contains the targets from processed_obstacles
+            processData.averaged_obstacles_index = processObstacleArray(processData.processed_obstacles, processData.processed_obstacles_index, processData.averaged_obstacles, 0);
+            
+            //save this set of obstacles if necessary
+            if (processData.storeObstaclesNow > 0){
+                for (i=0; i<processData.averaged_obstacles_index; i++) processData.stored_obstacles[i] = processData.averaged_obstacles[i];
+                processData.stored_obstacles_index = processData.averaged_obstacles_index;
+                processData.useStoredObstacles = 1;
+            }
+            
+            //send all intermediate targets and averaged targets to the pi
+            if (processData.useStoredObstacles > 0)
+                for (i=0; i<processData.stored_obstacles_index; i++){
+                    sendTargetsData(processData.stored_obstacles[i], processData.targetsThisIteration);
+                    processData.targetsThisIteration++;
+                }
+            else
+                for (i=0; i<processData.averaged_obstacles_index; i++){
+                    sendTargetsData(processData.averaged_obstacles[i], processData.targetsThisIteration);
+                    processData.targetsThisIteration++;
+                }
+            
+            //find the LR target
+            //added 04/23/16
+            processData.lr_processed_obstacles_index = processObstacleArray(processData.lr_obstacles_from_sensors, processData.lr_obstacles_from_sensors_index, processData.lr_processed_obstacles, processData.lr_processed_obstacles_index);
+
+            //send the LR's position only if a LR has been found
+            if (processData.lr_processed_obstacles_index > 0){
+                processData.lr_processed_obstacles[0].type = OBSTACLE_TYPE_LR;
+                sendTargetsData(processData.lr_processed_obstacles[0], processData.targetsThisIteration);
+                processData.targetsThisIteration++;
+            }
+            
+            /*
+            for (i=0; i<processData.lr_processed_obstacles_index; i++){
+                processData.lr_processed_obstacles[i].type = OBSTACLE_TYPE_LR;
+                sendTargetsData(processData.lr_processed_obstacles[i], processData.targetsThisIteration);
+                processData.targetsThisIteration++;
+            }
+            
+             */   
+            
+            //send sensor lines
+            #ifdef SENSOR_DEBUG_OBSTACLELINES
+                for (i=0; i<processData.processed_obstacles_index; i++){
+                    sendLinesData(processData.processed_obstacles[i]);
+                }
+            #endif
+            
+            //also send LR sensor lines
+            #ifdef SENSOR_DEBUG_LRLINES
+                for (i=0; i<processData.lr_obstacles_from_sensors_index; i++) sendLinesData(processData.lr_obstacles_from_sensors[i]);
+                Obstacle o;
+                o.midpoint_r = processData.lr_processed_obstacles_index;
+                o.midpoint_theta = processData.lr_obstacles_from_sensors_index;
+                sendEchoMessage(o);
+            #endif
+
+            sendEndMessage(); //tell the coordinator that I am finished sending data
+            sendDisplayFieldMessage();
+                       
+            processData.iterations = 0;
+            processData.isMultipleRequested = 0;
+            processData.updateNow = 0;
+            processData.storeObstaclesNow = 0;
+            
+            processData.state = PROCESS_STATE_INIT;
+            break;
+        }
+        
+        
+        
+        
         
         /* The default state should never be executed. */
         default:

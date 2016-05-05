@@ -113,22 +113,10 @@ void sendDataToTransmitQ(char* message) {
     }
 }
 
-// Check queue holding the data from other component tasks
-void receiveFromSendQ()
-{    
-    char newData = 0;
-    char read[MSG_LENGTH];
-
-    // Read the top message of the queue
-    if (xQueueReceive(sendData.sendQ_LR, &read, portMAX_DELAY))
-    {
-        //dbgOutputVal(SEND_RECEIVEFROMQ);
-        newData = 1;
-    } 
-
+void sendToTransmitQ(char* read){
     // If message received, push to UART transmit queue
     // If statement protects against repeat data.
-    if (newData && ((read[1] != sendData.prevType) || (read[2] != sendData.prevCount))) {
+    if ((read[1] != sendData.prevType) || (read[2] != sendData.prevCount)) {
         sendDataToTransmitQ(read);
     }
     
@@ -178,6 +166,13 @@ void putMsgOnSendQueue(char* data) {
     }
 }
 
+void sendStoredMessageToTransmitQ(){
+    if (sendData.sendStoredMessage == 1)
+        sendDataToTransmitQ(sendData.storedMessage);
+        //sendDataToTransmitQ("~e2345678.");
+
+}
+
 void SEND_Initialize ( void )
 {
     sendData.state = SEND_STATE_INIT;
@@ -187,6 +182,9 @@ void SEND_Initialize ( void )
     sendData.prevType = 'a';
     sendData.prevCount = 'a';
     
+    strcpy(sendData.storedMessage, "~e8765432.");
+    
+    sendData.sendStoredMessage = 0;
 
     
     //Create a queue capable of holding 1000 characters
@@ -206,27 +204,33 @@ void SEND_Initialize ( void )
     //Create a timer
     sendData.sendTimer_SA = xTimerCreate(  
                      "SendTimer100ms", //Just a text name
-                     ( SEND_TIMER_RATE / portTICK_PERIOD_MS ), //period is 100ms
+                     ( 1000 / portTICK_PERIOD_MS ), //period is 100ms
                      pdTRUE, //auto-reload when expires
-                     (void *) 23, //a unique id
-                     vTimerCallback ); //pointer to callback function
+                     (void *) 24, //a unique id
+                     sendTimerCallback ); //pointer to callback function
     
-    //Start the timer
-    if( sendData.sendTimer_SA == NULL ) {
-        dbgOutputVal(SEND_TIMERINIT_FAIL);
-        stopAll();
-    }
-    else if( xTimerStart( sendData.sendTimer_SA, 0 ) != pdPASS ) {
-        dbgOutputVal(SEND_TIMERINIT_FAIL);
-        stopAll();
-    }
+    
+    //if SENSOR_DEBUG_NOACK is defined, then don't start the timer
+    #ifndef SENSOR_DEBUG_NOACK
+        //Start the timer
+        if( sendData.sendTimer_SA == NULL ) {
+            dbgOutputVal(SEND_TIMERINIT_FAIL);
+            stopAll();
+        }
+        else if( xTimerStart( sendData.sendTimer_SA, 0 ) != pdPASS ) {
+            dbgOutputVal(SEND_TIMERINIT_FAIL);
+            stopAll();
+        }
+    #endif
+    
+     
 }
 
 // Finite state machine definition, runs forever
 void SEND_Tasks ( void )
 {
    while (1)
-    {
+   {
         switch ( sendData.state )
         {
             case SEND_STATE_INIT:
@@ -235,10 +239,52 @@ void SEND_Tasks ( void )
                 break;
             }
             
-            // Continually check data receive queue for new motor/sensor output
+            // Continually check data receive queue for new sensor output
             case SEND_STATE_LOOP:
             {
-                receiveFromSendQ();
+                char read[MSG_LENGTH];
+                if (xQueueReceive(sendData.sendQ_LR, &read, portMAX_DELAY))
+                {
+                    #ifdef SENSOR_DEBUG_NOACK
+                        sendToTransmitQ(read);
+                        break;
+                    #endif
+
+                    //only need an ack from the coordinator on certain message types
+                    if ( (read[1] != TYPE_SENSOR_ENDUPDATE) && (read[1] != TYPE_SENSOR_APPENDTARGETS) ){
+                        sendToTransmitQ(read);
+                        break;
+                    }
+                    
+                    //store the message
+                    sendData.storedMessage[0] = read[0];
+                    sendData.storedMessage[1] = read[1];
+                    sendData.storedMessage[2] = read[2];
+                    sendData.storedMessage[3] = read[3];
+                    sendData.storedMessage[4] = read[4];
+                    sendData.storedMessage[5] = read[5];
+                    sendData.storedMessage[6] = read[6];
+                    sendData.storedMessage[7] = read[7];
+                    sendData.storedMessage[8] = read[8];
+                    sendData.storedMessage[9] = read[9];
+                    
+                    //enable resend at timer interval
+                    sendData.sendStoredMessage = 1;
+                    
+                    //change states
+                    sendData.state = SEND_STATE_WAIT_FOR_ACK;
+                } 
+                break;
+            }
+            
+            case SEND_STATE_WAIT_FOR_ACK:
+            {
+                //if we have received the ack, then switch states to read another queue value
+                if (getAcked() == 1){
+                    sendData.sendStoredMessage = 0;
+                    sendData.state = SEND_STATE_LOOP;
+                    setAcked(0);
+                }
                 break;
             }
 

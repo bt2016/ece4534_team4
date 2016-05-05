@@ -91,11 +91,15 @@ void reportMsgDataToSendQ() {
     receiveData.goodMsg = 0;
 }
 
+int getAcked() {return receiveData.acked;}
+void setAcked(int newAck) {receiveData.acked = newAck;}
+
 void RECEIVE_Initialize ( void )
 {
     receiveData.state = RECEIVE_STATE_INIT;
     receiveData.goodMsg = 0;
     receiveData.badMsg = 0;
+    receiveData.acked = 0;
 
     //Create a queue capable of holding 1000 characters (bytes))
     receiveData.receiveIntQ_SA = xQueueCreate(1000, sizeof( char ) ); 
@@ -157,8 +161,33 @@ void RECEIVE_Tasks ( void )
                 //Do something with it.
                 if(qData == messageBuffer.stop){                
 
-                    //Turn a light on
-                    LATACLR = 1 << 3;       
+                    //Turn the light off. The light was turned on when we received the start byte
+                    LATACLR = 1 << 3;
+                    
+                    //messageBuffer.buffer is a char[10] with the completed message that we have received
+                    //if we receive a message where the coordinator is requesting an update,
+                    //tell the process task to send an update
+                    if (messageBuffer.buffer[1] == TYPE_SENSOR_UPDATEREQUESTED){
+                        //sendRequestForUpdateToProcessTask();
+                    }
+                    else if (messageBuffer.buffer[1] == TYPE_SENSOR_SINGLEREQUESTED){
+                        sendRequestForSingleToProcessTask(messageBuffer.buffer[3]);
+                    }
+                    else if (messageBuffer.buffer[1] == TYPE_SENSOR_MULTIPLEREQUESTED){
+                        if (messageBuffer.buffer[3] == '1') sendRequestForMultipleToProcessTask(0, messageBuffer.buffer[4]);
+                        else if (messageBuffer.buffer[3] == '2') sendRequestForMultipleToProcessTask(1, messageBuffer.buffer[4]);
+                        else if (messageBuffer.buffer[3] == '3') sendRequestForMultipleToProcessTask(2, messageBuffer.buffer[4]);
+                        else if (messageBuffer.buffer[3] == '4') sendRequestForMultipleToProcessTask(3, messageBuffer.buffer[4]);
+                        else if (messageBuffer.buffer[3] == '5') sendRequestForMultipleToProcessTask(4, messageBuffer.buffer[4]);
+                        else if (messageBuffer.buffer[3] == '6') sendRequestForMultipleToProcessTask(5, messageBuffer.buffer[4]);
+                        else if (messageBuffer.buffer[3] == '7') sendRequestForMultipleToProcessTask(6, messageBuffer.buffer[4]);
+                        else if (messageBuffer.buffer[3] == '8') sendRequestForMultipleToProcessTask(7, messageBuffer.buffer[4]);
+                        else if (messageBuffer.buffer[3] == '9') sendRequestForMultipleToProcessTask(8, messageBuffer.buffer[4]);
+                        else sendRequestForMultipleToProcessTask(messageBuffer.buffer[3], messageBuffer.buffer[4]);
+                    }
+                    else if (messageBuffer.buffer[1] == TYPE_COORD_ACK){
+                        receiveData.acked = 1;
+                    }
 
                     receiveData.goodMsg++;
                     

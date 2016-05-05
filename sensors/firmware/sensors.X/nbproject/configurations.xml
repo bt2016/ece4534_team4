@@ -45,6 +45,7 @@
         <itemPath>../src/receive.h</itemPath>
         <itemPath>../src/process_public.h</itemPath>
         <itemPath>../src/trigfunctions.h</itemPath>
+        <itemPath>../src/receive_public.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f1" displayName="driver" projectFiles="true">

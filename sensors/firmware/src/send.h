@@ -58,6 +58,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "debug.h"        //Created by me
 #include "timerCallback.h"//Created by me
 #include "proj_definitions.h"
+#include "receive_public.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -68,6 +69,7 @@ extern "C" {
 typedef enum
 {
 	SEND_STATE_INIT=0,
+    SEND_STATE_WAIT_FOR_ACK=1,
     SEND_STATE_LOOP 
 } SEND_STATES;
 
@@ -81,7 +83,8 @@ typedef struct
     char prevType;
     char prevCount;
     
-
+    int sendStoredMessage;
+    char storedMessage[MSG_LENGTH]; //container for the stored message for ack mode
     
 
     /* TODO: Define any additional data used by the application. */

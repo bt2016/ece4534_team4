@@ -48,6 +48,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <queue.h>
 #include <timers.h>
 #include "timerCallback.h"
+#include "process_public.h"
 
 
 // DOM-IGNORE-BEGIN
@@ -73,6 +74,7 @@ typedef struct
     char sendCount;
     unsigned short int goodMsg;
     unsigned short int badMsg;
+    int acked;
     
 } RECEIVE_DATA;
 

@@ -216,11 +216,41 @@ void SENSOR_Tasks ( void )
             
         case SENSOR_STATE_FINDOBSTACLES:
         {
+            Obstacle o;
+            
+            //correct for skewed sensor mounts in the LR (top-level) array
+            for (i=0; i<(SERVO_DEGREES-7); i++){
+                sensorData.ralr[SERVO_DEGREES-i] = sensorData.ralr[SERVO_DEGREES-i-7];
+                sensorData.rdlr[i] = sensorData.rdlr[i+2];
+                //sensorData.rdlr[SERVO_DEGREES-i] = sensorData.rdlr[SERVO_DEGREES-i-1];
+            }
+            
+            //correct sensor A's and B's distance reading
+            for (i=0; i<SERVO_DEGREES; i++){
+                //sensorData.ra[i] = sensorData.ra[i]-5;
+                //sensorData.rb[i] = sensorData.rb[i]+2;
+                #ifdef SENSOR_DEBUG_DISABLE_SERVOA
+                    sensorData.ra[i] = 0;
+                    sensorData.ralr[i] = 0;
+                #endif
+                #ifdef SENSOR_DEBUG_DISABLE_SERVOB
+                    sensorData.rb[i] = 0;
+                    sensorData.rblr[i] = 0;
+                #endif
+                #ifdef SENSOR_DEBUG_DISABLE_SERVOC
+                    sensorData.rc[i] = 0;
+                    sensorData.rclr[i] = 0;
+                #endif
+                #ifdef SENSOR_DEBUG_DISABLE_SERVOD
+                    sensorData.rd[i] = 0;
+                    sensorData.rdlr[i] = 0;
+                #endif
+            }
+            
             //if we are in SENSOR_DEBUG_SINGLEMAP mode, then also send the full array
             //from the sensor that was specified in the #define
             #ifdef SENSOR_DEBUG_SINGLEMAP
                 int* SINGLEMAP_array;
-                Obstacle o;
                 o.type = OBSTACLE_TYPE_MAP;
                 //o.start_theta = 0;
                 //o.end_theta = 0;
@@ -256,7 +286,11 @@ void SENSOR_Tasks ( void )
                 findObstacles(sensorData.rdlr, OBSTACLE_TYPE_SERVOD_LR);
                 
             #endif
-          
+            
+            //tell the Process task that we are finished sending data
+            o.type = OBSTACLE_TYPE_END;
+            putDataOnProcessQ(&o);
+            
             sensorData.state = SENSOR_STATE_INIT;
             break;
         }
@@ -365,7 +399,8 @@ int findObstacles(int* r, int sender){
                 }
                 
                 //send to Process Task unless it is a trivial line where r=0 constantly
-                if (o.midpoint_r != 0) putDataOnProcessQ(&o);
+                //if (o.midpoint_r != 0) putDataOnProcessQ(&o);
+                if (o.midpoint_r > SERVO_MINRANGE_CM) putDataOnProcessQ(&o);
                 i=endofline;
             }
 

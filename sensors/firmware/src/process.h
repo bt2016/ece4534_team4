@@ -78,7 +78,10 @@ typedef enum
 	/* Define states used by the application state machine. */
 	PROCESS_STATE_INIT=0,
     PROCESS_STATE_GATHERDATA=1,
-    PROCESS_STATE_PROCESS=2
+    PROCESS_STATE_UPDATE=2,
+    PROCESS_STATE_UPDATESINGLE=3,
+    PROCESS_STATE_UPDATEMULTIPLE=4,
+    PROCESS_STATE_PROCESS=5
 } PROCESS_STATES;
 
 
@@ -97,25 +100,39 @@ typedef struct
     unsigned short int mapCount;
     unsigned short int linesCount;
     unsigned short int targetsCount;
+    unsigned short int targetsThisIteration;
+    unsigned short int endCount;
+    unsigned short int ackCount;
     QueueHandle_t processQ_SA;
 	TimerHandle_t process_Timer_SA;
     
     Obstacle map[SERVO_DEGREES+1];
     Obstacle obstacles_from_sensors[50]; //raw lines data from sensors
     Obstacle processed_obstacles[50];    //targets data for this iteration
-    Obstacle averaged_obstacles[50];     //average targets data for lifetime of the program
+    Obstacle averaged_obstacles[50];     //average targets data for lifetime of multiple pans
+    Obstacle stored_obstacles[50];       //stored obstacles
     
-    Obstacle lr_obstacles_from_sensors[50]; //raw lines data from lr sensors
-    Obstacle lr_processed_obstacles[50]; //targets data from lr sensors
+    Obstacle lr_obstacles_from_sensors[10]; //raw lines data from lr sensors
+    Obstacle lr_processed_obstacles[10];    //targets data from lr sensors
+    Obstacle lr_averaged_obstacles[10];     //average targets for lifetime of multiple pans
     
     int map_index;
     int obstacles_from_sensors_index;
     int processed_obstacles_index;
     int averaged_obstacles_index;
+    int stored_obstacles_index;
     int lr_obstacles_from_sensors_index;
     int lr_processed_obstacles_index;
-    
-    int iterations;
+    int lr_averaged_obstacles_index;
+
+    int iterations;                 //how many iterations have we done so far?
+    int iterationsRequested;        //how many iterations does the coordinator want?
+    short int isUpdateRequested;
+    short int isSingleRequested;
+    short int isMultipleRequested;
+    short int updateNow;
+    short int storeObstaclesNow;
+    short int useStoredObstacles;
 
 } PROCESS_DATA;
 

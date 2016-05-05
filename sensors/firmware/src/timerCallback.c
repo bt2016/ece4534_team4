@@ -17,6 +17,7 @@
 
 #include "timerCallback.h"
 #include "process_public.h"
+#include "send_public.h"
 #include "proj_definitions.h"
 
 unsigned int sendms = 0;
@@ -27,12 +28,17 @@ unsigned int processTick = 0;
 
 // Called from Send Timer rollover
 void vTimerCallback(TimerHandle_t pxTimer) {
-    sendms += 1; 
+    //sendms += 1; 
+}
+
+void sendTimerCallback(TimerHandle_t sTimer){
+    sendStoredMessageToTransmitQ();
 }
 
 // Called on Sensor Timer rollover
 void sensorTimerCallback(TimerHandle_t sTimer){
     distSensorTick++;
+    
     
     // Error simulation constant - straddle message rate
     if (distSensorTick % MESSAGE_RATE_DIV == 0){
@@ -65,7 +71,7 @@ void processTimerCallback(TimerHandle_t aTimer) {
     processTick++;
     if (processTick % MESSAGE_RATE_DIV == 0){}
         //sendProcessedData();
-    sendRequestForUpdateToProcessTask();
+    //sendRequestForUpdateToProcessTask();
     
 }
 
