@@ -27,10 +27,8 @@ extern "C" {
 #endif
 
 void motorTimerCallback(TimerHandle_t mTimer);
-void sensorIRTimerCallback(TimerHandle_t sTimer);
 void sensorDistTimerCallback(TimerHandle_t dTimer);
 void receiveTimerCallback(TimerHandle_t rTimer);
-void processTimerCallback(TimerHandle_t pTimer);
 void actuatorTimerCallback(TimerHandle_t aTimer);
 
 /* Provide C++ Compatibility */

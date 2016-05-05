@@ -21,48 +21,45 @@
 unsigned int sensorIRTick = 0;
 unsigned int sensorDistTick = 0;
 unsigned int motorTick = 0;
+unsigned int ackTick = 0;
 
-// Called on Sensor Timer rollover
-void sensorIRTimerCallback(TimerHandle_t sTimer){
-    sensorIRTick++;
-    
-    // Error simulation constant - straddle message rate
-    if (sensorIRTick % MESSAGE_RATE_DIV == 0)
-        readIRReceiverData();  // Read from IR receivers
-}
 
+// Read analog inputs - IR distance sensor and IR receivers
+// Start auto sample to scan and trigger INTERRUPT
 void sensorDistTimerCallback(TimerHandle_t dTimer) {
     sensorDistTick++;
     
     // Error simulation constant - straddle message rate
-    if (sensorDistTick % MESSAGE_RATE_DIV == 0)
-        PLIB_ADC_SamplingStart(0);  // Sample from sensor
+    if (sensorDistTick % MESSAGE_RATE_DIV == 0) {
+        PLIB_ADC_SampleAutoStartEnable(0);
+    }
 }
 
 // Called on Motor Timer rollover
+// Activate motor control read & Motor variable calculation
 void motorTimerCallback(TimerHandle_t mTimer) {
-    motorTick++;
+    ackTick++;
     
-    // Error simulation constant - straddle message rate
-    if (motorTick % MESSAGE_RATE_DIV == 0) 
-        motorSendToProcessQ(); // Send data to Send task
+    processMotorControls();
+    
+    if (ackTick % 2) {
+        sendTokenFoundMsg();
+    }
 }
 
-void processTimerCallback(TimerHandle_t pTimer) {
-    processSendToMotorQ();
-}
-
-// Report message received stats on rollover
+// Report message received stats on rollover (debug)
 void receiveTimerCallback(TimerHandle_t rTimer) {
     if (!CUT_RECEIVE_DATA)
         reportMsgDataToSendQ();
 }
 
+// Activate encoder reading
 void actuatorTimerCallback(TimerHandle_t aTimer) {
-    sendMotorControls();
+    motorTick++;
+    
+    motorReadEncoders(); // Send data to Send task
+    setLED();
 }
-
-
 
 /* *****************************************************************************
  End of File

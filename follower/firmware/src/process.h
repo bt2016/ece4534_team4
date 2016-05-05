@@ -71,7 +71,7 @@ extern "C" {
 #endif
 // DOM-IGNORE-END 
 
-
+    
 typedef enum
 {
 	/* Application's state machine's initial state. */
@@ -82,6 +82,16 @@ typedef enum
 
 } PROCESS_STATES;
 
+typedef struct
+{
+  unsigned int frontDistance;
+
+  unsigned int leftSignal;
+  unsigned int rightSignal;
+  unsigned int frontSignal;
+  unsigned int rearSignal;
+    
+} LD_POS;
 
 typedef struct
 {
@@ -91,6 +101,9 @@ typedef struct
     
     QueueHandle_t processQ_FR;
 	TimerHandle_t process_Timer_FR;
+    
+    char prevType;
+    char prevCount;
 
     /* TODO: Define any additional data used by the application. */
 

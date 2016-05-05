@@ -77,13 +77,11 @@ typedef struct
 {
     SENSOR_STATES state;
 	QueueHandle_t sensorQ_FR;
-	TimerHandle_t sensor_IR_Timer_FR;
     TimerHandle_t sensor_Dist_Timer_FR;
-    unsigned int senseCount;
     unsigned short int sendCount;
     int sendToSensorQ_Err;
-    unsigned short int IRSendCount;
-    unsigned short int distSendCount;
+    
+    char sendIRData;
 
 } SENSOR_DATA;
 

@@ -54,27 +54,9 @@ void clearBuffer(){
     
 }
 
-void receiveSendToMotorQ() {
-    // Convert sensor data to message format character array
-    char data[MSG_LENGTH];
-    data[0] = MSG_START;                         // Start byte
-    data[1] = TYPEC_MOTOR_CONTROL;    // Type byte
-    data[2] = 0x67;  // Count byte
-    // Dummy values
-    data[3] = 0x20;
-    data[4] = 0x40;
-    data[5] = 0x60;
-    data[6] = receiveData.sendCount << 1;
-    data[7] = receiveData.sendCount >> 3;
-    data[8] = receiveData.sendCount << 2;
-    data[9] = MSG_STOP;             // Stop byte
-                
-    putDataOnMotorQ(data);
-}
-
-
 void receiveSendValFromISR(char* data){
     
+    //stopAll();
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     if (xQueueSendFromISR( receiveData.receiveIntQ_FR,
                             (void*) data,
@@ -86,6 +68,7 @@ void receiveSendValFromISR(char* data){
 
 }
 
+// MILESTONE #2 function - WiFly error checking via Pi
 // Report number of good and bad messages to send queue to be transmitted to Pi via UART
 void reportMsgDataToSendQ() {
     receiveData.sendCount++;
@@ -135,7 +118,7 @@ void RECEIVE_Initialize ( void )
                      "ReceiveTimer", //Just a text name
                      ( RECEIVE_TIMER_RATE / portTICK_PERIOD_MS ), //period in ms
                      pdTRUE, //auto-reload when expires
-                     (void *) 27, //a unique id
+                     (void *) 22, //a unique id
                      receiveTimerCallback ); //pointer to callback function
     
     if( receiveData.receiveTimer_FR == NULL ) {
@@ -151,17 +134,15 @@ void RECEIVE_Initialize ( void )
 
 void RECEIVE_Tasks ( void )
 {
-    
     //Function to receive data from the queue
     //Blocks until it receives a byte
     char qData;
+ if (uxQueueMessagesWaiting(receiveData.receiveIntQ_FR) != 0){
     if (xQueueReceive(receiveData.receiveIntQ_FR, &qData, portMAX_DELAY))
     {
-        dbgOutputVal(qData);   
 
         if(qData == messageBuffer.start){
             
-            LATASET = 1 << 3;
             clearBuffer();
             messageBuffer.buffer[0] = qData; // ~ 
             messageBuffer.nextByteAt = 1;         
@@ -178,10 +159,82 @@ void RECEIVE_Tasks ( void )
                 //Do something with it.
                 if(qData == messageBuffer.stop){                
 
-                    //Turn a light on
-                    LATACLR = 1 << 3;       
+                    //putMsgOnSendQueue(messageBuffer.buffer);
 
                     receiveData.goodMsg++;
+                    
+                    // TOKEN FOUND MESSAGE RECEIVED
+                    if (messageBuffer.buffer[1] == (char)TYPEC_LR_SENSOR_TO_FR) {
+                        char data[MSG_LENGTH];
+
+                        int z;
+                        for (z = 0; z < 10; z++) {
+                            data[z] = messageBuffer.buffer[z];
+                        }
+          
+                        putDataOnMotorProcessQ(data); 
+                    }
+                    else if (messageBuffer.buffer[1] == (char)TYPEC_TOKEN_FOUND_ACK) {
+                        tokenAckReceived();
+                    }
+                    // START MESSAGE RECEIVED
+                    else if (messageBuffer.buffer[1] == (char)TYPEC_GO) {
+                        motorStart();
+                    }
+                    // STOP MESSAGE RECEIVED
+                    else if (messageBuffer.buffer[1] == (char)TYPEC_STOP) {
+                        motorStop();
+                    }
+                    // Milestone 4 debug code follows for information output via UART
+                    else if (messageBuffer.buffer[1] == (char)TYPE_HISTORY) {
+                        toggleTurn();
+                    }
+                    else if (messageBuffer.buffer[1] == (char)TYPE_FR_ACK) {
+                        toggleStopOnToken();
+                    }
+                    else if (messageBuffer.buffer[1] == (char)MS4_SET) {
+                        char IR = 0;
+                        char TD = 0;
+                        char ENC = 0;
+                        char PID = 0;
+                        char turn = 0;
+                        char token = 0;
+                        
+                        if (messageBuffer.buffer[8] == '1' || messageBuffer.buffer[8] == (char)'1') {
+                            IR = 1;
+                            TD = 1;
+                        }
+                        else if (messageBuffer.buffer[8] == '2' || messageBuffer.buffer[8] == (char)'2') {
+                            PID = 0x1;
+                            ENC = 0x1;
+                        }
+                        else if (messageBuffer.buffer[8] == '3' || messageBuffer.buffer[8] == (char)'3') {
+                                IR = 1;
+                                TD = 1;
+                        }
+                        else if (messageBuffer.buffer[8] == '4' || messageBuffer.buffer[8] == (char)'4') { 
+                                IR = 1;
+                                ENC = 1;
+                        }
+                        else if (messageBuffer.buffer[8] == '5' || messageBuffer.buffer[8] == (char)'5') {
+                                token = 1;
+                                TD = 1;
+                                IR = 1;
+                        }
+                        else if (messageBuffer.buffer[8] == '6' || messageBuffer.buffer[8] == (char)'6') {
+                                IR = 1;
+                                TD = 1;
+                        }
+                        else if (messageBuffer.buffer[8] == '7' || messageBuffer.buffer[8] == (char)'7') {
+                                IR = 1;
+                                TD = 1;
+                                turn = 1;
+                        }
+                       
+                        
+                        setOutputs(IR, TD, ENC, PID, turn, token);
+                        setSendIRData(IR);
+                    }
                     
                     //Clear the message
                     clearBuffer();               
@@ -195,6 +248,7 @@ void RECEIVE_Tasks ( void )
             }
         } //end if qData receive
         
+    }
     }
 
     
