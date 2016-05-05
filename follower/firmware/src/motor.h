@@ -93,7 +93,11 @@ typedef struct
   int pidIntegral;
   int pidPrevError;
   
-  uint8_t frontDist[DIST_HISTORY];
+  uint8_t frontDistL[DIST_HISTORY];
+  uint8_t frontDistR[DIST_HISTORY];
+  
+  int leftLostPos;
+  int rightLostPos;
   
   int prevDir;
   int prevFrontSignal;
@@ -109,6 +113,10 @@ typedef struct
 
 typedef struct
 {
+    char tokenMode;
+    char foundTokenNoAck;
+    unsigned short int tokenFindSendCount;
+    
     unsigned short int motorSendCount;
     unsigned short int IRsendCount;
     

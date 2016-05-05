@@ -93,6 +93,10 @@ void sendToSendQ(char type, char count, char d1, char d2, char d3, char d4, char
     putMsgOnSendQueue(data);
 }
 
+resetDist() {
+    leadPos.leftLostPos = 0;
+    leadPos.rightLostPos = 0;
+}
 // DEBUG code - hardcode IR receiver read values
 adjustSignals() {
     
@@ -128,7 +132,7 @@ void testTokenFound() {
 // DEBUG code - send current rover status (key control variables))
 void sendStatus() {
     if (MODE_STATUS_UPDATE)
-        sendToSendQ(TYPE_FR_STATUS, 0x50, motorData.rovState, 0x0, motorData.motorEnable, motorData.firstFollow, motorData.roundedTurn, motorData.stopOnToken);
+        sendToSendQ(TYPE_FR_STATUS, 0x50, motorData.rovState, 0x0, motorData.motorEnable, 0x0, motorData.roundedTurn, motorData.stopOnToken);
 }
 // Toggle sharp turns and rounded turns (affected by IR side data or not)
 void toggleTurn() {
@@ -159,18 +163,26 @@ void setOutputs(char IR, char TD, char ENC, char PID, char turn, char token) {
 ////////////////////////////// LOCATION TRACKING ///////////////////////////////////////////
 // Set distance from target location (Lead rover or Token) 
 void setTargetDistance() {
+    int dist;   
+            
     if (motorData.rovState == ACQUIRE_TOKEN_LOC) {
         // Distance to location: Distance reported * 73.5 + 7 cm for rest of follower + 6 cm for extra half-length
-        if (!motorData.tokenQueue) {
-            motorData.ticksToToken = (leadPos.frontDist[0] * 73) + (leadPos.frontDist[0] >> 1) + 750;
-        }
+        //if (!motorData.tokenQueue) {
+            if (leadPos.frontDistL[0] < leadPos.frontDistR[0]) dist = leadPos.frontDistL[0];
+            else dist = leadPos.frontDistR[0];
+            
+            motorData.ticksToToken = (dist * TICK_CM) + 750;
+        //}
         leadPos.prevDir = PREV_NEITHER;
         motorData.rovState = TOKEN_LOCK;  // LOCKED
     }
     else if (motorData.rovState == ACQUIRE_LOCATION) {
+        if (leadPos.frontDistL[2] < leadPos.frontDistR[2]) dist = leadPos.frontDistL[2];
+        else dist = leadPos.frontDistR[2];
+        
         // For location lock and not token lock, make addition only +515
-        motorData.timeSinceVanish = 200;
-        motorData.ticksToTarget = (leadPos.frontDist[3] * 73) + (leadPos.frontDist[3] >> 1) + 515 + motorData.curEncoder + motorData.prevEncoder;
+        motorData.timeSinceVanish = 100;
+        motorData.ticksToTarget = (dist * TICK_CM) + 515 + motorData.curEncoder;
         leadPos.prevDir = PREV_NEITHER;
         motorData.rovState = POINT_LOCK;  // Locked unless lead appears on distance sensors again
     }
@@ -187,6 +199,7 @@ void ackToken(char sequence, char timeH, char timeL) {
     // Currently locked onto rover position pre-turn - Use time since turn to estimate distance
     // after turn needed to move to pick up token
     else if (motorData.rovState == POINT_LOCK) {
+       
         motorData.tokenQueue = 1;
         motorData.ticksToTokenLock = motorData.timeSinceVanish;
         
@@ -195,7 +208,7 @@ void ackToken(char sequence, char timeH, char timeL) {
         motorData.prevTokenSequence = sequence;
         
         //motorData.rovState = ACQUIRE_TOKEN_LOC;
-        sendToSendQ(TYPE_FR_ACK, sequence, 0x0, 0x0, 0x0, leadPos.frontDist[0] & 0xff, timeH, timeL); //Acknowledge receive
+        sendToSendQ(TYPE_FR_ACK, sequence, 0x0, 0x0, leadPos.frontDistL[0], leadPos.frontDistR[0] & 0xff, timeH, timeL); //Acknowledge receive
         
     }
     // Else normal operation - Token is where lead rover currently is, lock onto that position
@@ -207,13 +220,25 @@ void ackToken(char sequence, char timeH, char timeL) {
         motorData.prevTokenSequence = sequence;
         
         motorData.rovState = ACQUIRE_TOKEN_LOC;
-        sendToSendQ(TYPE_FR_ACK, sequence, 0x0, 0x0, 0x0, leadPos.frontDist[0] & 0xff, timeH, timeL); //Acknowledge receive
+        sendToSendQ(TYPE_FR_ACK, sequence, 0x0, 0x0, leadPos.frontDistL[0], leadPos.frontDistR[0] & 0xff, timeH, timeL); //Acknowledge receive
         
-        if (leadPos.frontDist[0] < 40 && leadPos.frontDist[1] < 40) {
+        if (leadPos.frontDistL[0] < 40 && leadPos.frontDistL[1] < 40 && leadPos.frontDistR[0] < 40 && leadPos.frontDistR[1] < 40) {
             setTargetDistance();
         }
     }
 }
+
+void tokenAckReceived() {
+    motorData.foundTokenNoAck = 0x0;
+}
+
+void sendTokenFoundMsg() {
+    if (motorData.foundTokenNoAck != 0x0) {
+        motorData.tokenFindSendCount++;
+        sendToSendQ(TYPE_FR_FOUNDTOKEN, motorData.tokenFindSendCount, 0x0, 0x0, 0x0, 0x0, 0x0, motorData.prevTokenLow-1);
+    }
+}
+
 
 // Read motor encoder countdown value to determine next rover state
 void checkTicks() {
@@ -222,8 +247,10 @@ void checkTicks() {
     // Send confirmation signal to Coordinator, search for lead rover, begin flashing LED
     if (motorData.rovState == TOKEN_LOCK && motorData.ticksToToken <= 0) {
        
-        sendToSendQ(TYPE_FR_FOUNDTOKEN, motorData.tokenFindCount, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+        motorData.tokenFindSendCount++;
         motorData.tokenFindCount++;
+        motorData.foundTokenNoAck = 0x1;
+        sendTokenFoundMsg();
                 
         motorData.ticksToToken = 0;
         motorData.tokenQueue = 0;
@@ -237,7 +264,7 @@ void checkTicks() {
             motorData.keep_blinking = 1;
         }
         
-        if (leadPos.frontDist[0] < 40)
+        if (leadPos.frontDistL[0] < 40 && leadPos.frontDistR[0] < 40)
             motorData.rovState = FOLLOW;
         else
             motorData.rovState = SEARCH;
@@ -247,12 +274,20 @@ void checkTicks() {
     else if (motorData.rovState == POINT_LOCK && motorData.ticksToTarget <= 0) {
         motorData.ticksToTarget = 0;
         
-        if (motorData.tokenQueue) {
-            motorData.ticksToToken = motorData.ticksToTokenLock;
+        if (motorData.tokenQueue != 0) {
+            
+            if (motorData.tokenMode == TOKEN_TIME_TRACK) {
+                motorData.ticksToToken = motorData.ticksToTokenLock;
+            }
+        
+            else if (motorData.tokenMode == TOKEN_VISUAL_CONTACT) {
+                motorData.ticksToToken = 0;
+            }
+
             motorData.rovState = ACQUIRE_TOKEN_LOC;
         }
         
-        else if (leadPos.frontDist[0] < 40)
+        else if (leadPos.frontDistL[0] < 40 && leadPos.frontDistR[0] < 40)
             motorData.rovState = FOLLOW;
         else
             motorData.rovState = SEARCH;
@@ -265,6 +300,43 @@ void checkTicks() {
 
 ///////////////////////////// PROCESSING ////////////////////////////////////////////
 
+// Return enumeration for the best signal from IR directional data
+unsigned int bestSignal(unsigned int ft, unsigned int rr, unsigned int lt, unsigned int rt) {
+
+    // NONE = 4;
+    // LEFT = 3;
+    // RIGHT = 2;
+    // REAR = 1;
+    // FRONT = 0;
+    
+    if (ft < IRMIN && rr < IRMIN && lt < IRMIN && rt < IRMIN) leadPos.bestSignal = 4; // NONE
+    
+    unsigned int max = 0;
+    unsigned int front = ft; 
+    unsigned int rear = rr;  
+    unsigned int left = lt;  
+    unsigned int right = rt; 
+    
+    if (left > right) max = LEAD_LEFT;
+    else if (right > rear) max = LEAD_RIGHT;
+    else if (rear > front) max = LEAD_REAR;
+    
+    if (max == LEAD_LEFT) {
+        if (left > rear) {
+            if (left > front) {}
+            else max = LEAD_FRONT;
+        }
+        else if (rear > front) max = LEAD_REAR;
+        else max = LEAD_FRONT;
+    }
+    else if (max == LEAD_RIGHT) {
+        if (right > front) {}
+        else max = LEAD_FRONT;
+    }
+    
+    leadPos.bestSignal = max;
+}
+
 // Update the running data on the lead rover's position in terms of IR received signals
 // and distance sensing results
 void motorUpdateLeadPos(char type, char d1, char d2, char d3, char d4, char d5, char d6) {
@@ -273,23 +345,30 @@ void motorUpdateLeadPos(char type, char d1, char d2, char d3, char d4, char d5, 
     // Update front distance (in cm)
     if (type == (char)TYPE_FR_DIST) {
         for (i = DIST_HISTORY - 2; i >= 0; i--) {
-            leadPos.frontDist[i+1] = leadPos.frontDist[i];
+            leadPos.frontDistL[i+1] = leadPos.frontDistL[i];
+            leadPos.frontDistR[i+1] = leadPos.frontDistR[i];
         }
-        leadPos.frontDist[0] = d6;
+        leadPos.frontDistR[0] = d6;
+        leadPos.frontDistL[0] = d1;
     }
     // ONLY ONE USED IN CURRENT BUILD
     else if (type == (char)TYPE_ADC) {
         for (i = DIST_HISTORY - 2; i >= 0; i--) {
-            leadPos.frontDist[i+1] = leadPos.frontDist[i];
+            leadPos.frontDistL[i+1] = leadPos.frontDistL[i];
+            leadPos.frontDistR[i+1] = leadPos.frontDistR[i];
         }
-        leadPos.frontDist[0] = d6;
+        leadPos.frontDistL[0] = d1;
+        leadPos.frontDistR[0] = d6;
 
         leadPos.prevFrontSignal = leadPos.frontSignal;
-        leadPos.bestSignal = d1;
-        leadPos.frontSignal = d2;
-        leadPos.rearSignal = d3;
-        leadPos.leftSignal = d5;
-        leadPos.rightSignal = d4;
+        
+        if (!HC_SIGNALS) {
+            bestSignal(d2,d3,d5,d4);
+            leadPos.frontSignal = d2;
+            leadPos.rearSignal = d3;
+            leadPos.leftSignal = d5;
+            leadPos.rightSignal = d4;
+        }
         
         // Determine previous relative side position of rover, if any. Analog values can fluctuate,
         // so minimum difference is mandatory. 
@@ -303,7 +382,7 @@ void motorUpdateLeadPos(char type, char d1, char d2, char d3, char d4, char d5, 
         motorData.IRsendCount++;
         // Send to UART on specified interval (Milestone #3)
         if ((SEND_IR == 0x1) && (motorData.IRsendCount % IR_MOD == 0))
-            sendToSendQ(TYPE_HISTORY, leadPos.frontDist[0], leadPos.frontDist[1], leadPos.frontDist[2], leadPos.frontDist[3], leadPos.frontDist[4], leadPos.frontDist[5], leadPos.frontDist[6]);
+            sendToSendQ(TYPE_HISTORY, leadPos.frontDistL[0], leadPos.frontDistL[1], leadPos.frontDistL[2], leadPos.frontDistL[3], leadPos.frontDistL[4], leadPos.frontDistL[5], leadPos.frontDistL[6]);
     }
     // Update directional IR data (all four at once)
     else if (type == (char)TYPE_FR_IR) {
@@ -335,9 +414,20 @@ void noTargetOperation() {
     int maxPID = MAXPID;
     int maxNEG = MAXNEG;
     
+    if (!(leadPos.rearSignal > IRMIN) && !(leadPos.rightSignal > IRMIN) && !(leadPos.leftSignal > IRMIN)) {
+        // CHANGES HERE 4/27
+        if (leadPos.frontDistL[0] < 40 && leadPos.frontDistR[0] == 40 && (leadPos.frontSignal > IRMIN)) {
+            motorData.pidRightSpd = MAXNEG-600;
+            motorData.pidLeftSpd = MAXPID-600;
+        }
+        else if (leadPos.frontDistR[0] < 40 && leadPos.frontDistL[0] == 40 && (leadPos.frontSignal > IRMIN)) {
+            motorData.pidRightSpd = MAXPID-600;
+            motorData.pidLeftSpd = MAXNEG-600;
+        }
+    }
     // Conditionals to determine motor action based on current sensor data
     // No credible directional data: 
-    if ((leadPos.frontSignal < IRMIN && leadPos.rearSignal < IRMIN && leadPos.rightSignal < IRMIN && leadPos.leftSignal < IRMIN)
+    else if ((leadPos.frontSignal < IRMIN && leadPos.rearSignal < IRMIN && leadPos.rightSignal < IRMIN && leadPos.leftSignal < IRMIN)
     || (leadPos.frontSignal == IRMAX && leadPos.rearSignal == IRMAX && leadPos.rightSignal == IRMAX && leadPos.leftSignal == IRMAX)) {
         //SPIN - Not full speed
             motorData.pidRightSpd = maxPID - 500;
@@ -408,14 +498,6 @@ void noTargetOperation() {
             motorData.pidLeftSpd = maxPID;
         }
     }
-    
-    // If the last IR distance data reported valid, slow more to keep on target for the second reading
-    if (leadPos.frontDist[0] > 20 && leadPos.frontDist[0] < 40) {
-        motorData.pidRightSpd >>= 1;
-        motorData.pidLeftSpd >>= 1;
-        
-        
-    }
 }
 
 // Operation when locked onto target position (Previous lead position or Token location)
@@ -426,31 +508,25 @@ void lockOperation() {
     int maxNEG = MAXNEG;
     
     // If not locked onto token and lead appears in front, switch to follow mode
-    if (motorData.rovState != TOKEN_LOCK && leadPos.frontDist[0] < 40 && leadPos.frontDist[1] < 40) {
+    if (motorData.rovState != TOKEN_LOCK && leadPos.frontDistL[0] < 40 && leadPos.frontDistL[1] < 40 
+            && leadPos.frontDistR[0] < 40 && leadPos.frontDistR[1] < 40) {
         motorData.rovState = FOLLOW;
         followOperation();
         return;
     }
    
-    // If first follow (initial bootup) -> Slower rotations, greater allowance for angular adjustment
-    // because we aren't 'Following' just yet
-    if (motorData.firstFollow) {
-        if (leadPos.bestSignal == LEAD_LEFT) {
-            motorData.pidLeftSpd = -2000;
-            motorData.pidRightSpd = 2000;
-        }
-        else if (leadPos.bestSignal == LEAD_RIGHT) {
-            motorData.pidLeftSpd = 2000;
-            motorData.pidRightSpd = -2000;
-        }
+    if (motorData.rovState != TOKEN_LOCK && leadPos.frontDistL[0] < 40 && leadPos.frontDistR[0] < 40) {
+        motorData.pidLeftSpd = 0;
+        motorData.pidRightSpd = 0;
     }
     // Always reverse if something's directly in front
-    else if (leadPos.frontDist[0] < TARG_DIST) {
+    else if (leadPos.frontDistL[0] < TARG_DIST || leadPos.frontDistR[0] < TARG_DIST) {
         motorData.pidRightSpd = maxNEG;
         motorData.pidLeftSpd = maxNEG;
     }
     // Always stop if something's in the target range in front
-    else if (leadPos.frontDist[0] == TARG_DIST || leadPos.frontDist[0] == TARG_DIST_SEC) {
+    else if (leadPos.frontDistL[0] == TARG_DIST || leadPos.frontDistL[0] == TARG_DIST_SEC 
+            || leadPos.frontDistR[0] == TARG_DIST || leadPos.frontDistR[1] == TARG_DIST_SEC) {
         motorData.pidRightSpd = 0;
         motorData.pidLeftSpd = 0;
     }
@@ -462,7 +538,7 @@ void lockOperation() {
     
     // If rounded turns enabled, decrease the motor whose side favors the lead's orientation
     // This allows for gradual turning without changing states on the fly
-    if (motorData.rovState == POINT_LOCK && motorData.roundedTurn != 0) {
+    if (motorData.rovState == POINT_LOCK && motorData.roundedTurn != 0x0) {
         if (leadPos.rightSignal > leadPos.leftSignal) {
             motorData.pidRightSpd >>= 1;
         }
@@ -480,106 +556,89 @@ void followOperation() {
      //53 * 2^6
     int maxPID = MAXPID;
     int maxNEG = MAXNEG;
+    int blindLimit = 5;
     
     // Debug code
     if (HC_SIGNALS) adjustSignals();
     
     // Front signal too low for the object in front to be the lead - Rotate (change mode) until we find the real target
-    if (leadPos.frontSignal < 10 && (leadPos.rearSignal > 10 || leadPos.rightSignal > 200 || leadPos.leftSignal > 200)) {
+    if (leadPos.frontSignal < IRMIN && (leadPos.rearSignal > IRMIN || leadPos.rightSignal > 60 || leadPos.leftSignal > 60)) {
+        resetDist();
         motorData.rovState = SEARCH;
         turnOperation();
         return;
     }
 
+    if (leadPos.frontDistL[0] == 40 && leadPos.frontDistR[0] == 40 ) { //leadPos.frontDistL[1] == 40 && leadPos.frontDistR[1] == 40) {
+        resetDist();
+        motorData.rovState = ACQUIRE_LOCATION;
+        setTargetDistance();
+        lockOperation();
+        return;
+    }
+    else if (leadPos.frontDistL[0] == 40) leadPos.leftLostPos++;
+    else if (leadPos.frontDistR[0] == 40) leadPos.rightLostPos++;
+    
     // If in normal operation
-    if (MODE_LAST_LOC == 0x1 && !motorData.firstFollow) {
-        // Last two readings have lost the lead rover, after the previous two had it locked.
-        // We've lost his position and want to set the last known location as our destination
-        if (leadPos.frontDist[0] == 40 && leadPos.frontDist[1] == 40 && leadPos.frontDist[2] < 40 && leadPos.frontDist[3] < 40) {
-            motorData.rovState = ACQUIRE_LOCATION;
-
-            setTargetDistance();
-            
-            lockOperation();
-            return;
-        }
-        // If we have one signal that seems to have lost the lead, slow down to read again and make sure 
-        // it wasn't an erratic reading.
-        if (leadPos.frontDist[0] == 40 && leadPos.frontDist[1] < 40 && leadPos.frontDist[2] < 40) {
-            motorData.pidRightSpd >>= 1;
-            motorData.pidLeftSpd >>= 1;
-            
-            setMotorVars();
-            
+    if (MODE_LAST_LOC == 0x1) {
+        
+        if (leadPos.leftLostPos > blindLimit || leadPos.rightLostPos > blindLimit) {
+            resetDist();
+            motorData.rovState = SEARCH;
+            turnOperation();
             return;
         }
     }
     
-    // Always reverse if there's something right in front of the sensor
-    if (leadPos.frontDist[0] < TARG_DIST) {
-        motorData.pidRightSpd = maxNEG;
-        motorData.pidLeftSpd = maxNEG;
-        
-        // Test mode - Try to reverse and also adjust direction if there's a side offset
-        if (MODE_NUANCE == 0x1) {
-            if (leadPos.bestSignal == LEAD_RIGHT) {
-                motorData.pidLeftSpd += 1000;
-            }
-            if (leadPos.bestSignal == LEAD_LEFT) {
-                motorData.pidRightSpd += 1000;
-            }
+    if (leadPos.frontDistL[0] < TARG_DIST) {
+        if (leadPos.frontDistR[0] > TARG_DIST_SEC) {
+            motorData.pidRightSpd = -1000;
+            motorData.pidLeftSpd = maxNEG;
+        } else {
+            motorData.pidRightSpd = maxNEG;
+            motorData.pidLeftSpd = maxNEG;
         }
     }
-    // Always stop if something's in the target zone
-    else if (leadPos.frontDist[0] == TARG_DIST || leadPos.frontDist[0] == TARG_DIST_SEC) {
-        motorData.pidRightSpd = 0;
-        motorData.pidLeftSpd = 0;
-        
-        if (MODE_NUANCE == 0x1) {
-            if (leadPos.bestSignal == LEAD_RIGHT) {
-                motorData.pidRightSpd = -800;
-                motorData.pidLeftSpd = 800;
-            }
-            if (leadPos.bestSignal == LEAD_LEFT) {
-                motorData.pidRightSpd = 800;
-                motorData.pidLeftSpd = -800;
-            }
+    else if (leadPos.frontDistR[0] < TARG_DIST) {
+        if (leadPos.frontDistL[0] > TARG_DIST_SEC) {
+            motorData.pidLeftSpd = -1000;
+            motorData.pidRightSpd = maxNEG;
+        } else {
+            motorData.pidRightSpd = maxNEG;
+            motorData.pidLeftSpd = maxNEG;
         }
+    }
+    // Always reverse if there's something right in front of the sensor
+   // if (leadPos.frontDistL[0] < TARG_DIST || leadPos.frontDistR[0] < TARG_DIST) {
+   //     motorData.pidRightSpd = maxNEG;
+   //     motorData.pidLeftSpd = maxNEG;
+   // }
+    // Always stop if something's in the target zone
+    else if (leadPos.frontDistL[0] == TARG_DIST || leadPos.frontDistL[0] == TARG_DIST_SEC) {
+        
+        //if (leadPos.frontDistR[0] == 40) {
+        //    motorData.pidRightSpd = MAXPID;
+        //    motorData.pidLeftSpd = MAXNEG;
+        //} else {
+            motorData.pidRightSpd = 0;
+            motorData.pidLeftSpd = 0;
+        //}
+    }
+    else if (leadPos.frontDistR[0] == TARG_DIST || leadPos.frontDistR[0] == TARG_DIST_SEC) {
+        //if (leadPos.frontDistL[0] == 40) {
+        //    motorData.pidRightSpd = MAXNEG;
+        //    motorData.pidLeftSpd = MAXPID;
+        //} else {
+            motorData.pidRightSpd = 0;
+            motorData.pidLeftSpd = 0;
+       // }
     }
     // Else, full speed ahead
-    else if (leadPos.frontDist[0] < 40) {
+    else if (leadPos.frontDistL[0] < 40 || leadPos.frontDistR[0] < 40) {
         motorData.pidRightSpd = maxPID;
         motorData.pidLeftSpd = maxPID;
-        
-        // IF AT STARTUP, Continue adjusting rotation until the front signal is the strongest
-        // The key at first is to line up accurately
-        if (motorData.firstFollow) {
-            if (leadPos.bestSignal == LEAD_LEFT) {
-                motorData.pidLeftSpd = -2000;
-                motorData.pidRightSpd = 2000;
-            }
-            else if (leadPos.bestSignal == LEAD_RIGHT) {
-                motorData.pidLeftSpd = 2000;
-                motorData.pidRightSpd = -2000;
-            }
-            else if (leadPos.bestSignal == LEAD_FRONT) {
-                if (leadPos.bestSignal == LEAD_LEFT) {
-                    motorData.pidLeftSpd -= 2000;
-                }
-                else if (leadPos.bestSignal == LEAD_RIGHT) {
-                    motorData.pidRightSpd -= 2000;
-                }
-            }
-        }
-        else if (MODE_NUANCE == 0x1) {
-            if (leadPos.bestSignal == LEAD_RIGHT) {
-                motorData.pidRightSpd -= 1000;
-            }
-            if (leadPos.bestSignal == LEAD_LEFT) {
-                motorData.pidLeftSpd -= 1000;
-            }
-        }
     }
+    
     //Else, not locked onto front target - Pursue based on directional data
     else {
         motorData.rovState = SEARCH;
@@ -601,26 +660,21 @@ void turnOperation() {
     if (HC_SIGNALS) adjustSignals();
     
     // If last two signals were positive, and the most recent says the lead is close
-    if (leadPos.frontDist[0] < 22 && leadPos.frontDist[1] < 40) {
+    if (leadPos.frontDistL[0] < 40 && leadPos.frontDistR[0] < 40 && (!(leadPos.frontDistL[1] == 40 && leadPos.frontDistR[1] == 40))) {
         
         // If the IR receivers corroborate the distance sensor's beliefs, switch to follow
-        if (!(leadPos.rearSignal > 10) && !(leadPos.frontSignal < 10 && leadPos.rightSignal > 10) && !(leadPos.frontSignal < 10 && leadPos.leftSignal > 10)) {
+        //if (!(leadPos.rearSignal > IRMIN) && !(leadPos.frontSignal < IRMIN && leadPos.rightSignal > IRMIN) && !(leadPos.frontSignal < IRMIN && leadPos.leftSignal > IRMIN)) {
+        if (!(leadPos.rearSignal > IRMIN) && !(leadPos.rightSignal > IRMIN) && !(leadPos.leftSignal > IRMIN)) {
             motorData.rovState = FOLLOW;
             followOperation();
             return;
         }
     }
-    // If first follow, trust the first read that states accuracy. If the IR receivers say otherwise,
-    // other code will adjust turns for now. 
-    else if (leadPos.frontDist[0] < 40 && motorData.firstFollow) {
-            motorData.rovState = FOLLOW;
-            followOperation();
-            return;
-    }
     // If the last three readings were positive for the lead rover and the IR receivers aren't going crazy,
     // Trust that the lead is actually there and follow
-    else if (leadPos.frontDist[0] < 40 && leadPos.frontDist[1] < 40 && leadPos.frontDist[2] < 40) {
-        if (!(leadPos.rearSignal > 10) && !(leadPos.frontSignal < 10 && leadPos.rightSignal > 10) && !(leadPos.frontSignal < 10 && leadPos.leftSignal > 10)) {
+    else if (leadPos.frontDistL[0] < 40 && leadPos.frontDistL[1] < 40 // && leadPos.frontDistL[2] < 40) {
+            && leadPos.frontDistR[0] < 40 && leadPos.frontDistR[1] < 40) {
+        if (!(leadPos.rearSignal > IRMIN) && !(leadPos.frontSignal < IRMIN && leadPos.rightSignal > IRMIN) && !(leadPos.frontSignal < IRMIN && leadPos.leftSignal > IRMIN)) {
             motorData.rovState = FOLLOW;
             followOperation();
             return;
@@ -644,21 +698,17 @@ void searchOperation() {
     
     // Follow similar guidelines for the regular search operation, but set a target rather 
     // than the lead itself (still using its current position, though)
-    if (leadPos.frontDist[0] < 22 && leadPos.frontDist[1] < 40) {
+    if (leadPos.frontDistL[0] < 40 && leadPos.frontDistR[0] < 40 && (!(leadPos.frontDistL[1] == 40 && leadPos.frontDistR[1] == 40))) {
         
-        if (!(leadPos.rearSignal > 10) && !(leadPos.frontSignal < 10 && leadPos.rightSignal > 10) && !(leadPos.frontSignal < 10 && leadPos.leftSignal > 10)) {
+        //if (!(leadPos.rearSignal > IRMIN) && !(leadPos.frontSignal < IRMIN && leadPos.rightSignal > IRMIN) && !(leadPos.frontSignal < IRMIN && leadPos.leftSignal > IRMIN)) {
+        if (!(leadPos.rearSignal > IRMIN) && !(leadPos.rightSignal > IRMIN) && !(leadPos.leftSignal > IRMIN)) { 
             setTargetDistance();
             lockOperation();
             return;
         }
     }
-    else if (leadPos.frontDist[0] < 40 && leadPos.frontDist[1] < 40 && motorData.firstFollow) {
-        motorData.rovState = FOLLOW;
-        followOperation();
-        return;
-    }
-    else if (leadPos.frontDist[0] < 40 && leadPos.frontDist[1] < 40 && leadPos.frontDist[2] < 40) {
-        if (!(leadPos.rearSignal > 10) && !(leadPos.frontSignal < 10 && leadPos.rightSignal > 10) && !(leadPos.frontSignal < 10 && leadPos.leftSignal > 10)) {
+    else if (leadPos.frontDistL[0] < 40 && leadPos.frontDistL[1] < 40 && leadPos.frontDistR[0] < 40 && leadPos.frontDistR[1] < 40) {
+        if (!(leadPos.rearSignal > IRMIN) && !(leadPos.frontSignal < IRMIN && leadPos.rightSignal > IRMIN) && !(leadPos.frontSignal < IRMIN && leadPos.leftSignal > IRMIN)) {
             motorData.rovState = FOLLOW;
             followOperation();
             return;
@@ -720,14 +770,6 @@ void setMotorVars() {
     }
     else leftDir = MOTOR_FORWARD;
     
-    // If first follow and stopped, confirm that first follow has successfully concluded
-    if (motorData.firstFollow) {
-        if (motorData.pidLeftSpd == 0 && motorData.pidRightSpd == 0) {
-            motorData.firstFollow = 0;
-            sendStatus();
-        }
-    }
-    
     // # Encoder ticks desired per 100ms read
     motorData.rightIdeal = rightSpeed;
     motorData.leftIdeal = leftSpeed;
@@ -750,7 +792,7 @@ void setMotorVars() {
     
     // Send to UART at specified interval
     if ((SEND_MOTOR == 0x1) && (motorData.motorSendCount % MOTOR_MOD == 0))
-        sendToSendQ(TYPEC_MOTOR_CONTROL, motorData.motorSendCount, (leadPos.frontDist[0] & 0xFF), 
+        sendToSendQ(TYPEC_MOTOR_CONTROL, motorData.motorSendCount, (leadPos.frontDistL[0] & 0xFF), 
                 0x40, rightDir, (rightSpeed & 0xFF), leftDir, (leftSpeed & 0xFF));    
 }
 
@@ -1185,6 +1227,9 @@ void pwm_Init() {
 ///////////////////////////// CORE ROUTINE ////////////////////////////////////
 void MOTOR_Initialize ( void )
 {
+    motorData.foundTokenNoAck = 0x0;
+    motorData.tokenMode = TOKEN_VISUAL_CONTACT;
+    
     motorData.IRsendCount = 0;
     motorData.sendCount = 0;
     motorData.motorSendCount = 0;
@@ -1210,7 +1255,8 @@ void MOTOR_Initialize ( void )
     // Zero entire queue of lead rover distance readings
     int i;
     for (i = 0; i < DIST_HISTORY; i++) {
-        leadPos.frontDist[i] = 0;
+        leadPos.frontDistL[i] = 0;
+        leadPos.frontDistR[i] = 0;
     }
     leadPos.pidIntegral = 0;
     leadPos.pidPrevError = 0;
@@ -1234,8 +1280,7 @@ void MOTOR_Initialize ( void )
     
     leadPos.prevFrontSignal = 0;
     motorData.tokenFindCount = 0;
-    
-    motorData.firstFollow = 1;
+    motorData.tokenFindSendCount = 0;
     
     motorData.roundedTurn = MODE_ROUNDED;
     motorData.stopOnToken = STOP_ON_TOKEN;
@@ -1243,6 +1288,9 @@ void MOTOR_Initialize ( void )
     motorData.timeSinceVanish = 0;
     motorData.tokenQueue = 0;
     //motorData.timeToToken = 0;
+    
+    leadPos.leftLostPos = 0;
+    leadPos.rightLostPos = 0;
     
     // Initialize data send enablers
     motorData.sendIRData = SEND_IRDATA;
@@ -1368,14 +1416,15 @@ void motorStop() {
     sendStatus();
 }
 
-// Start/restart rover. Zero key values, begin in search mode, activate First Follow
+// Start/restart rover. Zero key values, begin in search mode
 void motorStart() {
+    motorData.foundTokenNoAck = 0x0;
     motorData.tokenQueue = 0;
     motorData.rovState = SEARCH;
-    motorData.firstFollow = 1;
     motorData.keep_blinking = 0;
     motorData.tokenCountdown = 0;
     motorData.motorEnable = 0x1;
+    motorData.roundedTurn = 0x0;
     pidReset();
     sendStatus();
 }

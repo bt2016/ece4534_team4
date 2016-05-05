@@ -52,50 +52,13 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 SENSOR_DATA sensorData;
 
-// Return enumeration for the best signal from IR directional data
-unsigned int bestSignal(unsigned int ft, unsigned int rr, unsigned int lt, unsigned int rt) {
-
-    // NONE = 4;
-    // LEFT = 3;
-    // RIGHT = 2;
-    // REAR = 1;
-    // FRONT = 0;
-    
-    if (ft < 10 && rr < 10 && lt < 10 && rt < 10) return 4; // NONE
-    
-    unsigned int max = 0;
-    unsigned int front = ft; 
-    unsigned int rear = rr;  
-    unsigned int left = lt;  
-    unsigned int right = rt; 
-    
-    if (left > right) max = 3;
-    else if (right > rear) max = 2;
-    else if (rear > front) max = 1;
-    
-    if (max == 3) {
-        if (left > rear) {
-            if (left > front) {}
-            else max = 0;
-        }
-        else if (rear > front) max = 1;
-        else max = 0;
-    }
-    else if (max == 2) {
-        if (right > front) {}
-        else max = 0;
-    }
-    
-    return max;
-}
-
 //runs once
 void SENSOR_Initialize ( void )
 {
     // Initialize digital input pins A2-A5 (RB2-5)
-    ODCBCLR = (0x3D);
-    TRISBSET = (0x3D);
-    LATBCLR = (0x3D);
+    ODCBCLR = (0x3ff);
+    TRISBSET = (0x3ff);
+    LATBCLR = (0x3ff);
    
     // Initialize sequence bytes
     sensorData.sendCount = 0;
@@ -158,19 +121,19 @@ void SENSOR_Tasks ( void )
                 if (CUT_IR_DIST == 0) { 
                     
                     // Front, Rear, Left, Right
-                    char best = bestSignal(qData[4], qData[5], qData[7], qData[6]);
+                    // char best = bestSignal(qData[4], qData[5], qData[7], qData[6]);
         
                     // Convert sensor data to message format character array
                     char data[MSG_LENGTH];
                     data[0] = MSG_START;
                     data[1] = TYPE_ADC;
                     data[2] = sensorData.sendCount;
-                    data[3] = best;
+                    data[3] = qData[3];   // Dist1
                     data[4] = qData[4];  // Front
                     data[5] = qData[5];  // Rear
                     data[6] = qData[6];  // Right
                     data[7] = qData[7];  // Left
-                    data[8] = qData[8];  // Dist
+                    data[8] = qData[8];  // Dist2
                     data[9] = MSG_STOP;
                     
                     //dbgOutputVal(qData);  // Used for debug

@@ -41,8 +41,8 @@ extern "C" {
     
 // MESSAGE TYPES
 // Coordinator
-#define TYPEC_GO 0x99
-#define TYPEC_STOP 0x91
+#define TYPEC_GO 0x99 // 153
+#define TYPEC_STOP 0x91 // 145
 #define TYPEC_LR_SENSOR_TO_FR 0x8F  //143 - Token found message to send ot Follower Rover
 #define TYPEC_LR_HANDSHAKE 0x4f     //79  - Confirm 'Token found' message receive to Lead Rover
 #define TYPEC_MOTOR_CONTROL 0x5E   //94 - Rover motor control
@@ -61,15 +61,22 @@ extern "C" {
 #define TYPE_FR_ENCODER 0x6F    //111 - Motor encoder report data
 #define TYPE_FR_DIST 0x5F       //95  - Follower forward distance data
 #define TYPE_FR_IR 0x9F         //159 - Follower IR receiver data
-#define TYPE_FR_ACK 0xCD       // Token received acknowledgement
+#define TYPE_FR_ACK 0xCD       // 205 - Token received acknowledgement
 #define TYPE_PID 0x44          // Directional PID values
 #define TYPE_DISTPID 0xA5      // Distance PID values
 #define TYPE_FR_TARGETDATA 0xAB   // Distance to token/target values
-#define TYPE_FR_FOUNDTOKEN 0xF1   // FOUND TOKEN
+#define TYPE_FR_FOUNDTOKEN 0xF1   // 241 - FOUND TOKEN
     
 #define TYPE_ADC 0x18
 #define TYPE_HISTORY 0x65
 #define TYPE_FR_STATUS 0x66
+    
+#define TYPEC_TOKEN_FOUND_ACK 0x60   // 96
+    
+    
+#define TOKEN_VISUAL_CONTACT 0x3
+#define TOKEN_TIME_TRACK 0x5
+#define FF_ENABLE 0x0
     
 //////////////////// MOTOR DIRECTION CONTROL //////////////////////////////////
 #define MOTOR_FORWARD 0x11
@@ -87,8 +94,10 @@ extern "C" {
 #define SET_LOW 0
     
 #define TARG_DIST 8
-#define TARG_DIST_SEC 8
+#define TARG_DIST_SEC 9
 #define DIST_HISTORY 20
+    
+#define TICK_CM 76
     
     
     
@@ -157,7 +166,7 @@ extern "C" {
 #define TEST_REAR 0
     
 #define IROFFSET 10
-#define IRMIN 10
+#define IRMIN 20
 #define IRMAX 256
 
 //////////////////////////// MOTOR PWM & PID ////////////////////////////////
