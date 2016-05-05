@@ -101,7 +101,7 @@ void IntHandlerDrvAdc(void)
 {
     DRV_ADC_Stop();
     //TODO: make sure this corresponds to the Harmony config!!!
-    int numberSamplesPerInterrupt = 3;
+    int numSamp = 6;
         
     //clear the interrupt flag
     PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
@@ -111,15 +111,17 @@ void IntHandlerDrvAdc(void)
     unsigned int potValue2 = 0;
     unsigned int potValue3 = 0;
     unsigned int potValue4 = 0;
+    unsigned int potValue5 = 0;
     int i = 0;
     
-        for(i=0;i<5;i+=5)
+        for(i=0;i<numSamp;i+=numSamp)
     {
         potValue4 += DRV_ADC_SamplesRead(i);
         potValue += DRV_ADC_SamplesRead(i+1);
         potValue1 += DRV_ADC_SamplesRead(i+2);
         potValue3 += DRV_ADC_SamplesRead(i+3);
         potValue2 += DRV_ADC_SamplesRead(i+4);
+        potValue5 += DRV_ADC_SamplesRead(i+5);
     }
     /*
     for(i=0; i<numberSamplesPerInterrupt; i += 3) {
@@ -132,6 +134,7 @@ void IntHandlerDrvAdc(void)
     //potValue = potValue/numberSamplesPerInterrupt; //the output is a 16-bit int
     
     unsigned int distance;
+    unsigned int distance2;
     
     //convert ADC steps to distance in cm
     // distance = (unsigned int) (63.404-((double)potValue*0.058)); //cm
@@ -146,6 +149,11 @@ void IntHandlerDrvAdc(void)
     else
         distance = (unsigned int) (3530.0 / ((double)potValue));
     
+    if (potValue5 < 89)
+        distance2 = 40;
+    else
+        distance2 = (unsigned int) (3530.0 / ((double)potValue5));
+    
     if (potValue2 < 833) potValue2 = 0;
     else potValue2 = potValue2 - 832;
 
@@ -153,12 +161,12 @@ void IntHandlerDrvAdc(void)
     data[0] = MSG_START;          // Start byte
     data[1] = TYPE_ADC;               // Type byte
     data[2] = 0x20;              // Count byte
-    data[3] = 0x10;                // Sensor value (redundant)
+    data[3] = distance & 0xFF;           
     data[4] = (potValue1 & 0x03FC) >> 2;  //FRONT
     data[5] = (potValue2 & 0x03FC) >> 2;  //REAR
     data[6] = (potValue3 & 0x03FC) >> 2;  //RIGHT
     data[7] = (potValue4 & 0x03FC) >> 2;  //LEFT
-    data[8] = distance & 0xFF;                 // Left motor speed
+    data[8] = distance2 & 0xFF;           
     data[9] = MSG_STOP;           // Stop byte
     
     if (SEND_ADC == 0x1)

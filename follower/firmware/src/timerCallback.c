@@ -21,6 +21,7 @@
 unsigned int sensorIRTick = 0;
 unsigned int sensorDistTick = 0;
 unsigned int motorTick = 0;
+unsigned int ackTick = 0;
 
 
 // Read analog inputs - IR distance sensor and IR receivers
@@ -37,7 +38,13 @@ void sensorDistTimerCallback(TimerHandle_t dTimer) {
 // Called on Motor Timer rollover
 // Activate motor control read & Motor variable calculation
 void motorTimerCallback(TimerHandle_t mTimer) {
+    ackTick++;
+    
     processMotorControls();
+    
+    if (ackTick % 2) {
+        sendTokenFoundMsg();
+    }
 }
 
 // Report message received stats on rollover (debug)

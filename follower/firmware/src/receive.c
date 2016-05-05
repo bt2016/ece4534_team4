@@ -174,6 +174,9 @@ void RECEIVE_Tasks ( void )
           
                         putDataOnMotorProcessQ(data); 
                     }
+                    else if (messageBuffer.buffer[1] == (char)TYPEC_TOKEN_FOUND_ACK) {
+                        tokenAckReceived();
+                    }
                     // START MESSAGE RECEIVED
                     else if (messageBuffer.buffer[1] == (char)TYPEC_GO) {
                         motorStart();
