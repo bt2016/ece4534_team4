@@ -56,6 +56,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_definitions.h"
 #include "receive.h"
 #include "send.h"
+#include "process.h"
 
 
 // *****************************************************************************
@@ -67,6 +68,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 static void _SYS_Tasks ( void );
 static void _RECEIVE_Tasks(void);
 static void _SEND_Tasks(void);
+static void _PROCESS_Tasks(void);
 
 
 // *****************************************************************************
@@ -98,6 +100,11 @@ void SYS_Tasks ( void )
     /* Create OS Thread for SEND Tasks. */
     xTaskCreate((TaskFunction_t) _SEND_Tasks,
                 "SEND Tasks",
+                1024, NULL, 1, NULL);
+
+    /* Create OS Thread for PROCESS Tasks. */
+    xTaskCreate((TaskFunction_t) _PROCESS_Tasks,
+                "PROCESS Tasks",
                 1024, NULL, 1, NULL);
 
     /**************
@@ -161,6 +168,23 @@ static void _SEND_Tasks(void)
     while(1)
     {
         SEND_Tasks();
+    }
+}
+
+
+/*******************************************************************************
+  Function:
+    void _PROCESS_Tasks ( void )
+
+  Summary:
+    Maintains state machine of PROCESS.
+*/
+
+static void _PROCESS_Tasks(void)
+{
+    while(1)
+    {
+        PROCESS_Tasks();
     }
 }
 

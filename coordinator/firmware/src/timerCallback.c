@@ -17,6 +17,9 @@
 
 #include "timerCallback.h"
 #include "proj_definitions.h"
+#include "process.h"
+
+
 
 unsigned int sendms = 0;
 unsigned int motorTick = 0;
@@ -24,7 +27,11 @@ unsigned int motorTick = 0;
 // Called from Send Timer rollover
 void vTimerCallback(TimerHandle_t pxTimer) {
     sendms += 1; 
+    processSendTokenFound();
+    processSendSensorRequest();
 }
+
+
 
 // Distribute messages to internal task queues
 void receiveMotorCallback(TimerHandle_t dTimer) {

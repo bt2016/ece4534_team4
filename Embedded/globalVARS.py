@@ -18,6 +18,7 @@ NUMBER_OF_TOKENS = 5
 #SENSOR_IP = "192.168.42.54"
 
 COORDINATOR_IP = "192.168.42.51"
+<<<<<<< HEAD
 #LR_IP = "192.168.42.54"
 FOLLOWER_IP = "192.168.42.53"
 SENSOR_IP = "192.168.42.52"
@@ -25,6 +26,16 @@ SENSOR_IP = "192.168.42.52"
 
 LR_IP = "192.168.42.11"
 BROOKELAPTOP_IP = "192.168.42.54"
+=======
+#LR_IP = "192.168.42.52"
+FOLLOWER_IP = "192.168.42.53"
+LR_IP = "192.168.42.52"
+
+#SENSOR_IP = "192.168.42.52"
+#BROOKELAPTOP_IP = "192.168.42.54"
+SENSOR_IP = "192.168.42.54"
+BROOKELAPTOP_IP = "192.168.42.64"
+>>>>>>> af8f215e460b092323b529c68f9ea0fdf41604a5
 
 #these are the LISTENING ports
 COORDINATOR_PORT = 10000
@@ -60,7 +71,37 @@ TYPE_FR_IR = chr(159)
 TYPE_BROOKE_APPENDPOLAR = chr(97)
 TYPE_BROOKE_DISPLAY = chr(100)
 TYPE_BROOKE_CLEAR = chr(99)
+TYPE_BROOKE_ECHO = chr(101)
 
+#Message types from the sensor for MS4
+TYPE_SENSOR_APPENDMAP = chr(109)
+TYPE_SENSOR_APPENDLINES = chr(108)
+TYPE_SENSOR_APPENDTARGETS = chr(116)
+TYPE_SENSOR_CLEARMAP = chr(77)
+TYPE_SENSOR_CLEARLINES = chr(76)
+TYPE_SENSOR_CLEARTARGETS = chr(84)
+TYPE_SENSOR_CLEARALL = chr(67)
+TYPE_SENSOR_DISPLAYFULLMAP = chr(100)
+TYPE_SENSOR_DISPLAYFIELD = chr(68)
+TYPE_SENSOR_ECHO = chr(101)
+TYPE_SENSOR_ACK = chr(113)
+
+<<<<<<< HEAD
+=======
+#The coordinator should send this message type to the sensor 
+#to request a new list of obstacles
+#NOTE: the message must have 10 characters or else the pic won't recognize it
+TYPE_SENSOR_UPDATEREQUESTED = chr(117)
+TYPE_SENSOR_SINGLEREQUESTED = chr(118)
+TYPE_SENSOR_MULTIPLEREQUESTED = chr(119)
+
+#The coordinator will receive this message type when the sensor
+#has finished sending the list of obstacles
+TYPE_SENSOR_ENDUPDATE = chr(90)
+
+
+
+>>>>>>> af8f215e460b092323b529c68f9ea0fdf41604a5
 MOTOR_FORWARD = chr(17)
 MOTOR_BACKWARD = chr(85)
 MOTOR_STOP = chr(4)

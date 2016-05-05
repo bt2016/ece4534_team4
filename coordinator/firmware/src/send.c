@@ -127,9 +127,9 @@ void receiveFromSendQ()
 
     // If message received, push to UART transmit queue
     // If statement protects against repeat data.
-    if (newData && ((read[1] != sendData.prevType) || (read[2] != sendData.prevCount))) {
-        sendDataToTransmitQ(read);
-    }
+    //if (newData && ((read[1] != sendData.prevType) || (read[2] != sendData.prevCount))) {
+    sendDataToTransmitQ(read);
+    //}
     
     sendData.prevType = read[1];
     sendData.prevCount = read[2];
@@ -150,12 +150,6 @@ uint8_t removeSendQueueData() {
 
 // Place data passed from other tasks into send queue
 void putMsgOnSendQueue(char* data) {
-    
-    sendData.enqueueCount++;
-    
-    // Error simulation code, skip send enqueue
-    if (sendData.enqueueCount % MESSAGE_SKIP_DIV == 1)
-        return;
     
     if (sendData.sendQ_CD != 0) {
         

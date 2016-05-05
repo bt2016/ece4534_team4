@@ -13,6 +13,7 @@ from globalVARS import *
 from SENSOR_PROC import processMsgToCoordinator as sendToCoordinator
 from SENSOR_PROC import processMsgFromCoordinator as processCoordinatorMsg
 from SENSOR_PROC import processMsgFromBrooke as processBrookeMsg
+from SENSOR_PROC import processMsgFromSensor as processSensorMsg
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
@@ -91,7 +92,11 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                rxrate = EXPECTED_FR_RECEIVE
             elif BROOKELAPTOP_IP in self.request.getpeername():
                print("Brooke has connected.")
+<<<<<<< HEAD
 	       name = "BROOKE"
+=======
+               name = "BROOKE"
+>>>>>>> af8f215e460b092323b529c68f9ea0fdf41604a5
                txrate = EXPECTED_SA_SEND
                rxrate = EXPECTED_SA_RECEIVE
                 
@@ -170,6 +175,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                          if rxrate != 0:
                             receiverate = totalrate/rxrate
 
+
                          if totalrate == 0 and rxrate == 0:
                             rxreport = "RX Rate - GOOD!"
                          elif receiverate > 0.9 and receiverate < 1.1:
@@ -227,6 +233,10 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
                    elif BROOKELAPTOP_IP in self.request.getpeername():
                       processBrookeMsg(type, message)
+
+                   elif SENSOR_IP in self.request.getpeername():
+                      processSensorMsg(type, message)
+
                    else:
                       sendToCoordinator(message)
                       if message[1] == TYPE_LR_SENSOR and message[3] == chr(88):
@@ -237,6 +247,11 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                       
                    if len(message) > 2:
                       num = ord(message[2])
+
+                   #added by brooke
+                   if type == 0:
+                      print message
+                   #end added by brooke
 
                    self.trackIncoming(type, int(num))
 
